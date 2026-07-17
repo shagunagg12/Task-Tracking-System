@@ -1,0 +1,52 @@
+.preloader-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000;
+  transition: opacity 1.5s ease-in-out, visibility 1.5s ease-in-out;
+  overflow: hidden;
+  perspective: 800px;
+}
+
+.preloader-container.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.logo-wrapper {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: cinematicReveal 1.25s ease-out forwards;
+}
+
+.preloader-logo-img {
+  max-width: 300px;
+  max-height: 200px;
+  object-fit: contain;
+  filter: brightness(0) invert(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
+}
+
+@keyframes cinematicReveal {
+  0% { 
+    clip-path: circle(5% at 0% 0%);
+    opacity: 0.2;
+    transform: scale(0.95);
+    filter: blur(5px);
+  }
+  100% { 
+    clip-path: circle(150% at 0% 0%);
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
