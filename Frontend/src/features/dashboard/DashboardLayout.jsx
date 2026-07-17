@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Chatbot from '../../components/Chatbot';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -456,6 +457,7 @@ const DashboardLayout = () => {
         </div>
 
       </aside>
+      <Chatbot isSidebarOpen={isRightSidebarOpen} />
     </div>
   );
 };
