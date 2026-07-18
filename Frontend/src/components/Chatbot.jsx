@@ -9,20 +9,14 @@ import imgRun from '../assets/male_run.png';
 const Chatbot = ({ isSidebarOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [videoEnded, setVideoEnded] = useState({ 1: false, 2: false, 3: false, 4: false });
 
   const handleToggle = () => {
     if (!isOpen) {
       setIsLoading(true);
       setIsOpen(true);
-      setVideoEnded({ 1: false, 2: false, 3: false, 4: false }); // Reset state when opening
     } else {
       setIsOpen(false);
     }
-  };
-
-  const handleVideoEnd = (id) => {
-    setVideoEnded(prev => ({ ...prev, [id]: true }));
   };
 
   return (
@@ -73,55 +67,51 @@ const Chatbot = ({ isSidebarOpen }) => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', width: '100%', maxWidth: '1000px' }}>
                 
                 {/* Option 1 */}
-                <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
-                     onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
-                     onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                  <video src="/image/chatbot/generate_a_video_of_one_animat.mp4" autoPlay muted playsInline onEnded={() => handleVideoEnd(1)} ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
-                  {videoEnded[1] && (
-                    <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(20,20,20,0.95)', border: '2px solid var(--accent-green)', borderRadius: '20px', padding: '12px 16px', boxShadow: '0 0 20px var(--accent-green)', color: '#fff', fontSize: '14px', fontWeight: '600', textAlign: 'center', width: '90%', boxSizing: 'border-box', animation: 'floatAnim 2s ease-in-out infinite', zIndex: 20 }}>
-                      <div style={{ position: 'absolute', bottom: '-10px', left: '50%', transform: 'translateX(-50%)', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '10px solid var(--accent-green)' }} />
-                      "I'm Code Whisperer! Pick me for coding & architecture!"
-                    </div>
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h3 style={{ margin: 0, textAlign: 'center', fontFamily: '"Norwester", sans-serif', color: 'var(--text-main)' }}>
+                    <span style={{ fontSize: '48px', fontWeight: 'bold' }}>D</span><span style={{ fontSize: '24px' }}>aksh</span>
+                  </h3>
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
+                       onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
+                       onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                    <video src="/image/daksh.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                  </div>
                 </div>
                 
                 {/* Option 2 */}
-                <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
-                     onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
-                     onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                  <video src="/image/chatbot/The_video_frames_in_the_grid_a.mp4" autoPlay muted playsInline onEnded={() => handleVideoEnd(2)} ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
-                  {videoEnded[2] && (
-                    <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(20,20,20,0.95)', border: '2px solid var(--accent-green)', borderRadius: '20px', padding: '12px 16px', boxShadow: '0 0 20px var(--accent-green)', color: '#fff', fontSize: '14px', fontWeight: '600', textAlign: 'center', width: '90%', boxSizing: 'border-box', animation: 'floatAnim 2s ease-in-out infinite', zIndex: 20 }}>
-                      <div style={{ position: 'absolute', bottom: '-10px', left: '50%', transform: 'translateX(-50%)', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '10px solid var(--accent-green)' }} />
-                      "I'm Creative Muse! Pick me for UI/UX & design!"
-                    </div>
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h3 style={{ margin: 0, textAlign: 'center', fontFamily: '"Norwester", sans-serif', color: 'var(--text-main)' }}>
+                    <span style={{ fontSize: '48px', fontWeight: 'bold' }}>A</span><span style={{ fontSize: '24px' }}>yush</span>
+                  </h3>
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
+                       onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
+                       onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                    <video src="/image/Ayush%20Badola%20Video.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                  </div>
                 </div>
                 
                 {/* Option 3 */}
-                <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
-                     onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
-                     onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                  <video src="/src/assets/video_jump.mp4" autoPlay muted playsInline onEnded={() => handleVideoEnd(3)} ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
-                  {videoEnded[3] && (
-                    <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(20,20,20,0.95)', border: '2px solid var(--accent-green)', borderRadius: '20px', padding: '12px 16px', boxShadow: '0 0 20px var(--accent-green)', color: '#fff', fontSize: '14px', fontWeight: '600', textAlign: 'center', width: '90%', boxSizing: 'border-box', animation: 'floatAnim 2s ease-in-out infinite', zIndex: 20 }}>
-                      <div style={{ position: 'absolute', bottom: '-10px', left: '50%', transform: 'translateX(-50%)', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '10px solid var(--accent-green)' }} />
-                      "I'm Data Master! Pick me for data analysis & trends!"
-                    </div>
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h3 style={{ margin: 0, textAlign: 'center', fontFamily: '"Norwester", sans-serif', color: 'var(--text-main)' }}>
+                    <span style={{ fontSize: '48px', fontWeight: 'bold' }}>R</span><span style={{ fontSize: '24px' }}>achit</span>
+                  </h3>
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
+                       onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
+                       onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                    <video src="/image/rachit.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                  </div>
                 </div>
                 
                 {/* Option 4 */}
-                <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
-                     onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
-                     onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                  <video src="/src/assets/video_sprint.mp4" autoPlay muted playsInline onEnded={() => handleVideoEnd(4)} ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
-                  {videoEnded[4] && (
-                    <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(20,20,20,0.95)', border: '2px solid var(--accent-green)', borderRadius: '20px', padding: '12px 16px', boxShadow: '0 0 20px var(--accent-green)', color: '#fff', fontSize: '14px', fontWeight: '600', textAlign: 'center', width: '90%', boxSizing: 'border-box', animation: 'floatAnim 2s ease-in-out infinite', zIndex: 20 }}>
-                      <div style={{ position: 'absolute', bottom: '-10px', left: '50%', transform: 'translateX(-50%)', borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '10px solid var(--accent-green)' }} />
-                      "I'm Wordsmith! Pick me for copywriting & editing!"
-                    </div>
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h3 style={{ margin: 0, textAlign: 'center', fontFamily: '"Norwester", sans-serif', color: 'var(--text-main)' }}>
+                    <span style={{ fontSize: '48px', fontWeight: 'bold' }}>K</span><span style={{ fontSize: '24px' }}>artik</span>
+                  </h3>
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
+                       onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
+                       onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                    <video src="/image/kartik.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                  </div>
                 </div>
               </div>
             </div>
