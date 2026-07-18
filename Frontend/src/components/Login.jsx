@@ -8,7 +8,7 @@ export default function Login({ onLogin }) {
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRight: '1px solid var(--border-color)' }}>
         <video 
           key={isRegistering ? 'register' : 'login'}
-          src={isRegistering ? "/image/Registerpage.mp4" : "/image/login_page.mp4"} 
+          src="/image/login_page.mp4" 
           autoPlay 
           loop 
           muted 
