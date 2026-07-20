@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Chatbot from '../../components/Chatbot';
+import ProfileSettings from '../../components/ProfileSettings';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -68,6 +69,7 @@ const DashboardLayout = () => {
     { id: 'Performance', icon: '🚀', text: 'Performance' },
     { id: 'Report Generation', icon: '📊', text: 'Report Generation' },
     { id: 'Appreciation', icon: '🌟', text: 'Appreciation' },
+    { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
   return (
@@ -107,7 +109,7 @@ const DashboardLayout = () => {
           <div className="header-left">
             <span className="header-icon">❖</span>
             <span className="header-icon">⭐</span>
-            <span className="breadcrumb">Dashboards / <span className="current">Overview</span></span>
+            <span className="breadcrumb">Dashboards / <span className="current">{activeMenu}</span></span>
           </div>
           <div className="header-right">
              <div className="header-actions">
@@ -122,10 +124,14 @@ const DashboardLayout = () => {
         </header>
 
         <div className="content-scroll">
-          {/* Overview Top Stats */}
-          <section className="section-overview">
-            <div className="section-header">
-              <h2>Overview</h2>
+          {activeMenu === 'Profile' ? (
+            <ProfileSettings />
+          ) : (
+            <>
+              {/* Overview Top Stats */}
+              <section className="section-overview">
+                <div className="section-header">
+                  <h2>{activeMenu}</h2>
               <div className="date-filter">Today <span>⌄</span></div>
             </div>
             
@@ -342,12 +348,14 @@ const DashboardLayout = () => {
                  </div>
                </div>
                <p className="premium-desc">Claim your reward points to get gift cards, extra time off, or company merch! 🎁</p>
-               <div className="premium-actions">
-                 <button className="get-started-btn">Redeem Now</button>
-                 <button className="star-btn">★</button>
-               </div>
-            </div>
+                <div className="premium-actions">
+                  <button className="get-started-btn">Redeem Now</button>
+                  <button className="star-btn">★</button>
+                </div>
+             </div>
           </div>
+          </>
+          )}
         </div>
       </main>
 
