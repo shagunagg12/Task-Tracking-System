@@ -47,7 +47,8 @@ namespace Backend.Controllers
             {
                 FullName = dto.FullName,
                 Email = dto.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Profile = new UserProfile() // Automatically create blank profile
             };
 
             _context.Users.Add(user);

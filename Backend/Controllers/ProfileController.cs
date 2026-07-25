@@ -38,17 +38,17 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return NotFound("User not found.");
 
             return Ok(new
             {
                 user.FullName,
                 user.Email,
-                user.Designation,
-                user.Department,
-                user.Location,
-                user.Bio
+                Designation = user.Profile?.Designation ?? "",
+                Department = user.Profile?.Department ?? "",
+                Location = user.Profile?.Location ?? "",
+                Bio = user.Profile?.Bio ?? ""
             });
         }
 
@@ -61,15 +61,21 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return NotFound("User not found.");
 
             user.FullName = dto.FullName;
             user.Email = dto.Email;
-            user.Designation = dto.Designation;
-            user.Department = dto.Department;
-            user.Location = dto.Location;
-            user.Bio = dto.Bio;
+
+            if (user.Profile == null) 
+            {
+                user.Profile = new UserProfile();
+            }
+
+            user.Profile.Designation = dto.Designation;
+            user.Profile.Department = dto.Department;
+            user.Profile.Location = dto.Location;
+            user.Profile.Bio = dto.Bio;
 
             await _context.SaveChangesAsync();
 
