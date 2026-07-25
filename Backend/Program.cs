@@ -6,9 +6,17 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load the custom .env file from the env folder
+// Load the custom .env file from the env folder manually to bypass DotNetEnv bugs
 var envPath = Path.Combine(builder.Environment.ContentRootPath, "env", ".env");
-DotNetEnv.Env.Load(envPath);
+if (System.IO.File.Exists(envPath))
+{
+    foreach (var line in System.IO.File.ReadAllLines(envPath))
+    {
+        if (string.IsNullOrWhiteSpace(line) || !line.Contains('=')) continue;
+        var parts = line.Split('=', 2);
+        Environment.SetEnvironmentVariable(parts[0].Trim(), parts[1].Trim());
+    }
+}
 
 // Construct connection string from environment variables
 var dbServer = Environment.GetEnvironmentVariable("DB_SERVER");
@@ -28,6 +36,9 @@ else
     connectionString = $"Server={dbServer};Database={dbName};User Id={dbUser};Password={dbPassword};TrustServerCertificate=True;";
 }
 
+Console.WriteLine("=============================================");
+Console.WriteLine($"USING CONNECTION STRING: {connectionString}");
+Console.WriteLine("=============================================");
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

@@ -13,8 +13,8 @@ namespace Backend.Migrations
             // Removed unnecessary DropColumn and RenameColumn operations because the database already matches the new schema
             
             // Ensure the manually created Users table has a primary key on 'id', which is required for the foreign key relationship
-            migrationBuilder.Sql("ALTER TABLE Users ALTER COLUMN id INT NOT NULL;");
-            migrationBuilder.Sql("ALTER TABLE Users ADD CONSTRAINT PK_Users PRIMARY KEY (id);");
+            // migrationBuilder.Sql("ALTER TABLE Users ALTER COLUMN id INT NOT NULL;");
+            // migrationBuilder.Sql("ALTER TABLE Users ADD CONSTRAINT PK_Users PRIMARY KEY (id);");
 
             migrationBuilder.CreateTable(
                 name: "Profiles",
@@ -35,7 +35,7 @@ namespace Backend.Migrations
                         name: "FK_Profiles_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "id",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
