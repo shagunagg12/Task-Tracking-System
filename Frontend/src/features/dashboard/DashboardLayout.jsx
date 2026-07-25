@@ -51,6 +51,7 @@ const DashboardLayout = () => {
   const [activeMenu, setActiveMenu] = useState('Assigned Projects');
   const [isBrightTheme, setIsBrightTheme] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
 
   const toggleTheme = () => {
     setIsBrightTheme(!isBrightTheme);
@@ -58,6 +59,10 @@ const DashboardLayout = () => {
 
   const toggleRightSidebar = () => {
     setIsRightSidebarOpen(!isRightSidebarOpen);
+  };
+
+  const toggleLeftSidebar = () => {
+    setIsLeftSidebarOpen(!isLeftSidebarOpen);
   };
 
   const getUserName = () => {
@@ -91,7 +96,7 @@ const DashboardLayout = () => {
   return (
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
       {/* LEFT SIDEBAR */}
-      <aside className="left-sidebar">
+      <aside className={`left-sidebar ${isLeftSidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-start', borderBottom: '1px solid var(--border-color)' }}>
           <img src="/image/logo.png" alt="MATTS Logo" className="matts-sidebar-logo" style={{ maxWidth: '120px', height: 'auto' }} />
         </div>
@@ -166,6 +171,7 @@ const DashboardLayout = () => {
       <main className="main-content">
         <header className="top-header">
           <div className="header-left">
+            <span className="action-icon" onClick={toggleLeftSidebar} title="Toggle Sidebar" style={{ cursor: 'pointer', marginRight: '16px' }}>☰</span>
             <span className="header-icon">❖</span>
             <span className="header-icon">⭐</span>
             <span className="breadcrumb">Dashboards / <span className="current">{activeMenu}</span></span>
@@ -175,7 +181,6 @@ const DashboardLayout = () => {
                <span className="action-icon" onClick={toggleTheme} title="Toggle Theme">
                  {isBrightTheme ? '☀️' : '🌙'}
                </span>
-               <span className="action-icon" onClick={() => window.location.reload()} title="Refresh">↻</span>
                <span className="action-icon" onClick={toggleRightSidebar} title="Notifications">🔔</span>
                <span className="action-icon" title="Language">🌐</span>
              </div>
