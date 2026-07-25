@@ -60,6 +60,22 @@ const DashboardLayout = () => {
     setIsRightSidebarOpen(!isRightSidebarOpen);
   };
 
+  const getUserName = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return 'User';
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+             payload.unique_name || 
+             payload.name || 
+             'User';
+    } catch(e) {
+      return 'User';
+    }
+  };
+
+  const userName = getUserName();
+
   const menuItems = [
     { id: 'Assigned Projects', icon: '💼', text: 'Assigned Projects' },
     { id: 'Social Scoring', icon: '🤝', text: 'Social Scoring' },
@@ -76,9 +92,8 @@ const DashboardLayout = () => {
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
       {/* LEFT SIDEBAR */}
       <aside className="left-sidebar">
-        <div className="user-profile-header">
-          <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="User" className="user-avatar" />
-          <span className="user-name">Guy Hawkins</span>
+        <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-start', borderBottom: '1px solid var(--border-color)' }}>
+          <img src="/image/logo.png" alt="MATTS Logo" className="matts-sidebar-logo" style={{ maxWidth: '120px', height: 'auto' }} />
         </div>
 
         <div className="sidebar-section">
@@ -96,10 +111,54 @@ const DashboardLayout = () => {
           </ul>
         </div>
         
-        <div className="sidebar-footer">
-           <div className="dwison-logo">
-             <img src="/image/logo.png" alt="MATTS Logo" className="matts-sidebar-logo" />
-           </div>
+        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            backgroundColor: 'var(--bg-dark)', 
+            padding: '20px 0', 
+            borderTop: '1px solid var(--border-color)',
+            width: '100%',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img 
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`} 
+                alt="User" 
+                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
+              />
+              <span style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-main)' }}>{userName}</span>
+            </div>
+            
+            <button 
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.reload();
+              }}
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: 'var(--text-muted)', 
+                cursor: 'pointer', 
+                padding: '8px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)'; e.currentTarget.style.color = '#ff6b6b'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+              title="Logout"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -295,7 +354,7 @@ const DashboardLayout = () => {
                   <tr>
                     <td>
                       <div className="user-cell">
-                        <img src="https://i.pravatar.cc/150?u=1" alt="Danny" />
+                        <img src="https://ui-avatars.com/api/?name=Danny+Liu&background=random" alt="Danny" />
                         <div className="user-info">
                           <p className="name">Danny Liu</p>
                           <p className="email">Development</p>
@@ -308,7 +367,7 @@ const DashboardLayout = () => {
                   <tr>
                     <td>
                       <div className="user-cell">
-                        <img src="https://i.pravatar.cc/150?u=2" alt="Bella" />
+                        <img src="https://ui-avatars.com/api/?name=Bella+Deviant&background=random" alt="Bella" />
                         <div className="user-info">
                           <p className="name">Bella Deviant</p>
                           <p className="email">Marketing</p>
@@ -321,7 +380,7 @@ const DashboardLayout = () => {
                   <tr>
                     <td>
                       <div className="user-cell">
-                        <img src="https://i.pravatar.cc/150?u=3" alt="Darrell" />
+                        <img src="https://ui-avatars.com/api/?name=Darrell+Steward&background=random" alt="Darrell" />
                         <div className="user-info">
                           <p className="name">Darrell Steward</p>
                           <p className="email">Design</p>
@@ -400,28 +459,28 @@ const DashboardLayout = () => {
           <h3 className="right-title">Activities</h3>
           <ul className="list-items activities-list">
             <li className="list-item">
-              <img src="https://i.pravatar.cc/150?u=4" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Alice+Wonder&background=random" alt="user" className="tiny-avatar" />
               <div className="item-details">
                 <p className="item-title">Completed task 'Update Homepage'.</p>
                 <p className="item-time">Just now</p>
               </div>
             </li>
             <li className="list-item">
-              <img src="https://i.pravatar.cc/150?u=5" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Bob+Builder&background=random" alt="user" className="tiny-avatar" />
               <div className="item-details">
                 <p className="item-title">Earned 'Fast Learner' badge.</p>
                 <p className="item-time">47 Minutes ago</p>
               </div>
             </li>
             <li className="list-item">
-              <img src="https://i.pravatar.cc/150?u=6" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Charlie+Day&background=random" alt="user" className="tiny-avatar" />
               <div className="item-details">
                 <p className="item-title">Submitted weekly performance report.</p>
                 <p className="item-time">1 Days ago</p>
               </div>
             </li>
             <li className="list-item">
-              <img src="https://i.pravatar.cc/150?u=7" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Diana+Prince&background=random" alt="user" className="tiny-avatar" />
               <div className="item-details">
                 <p className="item-title">Appreciated Danny Liu.</p>
                 <p className="item-time">Feb 2, 2026</p>
@@ -434,17 +493,17 @@ const DashboardLayout = () => {
           <h3 className="right-title">Team Members</h3>
           <ul className="list-items contacts-list">
             <li className="list-item contact-item">
-              <img src="https://i.pravatar.cc/150?u=8" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Daniel+Craig&background=random" alt="user" className="tiny-avatar" />
               <p className="item-title">Daniel Craig</p>
               <span className="more-options">⋯</span>
             </li>
             <li className="list-item contact-item">
-              <img src="https://i.pravatar.cc/150?u=9" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Kate+Morrison&background=random" alt="user" className="tiny-avatar" />
               <p className="item-title">Kate Morrison</p>
               <span className="more-options">⋯</span>
             </li>
             <li className="list-item contact-item active-contact">
-              <img src="https://i.pravatar.cc/150?u=10" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Nataniel+Donowan&background=random" alt="user" className="tiny-avatar" />
               <p className="item-title">Nataniel Donowan</p>
               <div className="contact-actions">
                  <span className="c-action">✉</span>
@@ -452,12 +511,12 @@ const DashboardLayout = () => {
               </div>
             </li>
             <li className="list-item contact-item">
-              <img src="https://i.pravatar.cc/150?u=11" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Elisabeth+Wayne&background=random" alt="user" className="tiny-avatar" />
               <p className="item-title">Elisabeth Wayne</p>
               <span className="more-options">⋯</span>
             </li>
             <li className="list-item contact-item">
-              <img src="https://i.pravatar.cc/150?u=12" alt="user" className="tiny-avatar" />
+              <img src="https://ui-avatars.com/api/?name=Felicia+Raspet&background=random" alt="user" className="tiny-avatar" />
               <p className="item-title">Felicia Raspet</p>
               <span className="more-options">⋯</span>
             </li>

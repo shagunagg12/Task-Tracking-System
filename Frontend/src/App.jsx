@@ -6,7 +6,10 @@ import './styles/index.css';
 
 function App() {
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Check if user is already logged in on page load
+    return !!localStorage.getItem('token');
+  });
 
   return (
     <>
