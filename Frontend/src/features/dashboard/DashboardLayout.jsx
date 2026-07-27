@@ -48,7 +48,7 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
 };
 
 const DashboardLayout = () => {
-  const [activeMenu, setActiveMenu] = useState('Assigned Projects');
+  const [activeMenu, setActiveMenu] = useState('Overview');
   const [isBrightTheme, setIsBrightTheme] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -82,6 +82,7 @@ const DashboardLayout = () => {
   const userName = getUserName();
 
   const menuItems = [
+    { id: 'Overview', icon: '📊', text: 'Overview' },
     { id: 'Assigned Projects', icon: '💼', text: 'Assigned Projects' },
     { id: 'Social Scoring', icon: '🤝', text: 'Social Scoring' },
     { id: 'Efficiency', icon: '⚙️', text: 'Efficiency' },
@@ -190,7 +191,7 @@ const DashboardLayout = () => {
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
-          ) : (
+          ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
               <section className="section-overview">
@@ -419,6 +420,11 @@ const DashboardLayout = () => {
              </div>
           </div>
           </>
+          ) : (
+             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+               <h2>{activeMenu}</h2>
+               <p style={{ marginTop: '10px' }}>This section is currently under development.</p>
+             </div>
           )}
         </div>
       </main>
