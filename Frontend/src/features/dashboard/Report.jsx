@@ -127,11 +127,10 @@ const Report = () => {
   const priorityLow = hasRealData ? allTasks.filter(t => t.priority === 'Low').length : 40;
   const priorityCritical = hasRealData ? Math.floor(priorityHigh * 0.2) : 10;
 
-  // 5. Efficiency Score Formula
-  // Efficiency = Completed / (Completed + Overdue) * 100
-  const computedEfficiency = completedTasksCount > 0 
-    ? Math.round((completedTasksCount / (completedTasksCount + overdueTasksCount)) * 100)
-    : 94;
+  // 5. Efficiency Score Formula - Calculated as overall project task completion percentage
+  const computedEfficiency = hasRealData 
+    ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'Done').length / allTasks.length) * 100) : 0)
+    : 75;
 
   // Status Distribution Percentages normalized to add up to exactly 100%
   const completedPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'Done').length / allTasks.length) * 100) : 75;
