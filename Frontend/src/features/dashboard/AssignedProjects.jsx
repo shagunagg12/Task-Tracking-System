@@ -46,9 +46,12 @@ const AssignedProjects = () => {
 
   const activeProject = projectsData.find(p => p.id == selectedProjectId) || projectsData[0];
 
-  const filteredTasks = taskFilter === 'Ongoing' 
-    ? activeProject.tasks?.filter(t => t.status === 'In Progress' || t.status === 'Review') || []
-    : activeProject.tasks || [];
+  const filteredTasks = activeProject.tasks?.filter(t => {
+    if (taskFilter === 'Completed') return t.status === 'Done';
+    if (taskFilter === 'Ongoing') return t.status === 'In Progress';
+    if (taskFilter === 'Pending') return t.status === 'Review';
+    return true;
+  }) || [];
 
   const getDeadlineStyle = (color) => {
     if (color === 'orange') return { background: 'rgba(255, 159, 10, 0.1)', color: '#FF9F0A' };
@@ -120,18 +123,11 @@ const AssignedProjects = () => {
             <select 
               value={taskFilter} 
               onChange={(e) => setTaskFilter(e.target.value)}
-              style={{
-                background: 'var(--bg-dark)',
-                color: 'var(--text-main)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                fontSize: '12px',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
+              className="task-filter-select"
             >
               <option value="All">All</option>
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
               <option value="Ongoing">Ongoing</option>
             </select>
           </div>
@@ -146,7 +142,7 @@ const AssignedProjects = () => {
               </div>
             ))}
             {filteredTasks.length === 0 && (
-               <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0', fontSize: '13px' }}>No ongoing tasks.</div>
+               <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0', fontSize: '13px' }}>No tasks found for this filter.</div>
             )}
           </div>
         </div>
