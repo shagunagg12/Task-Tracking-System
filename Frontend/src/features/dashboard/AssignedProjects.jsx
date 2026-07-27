@@ -211,27 +211,31 @@ const AssignedProjects = () => {
                       >
                         <div className="project-card-header">
                           <h3>{proj.name}</h3>
-                          <span className={`status-badge ${proj.status === 'Completed' ? 'status-done' : 'status-inprogress'}`}>
-                            {proj.status}
+                          <span className={`project-card-badge ${proj.status === 'Completed' ? 'badge-completed' : 'badge-inprogress'}`}>
+                            {proj.status === 'Completed' ? '✓ Completed' : 'In Progress'}
                           </span>
                         </div>
-                        <div className="project-card-stats">
-                          <div className="stat-row">
-                            <span className="stat-label">Tasks Completed</span>
-                            <span className="stat-value">{completed} / {total}</span>
+                        
+                        <div className="project-card-body">
+                          <div className="pc-stat">
+                            <span className="pc-stat-value">{completed} <span className="pc-stat-total">/ {total}</span></span>
+                            <span className="pc-stat-label">Tasks</span>
                           </div>
-                          <div className="stat-row">
-                            <span className="stat-label">Overall Progress</span>
-                            <span className="stat-value">{prog}%</span>
+                          
+                          <div className="pc-stat">
+                            <span className="pc-stat-value">{proj.hours}<span className="pc-stat-total">h</span></span>
+                            <span className="pc-stat-label">Time Spent</span>
                           </div>
-                          <div className="stat-row">
-                            <span className="stat-label">Hours Devoted</span>
-                            <span className="stat-value">{proj.hours}h</span>
+                          
+                          <div className="pc-stat">
+                            <span className="pc-stat-value" style={{ color: 'var(--accent-green)' }}>{prog}%</span>
+                            <span className="pc-stat-label">Progress</span>
                           </div>
                         </div>
-                        <div className="project-card-progress">
-                          <div className="progress-bar-bg">
-                            <div className="progress-bar-fill" style={{ width: `${prog}%` }}></div>
+
+                        <div className="project-card-footer">
+                          <div className="pc-progress-track">
+                            <div className="pc-progress-fill" style={{ width: `${prog}%` }}></div>
                           </div>
                         </div>
                       </div>
