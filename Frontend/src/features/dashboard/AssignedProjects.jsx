@@ -282,7 +282,7 @@ const AssignedProjects = () => {
             <span><span style={{ color: 'var(--accent-green)' }}>⏱️</span> {activeProject.priorityTaskTimeRemaining}</span>
           </div>
           
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
             <button className="priority-action" style={{ marginTop: 0 }}>Jump to Task</button>
             {activeProject?.status !== 'Completed' && computedProgress === 100 && (
               <button 
