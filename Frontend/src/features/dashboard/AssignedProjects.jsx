@@ -8,6 +8,7 @@ const AssignedProjects = () => {
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [completionModalData, setCompletionModalData] = useState(null);
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -162,58 +163,101 @@ const AssignedProjects = () => {
 
   return (
     <div className="assigned-projects-container">
-      <div className="assigned-projects-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <h1>Projects</h1>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Status Filter:</span>
-            <select 
-              value={projectFilter} 
-              onChange={(e) => setProjectFilter(e.target.value)}
-              style={{
-                background: 'var(--bg-dark)',
-                color: 'var(--text-main)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '6px 10px',
-                fontSize: '13px',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="All">All</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
+      {viewMode === 'list' ? (
+        <>
+          <div className="assigned-projects-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <h1>Projects</h1>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Status Filter:</span>
+                <select 
+                  value={projectFilter} 
+                  onChange={(e) => setProjectFilter(e.target.value)}
+                  style={{
+                    background: 'var(--bg-dark)',
+                    color: 'var(--text-main)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '6px 10px',
+                    fontSize: '13px',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="All">All</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+            </div>
           </div>
-          
-          <select 
-            value={activeProject?.id || ''} 
-            onChange={(e) => setSelectedProjectId(e.target.value)}
-            style={{
-              background: 'var(--bg-card)',
-              color: 'var(--text-main)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              outline: 'none',
-              cursor: 'pointer',
-              fontWeight: '600'
-            }}
-          >
-            {filteredProjects.length === 0 ? (
-                <option value="">No projects match</option>
-            ) : (
-                filteredProjects.map(proj => (
-                  <option key={proj.id} value={proj.id}>{proj.name} {proj.status === 'Completed' ? '(Done)' : ''}</option>
-                ))
-            )}
-          </select>
-        </div>
-      </div>
 
-      <div className="assigned-grid">
+          <div className="project-cards-grid">
+            {filteredProjects.length === 0 ? (
+                <div style={{ color: 'var(--text-muted)' }}>No projects match this filter.</div>
+            ) : (
+                filteredProjects.map(proj => {
+                    const total = proj.tasks?.length || 0;
+                    const completed = proj.tasks?.filter(t => t.status === 'Done').length || 0;
+                    const prog = total === 0 ? 0 : Math.round((completed / total) * 100);
+                    return (
+                      <div 
+                        key={proj.id} 
+                        className="project-card"
+                        onClick={() => {
+                          setSelectedProjectId(proj.id);
+                          setViewMode('detail');
+                        }}
+                      >
+                        <div className="project-card-header">
+                          <h3>{proj.name}</h3>
+                          <span className={`status-badge ${proj.status === 'Completed' ? 'status-done' : 'status-inprogress'}`}>
+                            {proj.status}
+                          </span>
+                        </div>
+                        <div className="project-card-stats">
+                          <div className="stat-row">
+                            <span className="stat-label">Tasks Completed</span>
+                            <span className="stat-value">{completed} / {total}</span>
+                          </div>
+                          <div className="stat-row">
+                            <span className="stat-label">Overall Progress</span>
+                            <span className="stat-value">{prog}%</span>
+                          </div>
+                          <div className="stat-row">
+                            <span className="stat-label">Hours Devoted</span>
+                            <span className="stat-value">{proj.hours}h</span>
+                          </div>
+                        </div>
+                        <div className="project-card-progress">
+                          <div className="progress-bar-bg">
+                            <div className="progress-bar-fill" style={{ width: `${prog}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                })
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="assigned-projects-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <button 
+                className="back-to-projects-btn"
+                onClick={() => setViewMode('list')}
+              >
+                ⬅ Back to Projects
+              </button>
+              <h1 style={{ margin: 0, fontSize: '24px' }}>{activeProject?.name}</h1>
+              {activeProject?.status === 'Completed' && (
+                <span className="status-badge status-done">Completed</span>
+              )}
+            </div>
+          </div>
+
+          <div className="assigned-grid">
         
         {/* 1. Priority Task */}
         <div className="ap-card col-span-2 priority-task-card">
@@ -369,6 +413,8 @@ const AssignedProjects = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
