@@ -1,70 +1,120 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Chats.css';
 
-const MOCK_CONVERSATIONS = [
-  {
-    id: 1,
-    name: 'Project Alpha Team',
-    avatar: 'https://ui-avatars.com/api/?name=Project+Alpha&background=0D8ABC&color=fff',
-    lastMessage: 'Let\'s finalize the deployment today.',
-    time: '10:30 AM',
-    unread: 2,
-    isGroup: true,
-    status: 'online',
-    messages: [
-      { id: 1, sender: 'Alice', text: 'Are we still on track for Friday?', time: '10:15 AM', isMine: false },
-      { id: 2, sender: 'Me', text: 'Yes, just finishing up the last few bugs.', time: '10:20 AM', isMine: true },
-      { id: 3, sender: 'Bob', text: 'Let\'s finalize the deployment today.', time: '10:30 AM', isMine: false },
-    ]
-  },
-  {
-    id: 2,
-    name: 'Sarah Connor',
-    avatar: 'https://ui-avatars.com/api/?name=Sarah+Connor&background=4CAF50&color=fff',
-    lastMessage: 'Got it, thanks!',
-    time: 'Yesterday',
-    unread: 0,
-    isGroup: false,
-    status: 'away',
-    messages: [
-      { id: 1, sender: 'Me', text: 'I sent you the documents.', time: 'Yesterday 2:00 PM', isMine: true },
-      { id: 2, sender: 'Sarah', text: 'Got it, thanks!', time: 'Yesterday 2:15 PM', isMine: false },
-    ]
-  },
-  {
-    id: 3,
-    name: 'Design Sync',
-    avatar: 'https://ui-avatars.com/api/?name=Design+Sync&background=E91E63&color=fff',
-    lastMessage: 'The new mockups look great.',
-    time: 'Monday',
-    unread: 0,
-    isGroup: true,
-    status: 'offline',
-    messages: [
-      { id: 1, sender: 'Mike', text: 'Check out the Figma link.', time: 'Monday 9:00 AM', isMine: false },
-      { id: 2, sender: 'Me', text: 'The new mockups look great.', time: 'Monday 9:15 AM', isMine: true },
-    ]
-  },
-  {
-    id: 4,
-    name: 'IT Support',
-    avatar: 'https://ui-avatars.com/api/?name=IT+Support&background=F44336&color=fff',
-    lastMessage: 'Your ticket has been resolved.',
-    time: 'Aug 21',
-    unread: 0,
-    isGroup: false,
-    status: 'online',
-    messages: [
-      { id: 1, sender: 'Support', text: 'Your ticket has been resolved.', time: 'Aug 21 11:00 AM', isMine: false }
-    ]
-  }
-];
-
 const Chats = () => {
-  const [conversations, setConversations] = useState(MOCK_CONVERSATIONS);
-  const [activeChatId, setActiveChatId] = useState(MOCK_CONVERSATIONS[0].id);
+  const [conversations, setConversations] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // 'all', 'groups', 'direct'
   const messagesEndRef = useRef(null);
+
+  // Helper to get my name
+  const getUserName = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return 'Me';
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+             payload.unique_name || 
+             payload.name || 
+             'Me';
+    } catch(e) {
+      return 'Me';
+    }
+  };
+  const myName = getUserName();
+
+  useEffect(() => {
+    const fetchChatsData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5024/api/projects', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        const generatedConversations = [];
+        const uniqueMembers = new Map();
+
+        // 1. Process Projects as Group Chats
+        data.forEach(project => {
+          const teamNames = project.teamMembers?.map(tm => tm.name) || [];
+          generatedConversations.push({
+            id: `group_${project.id}`,
+            name: project.name,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(project.name)}&background=0D8ABC&color=fff`,
+            lastMessage: 'Welcome to the project chat!',
+            time: 'Just now',
+            unread: 0,
+            isGroup: true,
+            status: 'online',
+            members: teamNames,
+            messages: [
+              { id: Date.now() + Math.random(), sender: 'System', text: `Chat created for ${project.name}`, time: 'System', isMine: false }
+            ]
+          });
+
+          // Collect unique team members
+          project.teamMembers?.forEach(tm => {
+            if (tm.name && tm.name !== myName) {
+              if (!uniqueMembers.has(tm.name)) {
+                uniqueMembers.set(tm.name, {
+                  name: tm.name,
+                  image: tm.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(tm.name)}&background=random`
+                });
+              }
+            }
+          });
+        });
+
+        // Add some dummy individuals in case there are no projects or members (to fulfill "chat with anyone individually")
+        const extraDummies = ['Sarah Connor', 'John Doe', 'Alice Williams'];
+        extraDummies.forEach(dummy => {
+          if (!uniqueMembers.has(dummy) && dummy !== myName) {
+            uniqueMembers.set(dummy, {
+              name: dummy,
+              image: `https://ui-avatars.com/api/?name=${encodeURIComponent(dummy)}&background=random`
+            });
+          }
+        });
+
+        // 2. Process Unique Members as Direct Messages
+        Array.from(uniqueMembers.values()).forEach((member, index) => {
+          generatedConversations.push({
+            id: `dm_${index}`,
+            name: member.name,
+            avatar: member.image,
+            lastMessage: 'Say hi!',
+            time: 'Just now',
+            unread: 0,
+            isGroup: false,
+            status: index % 3 === 0 ? 'away' : 'online',
+            messages: []
+          });
+        });
+
+        setConversations(generatedConversations);
+        if (generatedConversations.length > 0) {
+          setActiveChatId(generatedConversations[0].id);
+        }
+
+      } catch (error) {
+        console.error('Error fetching chat data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChatsData();
+  }, [myName]);
 
   const activeChat = conversations.find(c => c.id === activeChatId);
 
@@ -82,7 +132,7 @@ const Chats = () => {
 
     const newMessage = {
       id: Date.now(),
-      sender: 'Me',
+      sender: myName,
       text: inputText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMine: true
@@ -110,6 +160,20 @@ const Chats = () => {
     setActiveChatId(id);
   };
 
+  const filteredConversations = conversations.filter(c => {
+    if (filter === 'groups') return c.isGroup;
+    if (filter === 'direct') return !c.isGroup;
+    return true; // all
+  });
+
+  if (isLoading) {
+    return (
+      <div className="chats-container" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--text-muted)' }}>Loading chats...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="chats-container">
       {/* Left Sidebar - Chat List */}
@@ -117,7 +181,6 @@ const Chats = () => {
         <div className="chats-sidebar-header">
           <h2>Chats</h2>
           <div className="chats-actions">
-            <button className="icon-btn" title="Filter"><FilterIcon /></button>
             <button className="icon-btn new-chat-btn" title="New Chat"><NewChatIcon /></button>
           </div>
         </div>
@@ -127,29 +190,50 @@ const Chats = () => {
             <input type="text" placeholder="Search chats..." />
           </div>
         </div>
+        
+        {/* Chat Filters */}
+        <div style={{ display: 'flex', padding: '0 20px 10px', gap: '10px' }}>
+          <button 
+            style={{ flex: 1, padding: '6px', borderRadius: '4px', border: 'none', background: filter === 'all' ? 'var(--accent-color)' : 'var(--bg-card-hover)', color: filter === 'all' ? 'white' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }}
+            onClick={() => setFilter('all')}
+          >All</button>
+          <button 
+            style={{ flex: 1, padding: '6px', borderRadius: '4px', border: 'none', background: filter === 'groups' ? 'var(--accent-color)' : 'var(--bg-card-hover)', color: filter === 'groups' ? 'white' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }}
+            onClick={() => setFilter('groups')}
+          >Teams</button>
+          <button 
+            style={{ flex: 1, padding: '6px', borderRadius: '4px', border: 'none', background: filter === 'direct' ? 'var(--accent-color)' : 'var(--bg-card-hover)', color: filter === 'direct' ? 'white' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }}
+            onClick={() => setFilter('direct')}
+          >Direct</button>
+        </div>
+
         <div className="chats-list">
-          {conversations.map(chat => (
-            <div 
-              key={chat.id} 
-              className={`chat-item ${activeChatId === chat.id ? 'active' : ''} ${chat.unread > 0 ? 'unread' : ''}`}
-              onClick={() => markAsRead(chat.id)}
-            >
-              <div className="chat-avatar-container">
-                <img src={chat.avatar} alt={chat.name} className="chat-avatar" />
-                <span className={`status-indicator ${chat.status}`}></span>
-              </div>
-              <div className="chat-item-content">
-                <div className="chat-item-top">
-                  <span className="chat-name">{chat.name}</span>
-                  <span className="chat-time">{chat.time}</span>
+          {filteredConversations.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No chats found.</div>
+          ) : (
+            filteredConversations.map(chat => (
+              <div 
+                key={chat.id} 
+                className={`chat-item ${activeChatId === chat.id ? 'active' : ''} ${chat.unread > 0 ? 'unread' : ''}`}
+                onClick={() => markAsRead(chat.id)}
+              >
+                <div className="chat-avatar-container">
+                  <img src={chat.avatar} alt={chat.name} className="chat-avatar" />
+                  <span className={`status-indicator ${chat.status}`}></span>
                 </div>
-                <div className="chat-item-bottom">
-                  <span className="chat-last-message">{chat.lastMessage}</span>
-                  {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                <div className="chat-item-content">
+                  <div className="chat-item-top">
+                    <span className="chat-name">{chat.name}</span>
+                    <span className="chat-time">{chat.time}</span>
+                  </div>
+                  <div className="chat-item-bottom">
+                    <span className="chat-last-message">{chat.lastMessage}</span>
+                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -166,7 +250,7 @@ const Chats = () => {
                 <div>
                   <h3 className="chat-header-name">{activeChat.name}</h3>
                   <span className="chat-header-status">
-                    {activeChat.isGroup ? 'Group Chat' : activeChat.status.charAt(0).toUpperCase() + activeChat.status.slice(1)}
+                    {activeChat.isGroup ? `Project Team (${activeChat.members?.length || 0} members)` : activeChat.status.charAt(0).toUpperCase() + activeChat.status.slice(1)}
                   </span>
                 </div>
               </div>
@@ -181,6 +265,11 @@ const Chats = () => {
 
             <div className="chat-messages-area">
               <div className="date-divider"><span>Today</span></div>
+              {activeChat.messages.length === 0 && (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '20px' }}>
+                  No messages yet. Start the conversation!
+                </div>
+              )}
               {activeChat.messages.map((msg, index) => {
                 const showSender = !msg.isMine && (index === 0 || activeChat.messages[index - 1].sender !== msg.sender);
                 return (
@@ -216,7 +305,7 @@ const Chats = () => {
                 </div>
                 <div className="input-row">
                   <textarea 
-                    placeholder="Type a new message"
+                    placeholder={`Message ${activeChat.name}`}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={(e) => {
@@ -246,7 +335,6 @@ const Chats = () => {
 };
 
 // SVG Icons
-const FilterIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>;
 const NewChatIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
 const SearchIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
 const VideoIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>;
