@@ -400,8 +400,8 @@ const Report = () => {
 
               <div className="summary-stat-box overdue">
                 <div className="summary-stat-header">
-                  <span className="summary-stat-label">Overdue Tasks</span>
-                  <span className="summary-stat-icon">🚨</span>
+                  <span className="summary-stat-label">Tasks Backlog</span>
+                  <span className="summary-stat-icon">📚</span>
                 </div>
                 <h3 className="summary-stat-value">{overdueTasksCount}</h3>
                 <span className="summary-stat-trend trend-down">↘ 25% <span style={{color:'var(--text-muted)'}}>improvement</span></span>
@@ -487,7 +487,7 @@ const Report = () => {
                 <td style={{ textAlign: 'right' }}>{completedTasksCount}</td>
               </tr>
               <tr>
-                <td>Overdue Tasks</td>
+                <td>Tasks Backlog</td>
                 <td style={{ textAlign: 'right' }}>{overdueTasksCount}</td>
               </tr>
             </tbody>
@@ -524,7 +524,7 @@ const Report = () => {
             <ul className="print-list">
               <li>High efficiency score of <strong>{computedEfficiency}%</strong> maintained across active projects.</li>
               <li>96.3% completion rate with minimal delay rate of 3.7%.</li>
-              <li>Overdue tasks kept to a minimum of <strong>{overdueTasksCount}</strong> items.</li>
+              <li>Tasks backlog kept to a minimum of <strong>{overdueTasksCount}</strong> items.</li>
             </ul>
           </div>
 
