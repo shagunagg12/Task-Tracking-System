@@ -225,6 +225,11 @@ body, html, #root {
   gap: 24px;
 }
 
+.content-scroll.no-padding {
+  padding: 0;
+  overflow: hidden; /* chat component handles its own scroll */
+}
+
 .content-scroll::-webkit-scrollbar {
   width: 6px;
 }

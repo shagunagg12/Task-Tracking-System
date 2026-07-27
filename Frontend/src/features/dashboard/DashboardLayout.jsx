@@ -190,7 +190,7 @@ const DashboardLayout = () => {
           </div>
         </header>
 
-        <div className="content-scroll">
+        <div className={`content-scroll ${activeMenu === 'Chats' ? 'no-padding' : ''}`}>
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
           ) : activeMenu === 'Projects' ? (
@@ -543,7 +543,7 @@ const DashboardLayout = () => {
         </div>
 
       </aside>
-      <Chatbot isSidebarOpen={isRightSidebarOpen} />
+      {activeMenu !== 'Chats' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
     </div>
   );
 };
