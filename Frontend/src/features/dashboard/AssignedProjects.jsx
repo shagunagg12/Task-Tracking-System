@@ -207,7 +207,25 @@ const AssignedProjects = () => {
 
           <div className="project-cards-grid">
             {filteredProjects.length === 0 ? (
-                <div style={{ color: 'var(--text-muted)' }}>No projects match this filter.</div>
+                <div className="empty-state-container" style={{
+                  gridColumn: '1 / -1',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '60px 20px',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  borderRadius: '16px',
+                  border: '1px dashed rgba(255, 255, 255, 0.1)',
+                  marginTop: '20px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.8 }}>📭</div>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', color: 'var(--text-main)' }}>All Caught Up!</h3>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px', maxWidth: '300px', lineHeight: 1.5 }}>
+                    There are no projects that match the current '{projectFilter}' filter.
+                  </p>
+                </div>
             ) : (
                 filteredProjects.map(proj => {
                     const total = proj.tasks?.length || 0;
