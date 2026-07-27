@@ -4,6 +4,7 @@ import './AssignedProjects.css';
 const AssignedProjects = () => {
   const [projectsData, setProjectsData] = useState([]);
   const [taskFilter, setTaskFilter] = useState('All');
+  const [projectFilter, setProjectFilter] = useState('All');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -77,13 +78,48 @@ const AssignedProjects = () => {
         if (!response.ok) {
             throw new Error('Failed to update status');
         }
+
+        // Check if all tasks are now done
+        const updatedProject = projectsData.find(p => p.id == projectId);
+        if (updatedProject) {
+            const allTasks = updatedProject.tasks || [];
+            // use the newly updated tasks list from local state since we optimistically updated
+            // wait, we just updated the state, but we don't have the fresh state here yet, 
+            // but we can calculate it from the previous state that we mutated.
+            // Actually, we mutated it inside setState, but `updatedProject` still refers to the old closure.
+            // Let's compute based on `allTasks` replacing this one task's status:
+            const allDone = allTasks.every(t => t.id === task.id ? nextStatus === 'Done' : t.status === 'Done');
+            
+            if (allDone && updatedProject.status !== 'Completed') {
+                if (window.confirm("All tasks are completed! Would you like to mark the entire project as Completed?")) {
+                    const projResponse = await fetch(`http://localhost:5024/api/projects/${projectId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: 'Completed' })
+                    });
+                    if (projResponse.ok) {
+                        setProjectsData(prev => prev.map(p => p.id == projectId ? { ...p, status: 'Completed' } : p));
+                    }
+                }
+            }
+        }
+
     } catch (err) {
         console.error('Error updating task status:', err);
         setProjectsData(previousProjects); // revert
     }
   };
 
-  const activeProject = projectsData.find(p => p.id == selectedProjectId) || projectsData[0];
+  const filteredProjects = projectsData.filter(p => {
+    if (projectFilter === 'Completed') return p.status === 'Completed';
+    if (projectFilter === 'In Progress') return p.status === 'In Progress';
+    return true;
+  });
+
+  const activeProject = filteredProjects.find(p => p.id == selectedProjectId) || filteredProjects[0] || projectsData[0];
 
   const totalTasks = activeProject.tasks?.length || 0;
   const completedTasks = activeProject.tasks?.filter(t => t.status === 'Done').length || 0;
@@ -105,10 +141,32 @@ const AssignedProjects = () => {
   return (
     <div className="assigned-projects-container">
       <div className="assigned-projects-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <h1>Projects</h1>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Status Filter:</span>
+            <select 
+              value={projectFilter} 
+              onChange={(e) => setProjectFilter(e.target.value)}
+              style={{
+                background: 'var(--bg-dark)',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '6px 10px',
+                fontSize: '13px',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="All">All</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          
           <select 
-            value={selectedProjectId} 
+            value={activeProject?.id || ''} 
             onChange={(e) => setSelectedProjectId(e.target.value)}
             style={{
               background: 'var(--bg-card)',
@@ -122,9 +180,13 @@ const AssignedProjects = () => {
               fontWeight: '600'
             }}
           >
-            {projectsData.map(proj => (
-              <option key={proj.id} value={proj.id}>{proj.name}</option>
-            ))}
+            {filteredProjects.length === 0 ? (
+                <option value="">No projects match</option>
+            ) : (
+                filteredProjects.map(proj => (
+                  <option key={proj.id} value={proj.id}>{proj.name} {proj.status === 'Completed' ? '(Done)' : ''}</option>
+                ))
+            )}
           </select>
         </div>
       </div>

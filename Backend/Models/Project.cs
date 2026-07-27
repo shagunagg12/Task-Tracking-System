@@ -10,6 +10,7 @@ namespace Backend.Models
         public User? User { get; set; }
 
         public string Name { get; set; } = string.Empty;
+        public string Status { get; set; } = "In Progress";
 
         // Priority Task details
         public string PriorityTaskTitle { get; set; } = string.Empty;

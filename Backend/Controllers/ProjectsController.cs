@@ -64,6 +64,25 @@ namespace Backend.Controllers
             return Ok(new { message = "Status updated successfully", task });
         }
 
+        [HttpPatch("{projectId}/status")]
+        public async Task<IActionResult> UpdateProjectStatus(int projectId, [FromBody] UpdateProjectStatusRequest request)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == projectId && p.UserId == userId);
+
+            if (project == null) return NotFound(new { message = "Project not found." });
+
+            project.Status = request.Status;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Project status updated successfully", project });
+        }
+
         [AllowAnonymous]
         [HttpPost("seed-dummy-data")]
         public async Task<IActionResult> SeedDummyData()
