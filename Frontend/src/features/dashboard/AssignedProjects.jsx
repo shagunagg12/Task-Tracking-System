@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './AssignedProjects.css';
-import axios from 'axios';
 
 const AssignedProjects = () => {
   const [projectsData, setProjectsData] = useState([]);
@@ -12,13 +11,17 @@ const AssignedProjects = () => {
     const fetchProjects = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/projects', {
+        const response = await fetch('http://localhost:5024/api/projects', {
           headers: {
-            Authorization: `Bearer ${token}`
+            'Authorization': `Bearer ${token}`
           }
         });
         
-        const data = response.data;
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
         setProjectsData(data);
         if (data && data.length > 0) {
             setSelectedProjectId(data[0].id);
