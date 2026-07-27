@@ -203,41 +203,32 @@ const AssignedProjects = () => {
                     return (
                       <div 
                         key={proj.id} 
-                        className="project-card"
+                        className="project-card ap-card"
                         onClick={() => {
                           setSelectedProjectId(proj.id);
                           setViewMode('detail');
                         }}
                       >
-                        <div className="project-card-header">
-                          <h3>{proj.name}</h3>
-                          <span className={`project-card-badge ${proj.status === 'Completed' ? 'badge-completed' : 'badge-inprogress'}`}>
-                            {proj.status === 'Completed' ? '✓ Completed' : 'In Progress'}
+                        <div className="ap-card-title">
+                          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Project</span>
+                          <span className={`project-tag ${proj.status === 'Completed' ? 'tag-completed' : 'tag-inprogress'}`}>
+                            {proj.status}
                           </span>
                         </div>
+                        <h2 className="project-title">{proj.name}</h2>
+                        <p className="project-desc">
+                          {proj.status === 'Completed' 
+                            ? 'All tasks are complete. Ready for final review.'
+                            : 'Currently ongoing project with active tasks.'}
+                        </p>
                         
-                        <div className="project-card-body">
-                          <div className="pc-stat">
-                            <span className="pc-stat-value">{completed} <span className="pc-stat-total">/ {total}</span></span>
-                            <span className="pc-stat-label">Tasks</span>
-                          </div>
-                          
-                          <div className="pc-stat">
-                            <span className="pc-stat-value">{proj.hours}<span className="pc-stat-total">h</span></span>
-                            <span className="pc-stat-label">Time Spent</span>
-                          </div>
-                          
-                          <div className="pc-stat">
-                            <span className="pc-stat-value" style={{ color: 'var(--accent-green)' }}>{prog}%</span>
-                            <span className="pc-stat-label">Progress</span>
-                          </div>
+                        <div className="project-meta">
+                          <span><span style={{ color: 'var(--accent-green)' }}>📋</span> {completed}/{total} Tasks</span>
+                          <span><span style={{ color: 'var(--accent-green)' }}>⏱️</span> {proj.hours}h</span>
+                          <span><span style={{ color: 'var(--accent-green)' }}>📊</span> {prog}%</span>
                         </div>
-
-                        <div className="project-card-footer">
-                          <div className="pc-progress-track">
-                            <div className="pc-progress-fill" style={{ width: `${prog}%` }}></div>
-                          </div>
-                        </div>
+                        
+                        <button className="project-action">View Project</button>
                       </div>
                     );
                 })
