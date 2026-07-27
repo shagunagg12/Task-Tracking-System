@@ -262,14 +262,6 @@ const AssignedProjects = () => {
               {activeProject?.status === 'Completed' && (
                 <span className="status-badge status-done">Completed</span>
               )}
-              {activeProject?.status !== 'Completed' && computedProgress === 100 && (
-                <button 
-                  className="pulse-complete-btn"
-                  onClick={() => setCompletionModalData(activeProject.id)}
-                >
-                  Mark as Completed
-                </button>
-              )}
             </div>
           </div>
 
@@ -289,7 +281,18 @@ const AssignedProjects = () => {
             <span><span style={{ color: 'var(--accent-green)' }}>📅</span> Due: {activeProject.priorityTaskDue}</span>
             <span><span style={{ color: 'var(--accent-green)' }}>⏱️</span> {activeProject.priorityTaskTimeRemaining}</span>
           </div>
-          <button className="priority-action">Jump to Task</button>
+          
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '24px' }}>
+            <button className="priority-action" style={{ marginTop: 0 }}>Jump to Task</button>
+            {activeProject?.status !== 'Completed' && computedProgress === 100 && (
+              <button 
+                className="pulse-complete-btn"
+                onClick={() => setCompletionModalData(activeProject.id)}
+              >
+                Mark as Completed
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 5. Progress */}
