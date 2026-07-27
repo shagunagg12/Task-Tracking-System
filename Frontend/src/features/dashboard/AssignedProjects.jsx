@@ -1,86 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AssignedProjects.css';
-
-const projectsData = [
-  {
-    id: 'proj1',
-    name: 'Website Redesign (Phase 2)',
-    priorityTask: {
-      title: 'Website Redesign (Phase 2)',
-      desc: 'Complete the frontend overhaul for the client portal. Ensure all new UI components follow the updated glassmorphic design system. The deadline is approaching rapidly.',
-      due: 'Aug 15',
-      timeRemaining: '12h remaining'
-    },
-    progress: 75,
-    tasks: [
-      { id: 1, title: 'Design System Update', desc: 'Update color tokens', status: 'Done', statusClass: 'status-done' },
-      { id: 2, title: 'API Integration', desc: 'Connect user endpoints', status: 'In Progress', statusClass: 'status-inprogress' },
-      { id: 3, title: 'Code Review', desc: 'Review PR #42', status: 'Review', statusClass: 'status-review' },
-      { id: 4, title: 'Write Unit Tests', desc: 'Coverage for auth', status: 'In Progress', statusClass: 'status-inprogress' }
-    ],
-    deadlines: [
-      { day: '05', month: 'Aug', title: 'Design Sign-off', desc: 'Client approval needed', color: 'red' },
-      { day: '12', month: 'Aug', title: 'Beta Release', desc: 'Deploy to staging', color: 'orange' },
-      { day: '15', month: 'Aug', title: 'Final Delivery', desc: 'Production deployment', color: 'green' }
-    ],
-    hours: 128.5,
-    hoursTrend: '↗ 12%',
-    feedback: {
-      text: '"The new glassmorphic design looks incredible. Great work on the animations!"',
-      authorName: 'Sarah, Project Manager',
-      authorImage: 'https://ui-avatars.com/api/?name=Sarah+Manager&background=random'
-    },
-    team: [
-      { name: 'Alice', image: 'https://ui-avatars.com/api/?name=Alice+Wonder&background=random' },
-      { name: 'Bob', image: 'https://ui-avatars.com/api/?name=Bob+Builder&background=random' },
-      { name: 'Charlie', image: 'https://ui-avatars.com/api/?name=Charlie+Day&background=random' },
-      { name: 'Diana', image: 'https://ui-avatars.com/api/?name=Diana+Prince&background=random' },
-      { name: 'Ethan', image: 'https://ui-avatars.com/api/?name=Ethan+Hunt&background=random' }
-    ]
-  },
-  {
-    id: 'proj2',
-    name: 'Mobile App Launch',
-    priorityTask: {
-      title: 'Fix Authentication Bug',
-      desc: 'Users are experiencing intermittent logouts on iOS 17. Investigate the token refresh flow and patch immediately.',
-      due: 'Aug 10',
-      timeRemaining: '24h remaining'
-    },
-    progress: 45,
-    tasks: [
-      { id: 1, title: 'Test Token Refresh', desc: 'Simulate expiry', status: 'Done', statusClass: 'status-done' },
-      { id: 2, title: 'Patch iOS Bug', desc: 'Update Keychain logic', status: 'In Progress', statusClass: 'status-inprogress' },
-      { id: 3, title: 'App Store Review', desc: 'Submit v1.2', status: 'Review', statusClass: 'status-review' }
-    ],
-    deadlines: [
-      { day: '10', month: 'Aug', title: 'Hotfix Release', desc: 'Fix auth bug', color: 'red' },
-      { day: '20', month: 'Aug', title: 'Marketing Campaign', desc: 'Launch promo', color: 'green' }
-    ],
-    hours: 85.0,
-    hoursTrend: '↗ 8%',
-    feedback: {
-      text: '"Thanks for jumping on that iOS bug so quickly. We need it fixed ASAP."',
-      authorName: 'David, Tech Lead',
-      authorImage: 'https://ui-avatars.com/api/?name=David+Lead&background=random'
-    },
-    team: [
-      { name: 'Alice', image: 'https://ui-avatars.com/api/?name=Alice+Wonder&background=random' },
-      { name: 'Frank', image: 'https://ui-avatars.com/api/?name=Frank+Castle&background=random' },
-      { name: 'Grace', image: 'https://ui-avatars.com/api/?name=Grace+Hopper&background=random' }
-    ]
-  }
-];
+import axios from 'axios';
 
 const AssignedProjects = () => {
+  const [projectsData, setProjectsData] = useState([]);
   const [taskFilter, setTaskFilter] = useState('All');
-  const [selectedProjectId, setSelectedProjectId] = useState(projectsData[0].id);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const activeProject = projectsData.find(p => p.id === selectedProjectId) || projectsData[0];
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/api/projects', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        const data = response.data;
+        setProjectsData(data);
+        if (data && data.length > 0) {
+            setSelectedProjectId(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  if (isLoading) {
+    return <div style={{ color: 'white', padding: '20px' }}>Loading projects...</div>;
+  }
+
+  if (projectsData.length === 0) {
+    return <div style={{ color: 'white', padding: '20px' }}>No projects found. Please add a project.</div>;
+  }
+
+  const activeProject = projectsData.find(p => p.id == selectedProjectId) || projectsData[0];
 
   const filteredTasks = taskFilter === 'Ongoing' 
-    ? activeProject.tasks.filter(t => t.status === 'In Progress' || t.status === 'Review')
-    : activeProject.tasks;
+    ? activeProject.tasks?.filter(t => t.status === 'In Progress' || t.status === 'Review') || []
+    : activeProject.tasks || [];
 
   const getDeadlineStyle = (color) => {
     if (color === 'orange') return { background: 'rgba(255, 159, 10, 0.1)', color: '#FF9F0A' };
@@ -123,13 +88,13 @@ const AssignedProjects = () => {
             <span>Priority Task</span>
             <span className="priority-tag">High Priority</span>
           </div>
-          <h2 className="priority-title">{activeProject.priorityTask.title}</h2>
+          <h2 className="priority-title">{activeProject.priorityTaskTitle}</h2>
           <p className="priority-desc">
-            {activeProject.priorityTask.desc}
+            {activeProject.priorityTaskDesc}
           </p>
           <div className="priority-meta">
-            <span><span style={{ color: 'var(--accent-green)' }}>📅</span> Due: {activeProject.priorityTask.due}</span>
-            <span><span style={{ color: 'var(--accent-green)' }}>⏱️</span> {activeProject.priorityTask.timeRemaining}</span>
+            <span><span style={{ color: 'var(--accent-green)' }}>📅</span> Due: {activeProject.priorityTaskDue}</span>
+            <span><span style={{ color: 'var(--accent-green)' }}>⏱️</span> {activeProject.priorityTaskTimeRemaining}</span>
           </div>
           <button className="priority-action">Jump to Task</button>
         </div>
@@ -172,7 +137,7 @@ const AssignedProjects = () => {
               <div key={task.id} className="task-item">
                 <div className="task-info">
                   <h4>{task.title}</h4>
-                  <p>{task.desc}</p>
+                  <p>{task.description}</p>
                 </div>
                 <span className={`task-status ${task.statusClass}`}>{task.status}</span>
               </div>
@@ -187,7 +152,7 @@ const AssignedProjects = () => {
         <div className="ap-card col-span-1">
           <div className="ap-card-title">Upcoming Deadlines</div>
           <div className="deadline-list">
-            {activeProject.deadlines.map((dl, idx) => (
+            {activeProject.deadlines?.map((dl, idx) => (
               <div key={idx} className="deadline-item">
                 <div className="deadline-date" style={getDeadlineStyle(dl.color)}>
                   <div className="day">{dl.day}</div>
@@ -195,7 +160,7 @@ const AssignedProjects = () => {
                 </div>
                 <div className="deadline-info">
                   <h4>{dl.title}</h4>
-                  <p>{dl.desc}</p>
+                  <p>{dl.description}</p>
                 </div>
               </div>
             ))}
@@ -217,13 +182,17 @@ const AssignedProjects = () => {
 
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
              <div className="ap-card-title">Recent Feedback</div>
-             <div className="feedback-bubble">
-               <p className="feedback-text">{activeProject.feedback.text}</p>
-               <div className="feedback-author">
-                 <img src={activeProject.feedback.authorImage} alt="Manager" />
-                 <span>{activeProject.feedback.authorName}</span>
-               </div>
-             </div>
+             {activeProject.feedbacks?.length > 0 ? (
+                 <div className="feedback-bubble">
+                   <p className="feedback-text">{activeProject.feedbacks[0].text}</p>
+                   <div className="feedback-author">
+                     <img src={activeProject.feedbacks[0].authorImage} alt="Manager" />
+                     <span>{activeProject.feedbacks[0].authorName}</span>
+                   </div>
+                 </div>
+             ) : (
+                 <div style={{color: 'var(--text-muted)', fontSize: '13px'}}>No feedback yet.</div>
+             )}
           </div>
 
         </div>
@@ -232,7 +201,7 @@ const AssignedProjects = () => {
         <div className="ap-card col-span-3">
           <div className="ap-card-title">Team Members</div>
           <div className="team-avatars">
-            {activeProject.team.map((member, idx) => (
+            {activeProject.teamMembers?.map((member, idx) => (
               <div key={idx} className="team-member">
                 <img src={member.image} alt={member.name} />
                 <span>{member.name}</span>
