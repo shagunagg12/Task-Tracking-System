@@ -127,11 +127,10 @@ const Report = () => {
   const priorityLow = hasRealData ? allTasks.filter(t => t.priority === 'Low').length : 40;
   const priorityCritical = hasRealData ? Math.floor(priorityHigh * 0.2) : 10;
 
-  // 5. Efficiency Score Formula
-  // Efficiency = Completed / (Completed + Overdue) * 100
-  const computedEfficiency = completedTasksCount > 0 
-    ? Math.round((completedTasksCount / (completedTasksCount + overdueTasksCount)) * 100)
-    : 94;
+  // 5. Efficiency Score Formula - Calculated as overall project task completion percentage
+  const computedEfficiency = hasRealData 
+    ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'Done').length / allTasks.length) * 100) : 0)
+    : 75;
 
   // Status Distribution Percentages normalized to add up to exactly 100%
   const completedPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'Done').length / allTasks.length) * 100) : 75;
@@ -184,7 +183,6 @@ const Report = () => {
                 <h2 className="report-card-title">🎯 1. Efficiency Report</h2>
                 <div className="report-card-subtitle">Calculated Efficiency Index & key metrics.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             
             <div className="gauge-chart-wrapper">
@@ -245,7 +243,6 @@ const Report = () => {
                 <h2 className="report-card-title">📈 2. Productivity Report</h2>
                 <div className="report-card-subtitle">Daily, weekly, and monthly productivity analysis.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             <div className="productivity-container">
               <div className="productivity-kpis">
@@ -325,7 +322,6 @@ const Report = () => {
                 <h2 className="report-card-title">🥧 3. Status Distribution</h2>
                 <div className="report-card-subtitle">Task breakdown status metrics.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             
             <div className="donut-container">
@@ -372,7 +368,6 @@ const Report = () => {
                 <h2 className="report-card-title">📋 4. Task Summary</h2>
                 <div className="report-card-subtitle">Real-time overview of task states and deadlines.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             
             <div className="summary-stats-grid">
@@ -405,8 +400,8 @@ const Report = () => {
 
               <div className="summary-stat-box overdue">
                 <div className="summary-stat-header">
-                  <span className="summary-stat-label">Overdue Tasks</span>
-                  <span className="summary-stat-icon">🚨</span>
+                  <span className="summary-stat-label">Tasks Backlog</span>
+                  <span className="summary-stat-icon">📚</span>
                 </div>
                 <h3 className="summary-stat-value">{overdueTasksCount}</h3>
                 <span className="summary-stat-trend trend-down">↘ 25% <span style={{color:'var(--text-muted)'}}>improvement</span></span>
@@ -492,7 +487,7 @@ const Report = () => {
                 <td style={{ textAlign: 'right' }}>{completedTasksCount}</td>
               </tr>
               <tr>
-                <td>Overdue Tasks</td>
+                <td>Tasks Backlog</td>
                 <td style={{ textAlign: 'right' }}>{overdueTasksCount}</td>
               </tr>
             </tbody>
@@ -529,7 +524,7 @@ const Report = () => {
             <ul className="print-list">
               <li>High efficiency score of <strong>{computedEfficiency}%</strong> maintained across active projects.</li>
               <li>96.3% completion rate with minimal delay rate of 3.7%.</li>
-              <li>Overdue tasks kept to a minimum of <strong>{overdueTasksCount}</strong> items.</li>
+              <li>Tasks backlog kept to a minimum of <strong>{overdueTasksCount}</strong> items.</li>
             </ul>
           </div>
 
