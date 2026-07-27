@@ -7,6 +7,7 @@ const AssignedProjects = () => {
   const [projectFilter, setProjectFilter] = useState('All');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [completionModalData, setCompletionModalData] = useState(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -91,25 +92,36 @@ const AssignedProjects = () => {
             const allDone = allTasks.every(t => t.id === task.id ? nextStatus === 'Done' : t.status === 'Done');
             
             if (allDone && updatedProject.status !== 'Completed') {
-                if (window.confirm("All tasks are completed! Would you like to mark the entire project as Completed?")) {
-                    const projResponse = await fetch(`http://localhost:5024/api/projects/${projectId}/status`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ status: 'Completed' })
-                    });
-                    if (projResponse.ok) {
-                        setProjectsData(prev => prev.map(p => p.id == projectId ? { ...p, status: 'Completed' } : p));
-                    }
-                }
+                setCompletionModalData(projectId);
             }
         }
 
     } catch (err) {
         console.error('Error updating task status:', err);
         setProjectsData(previousProjects); // revert
+    }
+  };
+
+  const handleConfirmCompletion = async () => {
+    if (!completionModalData) return;
+    const projectId = completionModalData;
+    setCompletionModalData(null);
+    
+    try {
+        const token = localStorage.getItem('token');
+        const projResponse = await fetch(`http://localhost:5024/api/projects/${projectId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: 'Completed' })
+        });
+        if (projResponse.ok) {
+            setProjectsData(prev => prev.map(p => p.id == projectId ? { ...p, status: 'Completed' } : p));
+        }
+    } catch (err) {
+        console.error("Failed to update project status:", err);
     }
   };
 
