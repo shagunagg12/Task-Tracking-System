@@ -3,6 +3,7 @@ import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
+import Chats from '../chats/Chats';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -196,6 +197,8 @@ const DashboardLayout = () => {
             <AssignedProjects />
           ) : activeMenu === 'Report' ? (
             <Report />
+          ) : activeMenu === 'Chats' ? (
+            <Chats />
           ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
