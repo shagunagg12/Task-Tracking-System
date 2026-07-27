@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
+import Report from './Report';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -193,6 +194,8 @@ const DashboardLayout = () => {
             <ProfileSettings />
           ) : activeMenu === 'Projects' ? (
             <AssignedProjects />
+          ) : activeMenu === 'Report' ? (
+            <Report />
           ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
