@@ -105,6 +105,19 @@ const AssignedProjects = () => {
         // 4. Trigger modal if all tasks are now complete and project is not already completed
         if (computedAllDone && currentProjectStatus !== 'Completed') {
             setCompletionModalData(projectId);
+        } else if (!computedAllDone && currentProjectStatus === 'Completed') {
+            // Revert project to In Progress if a task is unchecked
+            setProjectsData(prev => prev.map(p => p.id == projectId ? { ...p, status: 'In Progress' } : p));
+            
+            // Fire off background request to save reverted status
+            fetch(`http://localhost:5024/api/projects/${projectId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'In Progress' })
+            }).catch(e => console.error('Failed to revert project status', e));
         }
 
     } catch (err) {
