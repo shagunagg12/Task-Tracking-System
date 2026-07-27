@@ -44,11 +44,7 @@ const AssignedProjects = () => {
     return <div style={{ color: 'white', padding: '20px' }}>No projects found. Please add a project.</div>;
   }
 
-  const cycleTaskStatus = async (task, projectId) => {
-    const statusOrder = ['In Progress', 'Review', 'Done'];
-    const currentIndex = statusOrder.indexOf(task.status);
-    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
-    
+  const updateTaskStatus = async (task, projectId, nextStatus) => {
     // Optimistic update
     const previousProjects = JSON.parse(JSON.stringify(projectsData));
     
@@ -185,17 +181,26 @@ const AssignedProjects = () => {
                   <h4>{task.title}</h4>
                   <p>{task.description}</p>
                 </div>
-                <span 
+                <select 
                   className={`task-status ${task.statusClass}`}
-                  onClick={() => cycleTaskStatus(task, activeProject.id)}
-                  style={{ cursor: 'pointer', userSelect: 'none', transition: 'transform 0.1s' }}
-                  title="Click to change status"
-                  onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                  onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                  value={task.status}
+                  onChange={(e) => updateTaskStatus(task, activeProject.id, e.target.value)}
+                  style={{ 
+                    cursor: 'pointer', 
+                    border: 'none', 
+                    outline: 'none',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none',
+                    textAlign: 'center',
+                    paddingRight: '10px'
+                  }}
+                  title="Change status"
                 >
-                  {task.status}
-                </span>
+                  <option value="In Progress" style={{ background: 'var(--bg-card)', color: '#0A84FF' }}>In Progress</option>
+                  <option value="Review" style={{ background: 'var(--bg-card)', color: '#FF9F0A' }}>Review</option>
+                  <option value="Done" style={{ background: 'var(--bg-card)', color: '#30D158' }}>Done</option>
+                </select>
               </div>
             ))}
             {filteredTasks.length === 0 && (
