@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
+import AssignedProjects from './AssignedProjects';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -83,14 +84,13 @@ const DashboardLayout = () => {
 
   const menuItems = [
     { id: 'Overview', icon: '📊', text: 'Overview' },
-    { id: 'Assigned Projects', icon: '💼', text: 'Assigned Projects' },
-    { id: 'Social Scoring', icon: '🤝', text: 'Social Scoring' },
-    { id: 'Efficiency', icon: '⚙️', text: 'Efficiency' },
-    { id: 'Learning', icon: '🎓', text: 'Learning' },
+    { id: 'Projects', icon: '💼', text: 'Projects' },
+    { id: 'Standings', icon: '🏆', text: 'Standings' },
+    { id: 'Calendar', icon: '📅', text: 'Calendar' },
+    { id: 'Chats', icon: '💬', text: 'Chats' },
+    { id: 'Achievements', icon: '🌟', text: 'Achievements' },
     { id: 'Rewards', icon: '🎁', text: 'Rewards' },
-    { id: 'Performance', icon: '🚀', text: 'Performance' },
-    { id: 'Report Generation', icon: '📊', text: 'Report Generation' },
-    { id: 'Appreciation', icon: '🌟', text: 'Appreciation' },
+    { id: 'Report', icon: '📈', text: 'Report' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
@@ -191,6 +191,8 @@ const DashboardLayout = () => {
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
+          ) : activeMenu === 'Projects' ? (
+            <AssignedProjects />
           ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
