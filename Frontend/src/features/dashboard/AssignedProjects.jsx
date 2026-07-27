@@ -262,6 +262,14 @@ const AssignedProjects = () => {
               {activeProject?.status === 'Completed' && (
                 <span className="status-badge status-done">Completed</span>
               )}
+              {activeProject?.status !== 'Completed' && computedProgress === 100 && (
+                <button 
+                  className="pulse-complete-btn"
+                  onClick={() => setCompletionModalData(activeProject.id)}
+                >
+                  Mark as Completed
+                </button>
+              )}
             </div>
           </div>
 

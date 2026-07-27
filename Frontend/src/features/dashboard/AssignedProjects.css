@@ -569,3 +569,38 @@
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-main);
 }
+
+.pulse-complete-btn {
+  background: var(--accent-green);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  animation: pulseAttention 2s infinite ease-in-out;
+  box-shadow: 0 0 10px rgba(185, 246, 90, 0.5);
+  transition: all 0.2s;
+}
+
+.pulse-complete-btn:hover {
+  background: var(--accent-green-dark);
+  animation: none;
+  transform: scale(1.05);
+}
+
+@keyframes pulseAttention {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(185, 246, 90, 0.5);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(185, 246, 90, 0.8), 0 0 10px rgba(185, 246, 90, 0.5) inset;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(185, 246, 90, 0.5);
+  }
+}
