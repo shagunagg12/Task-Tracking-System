@@ -50,7 +50,7 @@ namespace Backend.Controllers
 
             var task = await _context.ProjectTasks
                 .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == taskId && t.Project.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.Project != null && t.Project.UserId == userId);
 
             if (task == null) return NotFound(new { message = "Task not found." });
 
