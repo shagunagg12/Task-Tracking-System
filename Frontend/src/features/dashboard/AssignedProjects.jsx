@@ -1,7 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './AssignedProjects.css';
 
 const AssignedProjects = () => {
+  const [taskFilter, setTaskFilter] = useState('All');
+
+  const allTasks = [
+    { id: 1, title: 'Design System Update', desc: 'Update color tokens', status: 'Done', statusClass: 'status-done' },
+    { id: 2, title: 'API Integration', desc: 'Connect user endpoints', status: 'In Progress', statusClass: 'status-inprogress' },
+    { id: 3, title: 'Code Review', desc: 'Review PR #42', status: 'Review', statusClass: 'status-review' },
+    { id: 4, title: 'Write Unit Tests', desc: 'Coverage for auth', status: 'In Progress', statusClass: 'status-inprogress' }
+  ];
+
+  const filteredTasks = taskFilter === 'Ongoing' 
+    ? allTasks.filter(t => t.status === 'In Progress' || t.status === 'Review')
+    : allTasks;
   return (
     <div className="assigned-projects-container">
       <div className="assigned-projects-header">
@@ -40,36 +52,39 @@ const AssignedProjects = () => {
 
         {/* 2. Tasks */}
         <div className="ap-card col-span-1">
-          <div className="ap-card-title">Tasks</div>
+          <div className="ap-card-title">
+            <span>Tasks</span>
+            <select 
+              value={taskFilter} 
+              onChange={(e) => setTaskFilter(e.target.value)}
+              style={{
+                background: 'var(--bg-dark)',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                padding: '4px 8px',
+                fontSize: '12px',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="All">All</option>
+              <option value="Ongoing">Ongoing</option>
+            </select>
+          </div>
           <div className="task-list">
-            <div className="task-item">
-              <div className="task-info">
-                <h4>Design System Update</h4>
-                <p>Update color tokens</p>
+            {filteredTasks.map(task => (
+              <div key={task.id} className="task-item">
+                <div className="task-info">
+                  <h4>{task.title}</h4>
+                  <p>{task.desc}</p>
+                </div>
+                <span className={`task-status ${task.statusClass}`}>{task.status}</span>
               </div>
-              <span className="task-status status-done">Done</span>
-            </div>
-            <div className="task-item">
-              <div className="task-info">
-                <h4>API Integration</h4>
-                <p>Connect user endpoints</p>
-              </div>
-              <span className="task-status status-inprogress">In Progress</span>
-            </div>
-            <div className="task-item">
-              <div className="task-info">
-                <h4>Code Review</h4>
-                <p>Review PR #42</p>
-              </div>
-              <span className="task-status status-review">Review</span>
-            </div>
-            <div className="task-item">
-              <div className="task-info">
-                <h4>Write Unit Tests</h4>
-                <p>Coverage for auth</p>
-              </div>
-              <span className="task-status status-inprogress">In Progress</span>
-            </div>
+            ))}
+            {filteredTasks.length === 0 && (
+               <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0', fontSize: '13px' }}>No ongoing tasks.</div>
+            )}
           </div>
         </div>
 
