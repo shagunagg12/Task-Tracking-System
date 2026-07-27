@@ -47,24 +47,45 @@ const AssignedProjects = () => {
   }
 
   const updateTaskStatus = async (task, projectId, nextStatus) => {
-    // Optimistic update
-    const previousProjects = JSON.parse(JSON.stringify(projectsData));
+    // 1. Compute completion status strictly BEFORE any state mutation
+    const targetProject = projectsData.find(p => p.id == projectId);
+    let computedAllDone = false;
+    let currentProjectStatus = 'In Progress';
     
-    setProjectsData(prev => {
-        const newData = [...prev];
-        const projIndex = newData.findIndex(p => p.id == projectId);
-        if (projIndex > -1) {
-            const taskIndex = newData[projIndex].tasks.findIndex(t => t.id === task.id);
-            if (taskIndex > -1) {
-                newData[projIndex].tasks[taskIndex].status = nextStatus;
-                if (nextStatus === "Done") newData[projIndex].tasks[taskIndex].statusClass = "status-done";
-                else if (nextStatus === "In Progress") newData[projIndex].tasks[taskIndex].statusClass = "status-inprogress";
-                else if (nextStatus === "Review") newData[projIndex].tasks[taskIndex].statusClass = "status-review";
-            }
+    if (targetProject) {
+        currentProjectStatus = targetProject.status;
+        const allTasks = targetProject.tasks || [];
+        // If there are tasks, check if every task will be 'Done' after this change
+        if (allTasks.length > 0) {
+            computedAllDone = allTasks.every(t => {
+                if (t.id === task.id) return nextStatus === 'Done';
+                return t.status === 'Done';
+            });
         }
-        return newData;
-    });
+    }
 
+    // 2. Perform immutable optimistic update
+    const previousProjects = JSON.parse(JSON.stringify(projectsData));
+    setProjectsData(prev => prev.map(p => {
+        if (p.id == projectId) {
+            return {
+                ...p,
+                tasks: p.tasks.map(t => {
+                    if (t.id === task.id) {
+                        let newClass = "";
+                        if (nextStatus === "Done") newClass = "status-done";
+                        else if (nextStatus === "In Progress") newClass = "status-inprogress";
+                        else if (nextStatus === "Review") newClass = "status-review";
+                        return { ...t, status: nextStatus, statusClass: newClass };
+                    }
+                    return t;
+                })
+            };
+        }
+        return p;
+    }));
+
+    // 3. Make the API call
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:5024/api/projects/tasks/${task.id}/status`, {
@@ -77,23 +98,12 @@ const AssignedProjects = () => {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to update status');
+            throw new Error('Failed to update task status');
         }
 
-        // Check if all tasks are now done
-        const updatedProject = projectsData.find(p => p.id == projectId);
-        if (updatedProject) {
-            const allTasks = updatedProject.tasks || [];
-            // use the newly updated tasks list from local state since we optimistically updated
-            // wait, we just updated the state, but we don't have the fresh state here yet, 
-            // but we can calculate it from the previous state that we mutated.
-            // Actually, we mutated it inside setState, but `updatedProject` still refers to the old closure.
-            // Let's compute based on `allTasks` replacing this one task's status:
-            const allDone = allTasks.every(t => t.id === task.id ? nextStatus === 'Done' : t.status === 'Done');
-            
-            if (allDone && updatedProject.status !== 'Completed') {
-                setCompletionModalData(projectId);
-            }
+        // 4. Trigger modal if all tasks are now complete and project is not already completed
+        if (computedAllDone && currentProjectStatus !== 'Completed') {
+            setCompletionModalData(projectId);
         }
 
     } catch (err) {
@@ -346,6 +356,20 @@ const AssignedProjects = () => {
         </div>
 
       </div>
+
+      {completionModalData && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal">
+            <div className="custom-modal-icon">🎉</div>
+            <h3 className="custom-modal-title">All Tasks Completed!</h3>
+            <p className="custom-modal-text">You have successfully finished all tasks for this project. Would you like to mark the entire project as completed?</p>
+            <div className="custom-modal-actions">
+              <button className="custom-modal-btn cancel" onClick={() => setCompletionModalData(null)}>Not Yet</button>
+              <button className="custom-modal-btn confirm" onClick={handleConfirmCompletion}>Mark as Completed</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
