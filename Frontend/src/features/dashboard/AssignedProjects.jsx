@@ -46,6 +46,10 @@ const AssignedProjects = () => {
 
   const activeProject = projectsData.find(p => p.id == selectedProjectId) || projectsData[0];
 
+  const totalTasks = activeProject.tasks?.length || 0;
+  const completedTasks = activeProject.tasks?.filter(t => t.status === 'Done').length || 0;
+  const computedProgress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
   const filteredTasks = activeProject.tasks?.filter(t => {
     if (taskFilter === 'Completed') return t.status === 'Done';
     if (taskFilter === 'Ongoing') return t.status === 'In Progress';
@@ -109,8 +113,8 @@ const AssignedProjects = () => {
         <div className="ap-card col-span-1">
           <div className="ap-card-title">Overall Progress</div>
           <div className="progress-container">
-            <div className="circular-progress" style={{ background: `conic-gradient(var(--accent-green) ${activeProject.progress}%, rgba(255, 255, 255, 0.1) 0)` }}>
-              <span className="progress-value">{activeProject.progress}%</span>
+            <div className="circular-progress" style={{ background: `conic-gradient(var(--accent-green) ${computedProgress}%, rgba(255, 255, 255, 0.1) 0)` }}>
+              <span className="progress-value">{computedProgress}%</span>
             </div>
             <span className="progress-label">On track for delivery</span>
           </div>

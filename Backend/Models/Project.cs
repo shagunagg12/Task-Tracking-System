@@ -17,7 +17,6 @@ namespace Backend.Models
         public string PriorityTaskDue { get; set; } = string.Empty;
         public string PriorityTaskTimeRemaining { get; set; } = string.Empty;
 
-        public int Progress { get; set; }
         public double Hours { get; set; }
         public string HoursTrend { get; set; } = string.Empty;
 

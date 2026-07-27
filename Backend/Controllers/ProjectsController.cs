@@ -73,7 +73,6 @@ namespace Backend.Controllers
                         PriorityTaskDesc = "High priority task that needs immediate attention.",
                         PriorityTaskDue = $"Aug {random.Next(1, 30)}",
                         PriorityTaskTimeRemaining = $"{random.Next(2, 48)}h remaining",
-                        Progress = random.Next(10, 100),
                         Hours = Math.Round(random.NextDouble() * 200, 1),
                         HoursTrend = $"{(random.NextDouble() > 0.5 ? "↗" : "↘")} {random.Next(1, 20)}%",
                         Tasks = new List<ProjectTask>(),
