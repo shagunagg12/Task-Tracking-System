@@ -18,5 +18,6 @@ namespace Backend.Models
 
         // Navigation property
         public UserProfile? Profile { get; set; }
+        public ICollection<Project> Projects { get; set; } = new List<Project>();
     }
 }

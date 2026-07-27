@@ -149,6 +149,33 @@
   cursor: pointer;
 }
 
+.task-filter-select {
+  background: var(--bg-dark);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat, repeat;
+  background-position: right .7em top 50%, 0 0;
+  background-size: .65em auto, 100%;
+  padding-right: 24px;
+}
+
+.task-filter-select:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.task-filter-select option {
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
 .task-item:hover {
   border-color: var(--border-color);
   background: rgba(255, 255, 255, 0.05);
@@ -343,5 +370,237 @@
   }
   .col-span-2, .col-span-3 {
     grid-column: span 1;
+  }
+}
+
+/* Custom Modal */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeInModal 0.2s ease;
+}
+
+.custom-modal {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 32px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-modal-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.custom-modal-title {
+  font-size: 20px;
+  margin: 0 0 12px 0;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.custom-modal-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.custom-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.custom-modal-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.custom-modal-btn.cancel {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.custom-modal-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.custom-modal-btn.confirm {
+  background: var(--accent-green);
+  color: #000;
+}
+
+.custom-modal-btn.confirm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(48, 209, 88, 0.3);
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+}
+
+/* Project Cards Grid */
+.project-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.project-card {
+  background: linear-gradient(135deg, rgba(185, 246, 90, 0.05) 0%, rgba(32, 34, 38, 1) 100%);
+  border: 1px solid rgba(185, 246, 90, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(185, 246, 90, 0.5);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.project-tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tag-completed {
+  background: rgba(48, 209, 88, 0.15);
+  color: #30D158;
+}
+
+.tag-inprogress {
+  background: rgba(10, 132, 255, 0.15);
+  color: #0A84FF;
+}
+
+.project-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 12px 0;
+  color: var(--text-main);
+}
+
+.project-desc {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.project-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 13px;
+  margin-top: auto;
+}
+
+.project-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-action {
+  margin-top: 24px;
+  background: var(--accent-green);
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: fit-content;
+}
+
+.project-card:hover .project-action {
+  background: var(--accent-green-dark);
+}
+
+.back-to-projects-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.back-to-projects-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+}
+
+.pulse-complete-btn {
+  background: var(--accent-green);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  animation: pulseAttention 2s infinite ease-in-out;
+  box-shadow: 0 0 10px rgba(185, 246, 90, 0.5);
+  transition: all 0.2s;
+}
+
+.pulse-complete-btn:hover {
+  background: var(--accent-green-dark);
+  animation: none;
+  transform: scale(1.05);
+}
+
+@keyframes pulseAttention {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(185, 246, 90, 0.5);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(185, 246, 90, 0.8), 0 0 10px rgba(185, 246, 90, 0.5) inset;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(185, 246, 90, 0.5);
   }
 }
