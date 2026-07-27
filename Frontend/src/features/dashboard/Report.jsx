@@ -184,7 +184,6 @@ const Report = () => {
                 <h2 className="report-card-title">🎯 1. Efficiency Report</h2>
                 <div className="report-card-subtitle">Calculated Efficiency Index & key metrics.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             
             <div className="gauge-chart-wrapper">
@@ -245,7 +244,6 @@ const Report = () => {
                 <h2 className="report-card-title">📈 2. Productivity Report</h2>
                 <div className="report-card-subtitle">Daily, weekly, and monthly productivity analysis.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             <div className="productivity-container">
               <div className="productivity-kpis">
@@ -325,7 +323,6 @@ const Report = () => {
                 <h2 className="report-card-title">🥧 3. Status Distribution</h2>
                 <div className="report-card-subtitle">Task breakdown status metrics.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             
             <div className="donut-container">
@@ -372,7 +369,6 @@ const Report = () => {
                 <h2 className="report-card-title">📋 4. Task Summary</h2>
                 <div className="report-card-subtitle">Real-time overview of task states and deadlines.</div>
               </div>
-              <span className="report-card-options">⋮</span>
             </div>
             
             <div className="summary-stats-grid">
