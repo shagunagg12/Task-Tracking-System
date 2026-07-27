@@ -59,8 +59,8 @@ const AssignedProjects = () => {
         // If there are tasks, check if every task will be 'Done' after this change
         if (allTasks.length > 0) {
             computedAllDone = allTasks.every(t => {
-                if (t.id === task.id) return nextStatus === 'Done';
-                return t.status === 'Done';
+                if (t.id === task.id) return nextStatus === 'Completed';
+                return t.status === 'Completed';
             });
         }
     }
@@ -74,9 +74,10 @@ const AssignedProjects = () => {
                 tasks: p.tasks.map(t => {
                     if (t.id === task.id) {
                         let newClass = "";
-                        if (nextStatus === "Done") newClass = "status-done";
+                        if (nextStatus === "Completed") newClass = "status-completed";
                         else if (nextStatus === "In Progress") newClass = "status-inprogress";
-                        else if (nextStatus === "Review") newClass = "status-review";
+                        else if (nextStatus === "Pending") newClass = "status-pending";
+                        else if (nextStatus === "Blocked") newClass = "status-blocked";
                         return { ...t, status: nextStatus, statusClass: newClass };
                     }
                     return t;
@@ -158,15 +159,17 @@ const AssignedProjects = () => {
   const activeProject = filteredProjects.find(p => p.id == selectedProjectId) || filteredProjects[0] || projectsData[0];
 
   const totalTasks = activeProject.tasks?.length || 0;
-  const completedTasks = activeProject.tasks?.filter(t => t.status === 'Done').length || 0;
+  const completedTasks = activeProject.tasks?.filter(t => t.status === 'Completed').length || 0;
   const computedProgress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
-  const filteredTasks = activeProject.tasks?.filter(t => {
-    if (taskFilter === 'Completed') return t.status === 'Done';
-    if (taskFilter === 'Ongoing') return t.status === 'In Progress';
-    if (taskFilter === 'Pending') return t.status === 'Review';
+  const filteredTasks = (activeProject.tasks || []).filter(t => {
+    if (taskFilter === 'All') return true;
+    if (taskFilter === 'Completed') return t.status === 'Completed';
+    if (taskFilter === 'In Progress') return t.status === 'In Progress';
+    if (taskFilter === 'Pending') return t.status === 'Pending';
+    if (taskFilter === 'Blocked') return t.status === 'Blocked';
     return true;
-  }) || [];
+  });
 
   const getDeadlineStyle = (color) => {
     if (color === 'orange') return { background: 'rgba(255, 159, 10, 0.1)', color: '#FF9F0A' };
@@ -229,7 +232,7 @@ const AssignedProjects = () => {
             ) : (
                 filteredProjects.map(proj => {
                     const total = proj.tasks?.length || 0;
-                    const completed = proj.tasks?.filter(t => t.status === 'Done').length || 0;
+                    const completed = proj.tasks?.filter(t => t.status === 'Completed').length || 0;
                     const prog = total === 0 ? 0 : Math.round((completed / total) * 100);
                     return (
                       <div 
@@ -278,7 +281,7 @@ const AssignedProjects = () => {
               </button>
               <h1 style={{ margin: 0, fontSize: '24px' }}>{activeProject?.name}</h1>
               {activeProject?.status === 'Completed' && (
-                <span className="status-badge status-done">Completed</span>
+                <span className="status-badge status-completed">Completed</span>
               )}
             </div>
           </div>
@@ -335,8 +338,9 @@ const AssignedProjects = () => {
             >
               <option value="All">All</option>
               <option value="Completed">Completed</option>
+              <option value="In Progress">In Progress</option>
               <option value="Pending">Pending</option>
-              <option value="Ongoing">Ongoing</option>
+              <option value="Blocked">Blocked</option>
             </select>
           </div>
           <div className="task-list">
@@ -362,9 +366,10 @@ const AssignedProjects = () => {
                   }}
                   title="Change status"
                 >
+                  <option value="Completed" style={{ background: 'var(--bg-card)', color: '#30D158' }}>Completed</option>
                   <option value="In Progress" style={{ background: 'var(--bg-card)', color: '#0A84FF' }}>In Progress</option>
-                  <option value="Review" style={{ background: 'var(--bg-card)', color: '#FF9F0A' }}>Review</option>
-                  <option value="Done" style={{ background: 'var(--bg-card)', color: '#30D158' }}>Done</option>
+                  <option value="Pending" style={{ background: 'var(--bg-card)', color: '#FFD60A' }}>Pending</option>
+                  <option value="Blocked" style={{ background: 'var(--bg-card)', color: '#FF453A' }}>Blocked</option>
                 </select>
               </div>
             ))}

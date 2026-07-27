@@ -55,9 +55,10 @@ namespace Backend.Controllers
             if (task == null) return NotFound(new { message = "Task not found." });
 
             task.Status = request.Status;
-            if (request.Status == "Done") task.StatusClass = "status-done";
+            if (request.Status == "Completed") task.StatusClass = "status-completed";
             else if (request.Status == "In Progress") task.StatusClass = "status-inprogress";
-            else if (request.Status == "Review") task.StatusClass = "status-review";
+            else if (request.Status == "Pending") task.StatusClass = "status-pending";
+            else if (request.Status == "Blocked") task.StatusClass = "status-blocked";
             else task.StatusClass = ""; // fallback
             
             await _context.SaveChangesAsync();
