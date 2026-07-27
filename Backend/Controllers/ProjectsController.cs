@@ -39,6 +39,31 @@ namespace Backend.Controllers
             return Ok(projects);
         }
 
+        [HttpPatch("tasks/{taskId}/status")]
+        public async Task<IActionResult> UpdateTaskStatus(int taskId, [FromBody] UpdateTaskStatusRequest request)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.Project.UserId == userId);
+
+            if (task == null) return NotFound(new { message = "Task not found." });
+
+            task.Status = request.Status;
+            if (request.Status == "Done") task.StatusClass = "status-done";
+            else if (request.Status == "In Progress") task.StatusClass = "status-inprogress";
+            else if (request.Status == "Review") task.StatusClass = "status-review";
+            else task.StatusClass = ""; // fallback
+            
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Status updated successfully", task });
+        }
+
         [AllowAnonymous]
         [HttpPost("seed-dummy-data")]
         public async Task<IActionResult> SeedDummyData()

@@ -44,6 +44,49 @@ const AssignedProjects = () => {
     return <div style={{ color: 'white', padding: '20px' }}>No projects found. Please add a project.</div>;
   }
 
+  const cycleTaskStatus = async (task, projectId) => {
+    const statusOrder = ['In Progress', 'Review', 'Done'];
+    const currentIndex = statusOrder.indexOf(task.status);
+    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    
+    // Optimistic update
+    const previousProjects = JSON.parse(JSON.stringify(projectsData));
+    
+    setProjectsData(prev => {
+        const newData = [...prev];
+        const projIndex = newData.findIndex(p => p.id == projectId);
+        if (projIndex > -1) {
+            const taskIndex = newData[projIndex].tasks.findIndex(t => t.id === task.id);
+            if (taskIndex > -1) {
+                newData[projIndex].tasks[taskIndex].status = nextStatus;
+                if (nextStatus === "Done") newData[projIndex].tasks[taskIndex].statusClass = "status-done";
+                else if (nextStatus === "In Progress") newData[projIndex].tasks[taskIndex].statusClass = "status-inprogress";
+                else if (nextStatus === "Review") newData[projIndex].tasks[taskIndex].statusClass = "status-review";
+            }
+        }
+        return newData;
+    });
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5024/api/projects/tasks/${task.id}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: nextStatus })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update status');
+        }
+    } catch (err) {
+        console.error('Error updating task status:', err);
+        setProjectsData(previousProjects); // revert
+    }
+  };
+
   const activeProject = projectsData.find(p => p.id == selectedProjectId) || projectsData[0];
 
   const totalTasks = activeProject.tasks?.length || 0;
@@ -142,7 +185,17 @@ const AssignedProjects = () => {
                   <h4>{task.title}</h4>
                   <p>{task.description}</p>
                 </div>
-                <span className={`task-status ${task.statusClass}`}>{task.status}</span>
+                <span 
+                  className={`task-status ${task.statusClass}`}
+                  onClick={() => cycleTaskStatus(task, activeProject.id)}
+                  style={{ cursor: 'pointer', userSelect: 'none', transition: 'transform 0.1s' }}
+                  title="Click to change status"
+                  onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                  onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  {task.status}
+                </span>
               </div>
             ))}
             {filteredTasks.length === 0 && (
