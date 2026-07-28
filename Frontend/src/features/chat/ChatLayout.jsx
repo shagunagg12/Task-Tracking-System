@@ -181,20 +181,32 @@ const ChatLayout = () => {
     
     if (!newMessage.trim() || !connection || !selectedUser) return;
 
+    const msgText = newMessage;
+    setNewMessage(''); // Clear input immediately
+    
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage = {
+      id: tempId,
+      senderId: currentUserId,
+      receiverId: selectedUser.id,
+      content: msgText,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Optimistic UI update - show message instantly
+    setMessages(prev => [...prev, tempMessage]);
+
     try {
-      const msgText = newMessage;
-      setNewMessage(''); // Clear input immediately
       const savedMessage = await connection.invoke('SendMessage', currentUserId, selectedUser.id, msgText);
       
       setMessages((prevMessages) => {
-        // Avoid duplicates in case the SignalR broadcast arrived first
-        if (!prevMessages.find(m => m.id === savedMessage.id)) {
-          return [...prevMessages, savedMessage];
-        }
-        return prevMessages;
+        // Replace temp message with the real one from the server
+        return prevMessages.map(m => m.id === tempId ? savedMessage : m);
       });
     } catch (e) {
       console.error('Send message failed:', e);
+      // Remove the temp message if sending failed
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     }
   };
 
