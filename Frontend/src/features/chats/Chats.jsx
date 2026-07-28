@@ -56,37 +56,44 @@ const Chats = () => {
       // Bind event handler BEFORE starting the connection
       connection.on('ReceiveMessage', (message) => {
         console.log('SignalR ReceiveMessage:', message);
-        const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const formattedMessage = { ...message, time: formattedTime };
+        try {
+          const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const formattedMessage = { ...message, time: formattedTime };
+          
+          const msgChatId = message.chatSessionId || message.ChatSessionId;
+          const currentChatId = currentChatIdRef.current;
 
-        if (message.chatSessionId.toString() === currentChatIdRef.current?.toString()) {
-          setMessages(prev => {
-            if (prev.some(m => m.id === formattedMessage.id)) return prev;
-            return [...prev, formattedMessage];
-          });
-          
-          // Update last message in sidebar
-          setConversations(prev => prev.map(chat => {
-            if (chat.id.toString() === message.chatSessionId.toString()) {
-              return { ...chat, lastMessage: message.text, time: formattedTime };
-            }
-            return chat;
-          }));
-          
-          setTimeout(scrollToBottom, 100);
-        } else {
-           // Update unread count or last message in sidebar for other chats
-           setConversations(prev => prev.map(chat => {
-            if (chat.id.toString() === message.chatSessionId.toString()) {
-              return { 
-                ...chat, 
-                lastMessage: message.text, 
-                time: formattedTime,
-                unread: (chat.unread || 0) + 1
-              };
-            }
-            return chat;
-          }));
+          if (msgChatId && currentChatId && msgChatId.toString() === currentChatId.toString()) {
+            setMessages(prev => {
+              if (prev.some(m => m.id === formattedMessage.id)) return prev;
+              return [...prev, formattedMessage];
+            });
+            
+            // Update last message in sidebar
+            setConversations(prev => prev.map(chat => {
+              if (chat.id.toString() === msgChatId.toString()) {
+                return { ...chat, lastMessage: message.text, time: formattedTime };
+              }
+              return chat;
+            }));
+            
+            setTimeout(scrollToBottom, 100);
+          } else if (msgChatId) {
+             // Update unread count or last message in sidebar for other chats
+             setConversations(prev => prev.map(chat => {
+              if (chat.id.toString() === msgChatId.toString()) {
+                return { 
+                  ...chat, 
+                  lastMessage: message.text, 
+                  time: formattedTime,
+                  unread: (chat.unread || 0) + 1
+                };
+              }
+              return chat;
+            }));
+          }
+        } catch (err) {
+          console.error("Error processing ReceiveMessage:", err);
         }
       });
 
