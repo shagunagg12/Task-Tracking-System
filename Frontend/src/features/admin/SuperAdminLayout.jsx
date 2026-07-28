@@ -8,6 +8,7 @@ import {
 import './SuperAdminLayout.css';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import SuperAdminProjects from './SuperAdminProjects';
+import SuperAdminUsers from './SuperAdminUsers';
 
 const SuperAdminLayout = ({ onSwitchToUser }) => {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -121,6 +122,8 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
              <SuperAdminDashboard />
            ) : activeMenu === 'Projects' ? (
              <SuperAdminProjects />
+           ) : activeMenu === 'User Management' ? (
+             <SuperAdminUsers />
            ) : (
              <div className="sa-placeholder">
                 <div className="sa-placeholder-icon">{menuItems.find(m => m.id === activeMenu)?.icon}</div>
