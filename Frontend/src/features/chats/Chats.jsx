@@ -56,18 +56,26 @@ const Chats = () => {
       connection.start()
         .then(() => {
           console.log('Connected to SignalR');
+          
+          if (currentChatIdRef.current) {
+            connection.invoke('JoinChat', currentChatIdRef.current.toString()).catch(console.error);
+          }
+
           connection.on('ReceiveMessage', (message) => {
+            const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const formattedMessage = { ...message, time: formattedTime };
+
             if (message.chatSessionId.toString() === currentChatIdRef.current?.toString()) {
               setMessages(prev => {
                 // If message already exists, don't add it
-                if (prev.some(m => m.id === message.id)) return prev;
-                return [...prev, message];
+                if (prev.some(m => m.id === formattedMessage.id)) return prev;
+                return [...prev, formattedMessage];
               });
               
               // Update last message in sidebar
               setConversations(prev => prev.map(chat => {
                 if (chat.id.toString() === message.chatSessionId.toString()) {
-                  return { ...chat, lastMessage: message.text, time: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                  return { ...chat, lastMessage: message.text, time: formattedTime };
                 }
                 return chat;
               }));
@@ -81,7 +89,7 @@ const Chats = () => {
                   return { 
                     ...chat, 
                     lastMessage: message.text, 
-                    time: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    time: formattedTime,
                     unread: (chat.unread || 0) + 1
                   };
                 }
