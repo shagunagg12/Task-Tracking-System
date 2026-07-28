@@ -57,6 +57,21 @@ namespace Backend.Controllers
             return Ok(new { url = url });
         }
 
+        [Authorize]
+        [HttpGet("status")]
+        public async Task<IActionResult> GetStatus()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.Users.FindAsync(userId);
+            bool isConnected = user != null && !string.IsNullOrEmpty(user.GoogleRefreshToken);
+            return Ok(new { isConnected });
+        }
+
         [HttpGet("/api/auth/google-callback")]
         public async Task<IActionResult> Callback([FromQuery] string code, [FromQuery] string state)
         {
