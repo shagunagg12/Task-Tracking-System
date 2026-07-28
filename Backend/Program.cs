@@ -5,11 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Backend.Hubs;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,7 +52,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173", "http://localhost:5174", "http://localhost:3000") // Common React/Vite ports
+            policy.SetIsOriginAllowed(origin => true) // Allow any origin for local dev on mobile
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -85,18 +80,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-var signalrConnectionString = Environment.GetEnvironmentVariable("AZURE_SIGNALR_CONNECTION_STRING");
-var signalrBuilder = builder.Services.AddSignalR();
-
-if (!string.IsNullOrWhiteSpace(signalrConnectionString) && !signalrConnectionString.Contains("your-signalr-resource"))
-{
-    Console.WriteLine("Using Azure SignalR Service...");
-    signalrBuilder.AddAzureSignalR(signalrConnectionString);
-}
-else
-{
-    Console.WriteLine("Using local in-memory SignalR (Azure SignalR connection string is missing or placeholder).");
-}
+builder.Services.AddSignalR();
 
 
 var app = builder.Build();
