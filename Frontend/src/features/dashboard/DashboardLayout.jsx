@@ -3,6 +3,7 @@ import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
+import Calendar from './Calendar';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -189,6 +190,11 @@ const DashboardLayout = () => {
           </div>
         </header>
 
+        {activeMenu === 'Calendar' ? (
+          <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <Calendar />
+          </div>
+        ) : (
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
@@ -432,6 +438,7 @@ const DashboardLayout = () => {
              </div>
           )}
         </div>
+        )}
       </main>
 
       {/* RIGHT SIDEBAR */}
