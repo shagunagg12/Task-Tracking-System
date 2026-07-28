@@ -104,6 +104,7 @@ namespace Backend.WebSockets
 
             var payload = new
             {
+                type = "ReceiveMessage",
                 id = message.Id,
                 chatSessionId = message.ChatSessionId,
                 senderId = message.SenderId,
@@ -112,10 +113,12 @@ namespace Backend.WebSockets
                 createdAt = message.CreatedAt
             };
 
-            var sessionMembers = await _context.ChatSessionMembers
+            var sessionMemberIds = await _context.ChatSessionMembers
                 .Where(m => m.ChatSessionId == sessionId)
-                .Select(m => m.UserId.ToString())
+                .Select(m => m.UserId)
                 .ToListAsync();
+            
+            var sessionMembers = sessionMemberIds.Select(id => id.ToString()).ToList();
 
             // Broadcast to the group specifically
             await _webSocketManager.BroadcastToGroupAsync(chatIdStr, payload);
