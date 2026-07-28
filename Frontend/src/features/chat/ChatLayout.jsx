@@ -16,10 +16,24 @@ const ChatLayout = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [typingTimeout, setTypingTimeout] = useState(null);
+  const typingTimeoutRef = useRef(null);
   const [connection, setConnection] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  
+  // Use refs for closure access in SignalR event listeners
+  const selectedUserRef = useRef(null);
+  const currentUserIdRef = useRef(null);
+  
   const messagesEndRef = useRef(null);
+
+  // Keep refs in sync
+  useEffect(() => {
+    selectedUserRef.current = selectedUser;
+  }, [selectedUser]);
+  
+  useEffect(() => {
+    currentUserIdRef.current = currentUserId;
+  }, [currentUserId]);
   
   const token = localStorage.getItem('token');
   
@@ -80,13 +94,16 @@ const ChatLayout = () => {
 
     const handleReceiveMessage = (message) => {
       setMessages((prevMessages) => {
+        const currentSelectedUser = selectedUserRef.current;
+        const currentId = currentUserIdRef.current;
+        
         // Ensure we only add the message if it belongs to the current chat
         if (
-          (message.senderId === selectedUser?.id) || 
-          (message.senderId === currentUserId && message.receiverId === selectedUser?.id)
+          (message.senderId === currentSelectedUser?.id) || 
+          (message.senderId === currentId && message.receiverId === currentSelectedUser?.id)
         ) {
           // Clear typing indicator when a message arrives from them
-          if (message.senderId === selectedUser?.id) {
+          if (message.senderId === currentSelectedUser?.id) {
              setIsTyping(false);
           }
           
@@ -100,13 +117,13 @@ const ChatLayout = () => {
     };
 
     const handleUserTyping = (senderId) => {
-      if (selectedUser && senderId === selectedUser.id) {
+      const currentSelectedUser = selectedUserRef.current;
+      if (currentSelectedUser && senderId === currentSelectedUser.id) {
         setIsTyping(true);
         
         // Auto-hide typing indicator after 3 seconds
-        if (typingTimeout) clearTimeout(typingTimeout);
-        const timeout = setTimeout(() => setIsTyping(false), 3000);
-        setTypingTimeout(timeout);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => setIsTyping(false), 3000);
       }
     };
 
@@ -116,9 +133,9 @@ const ChatLayout = () => {
     return () => {
       connection.off('ReceiveMessage', handleReceiveMessage);
       connection.off('UserTyping', handleUserTyping);
-      if (typingTimeout) clearTimeout(typingTimeout);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [connection, selectedUser, currentUserId, typingTimeout]);
+  }, [connection]);
 
   useEffect(() => {
     if (selectedUser) {
