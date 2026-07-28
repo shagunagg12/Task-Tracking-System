@@ -97,20 +97,25 @@ const ChatLayout = () => {
       setMessages((prevMessages) => {
         const currentSelectedUser = selectedUserRef.current;
         const currentId = currentUserIdRef.current;
-        console.log('Current state:', { currentId, selectedUserId: currentSelectedUser?.id, message });
+        
+        const msgSenderId = message.senderId ?? message.SenderId;
+        const msgReceiverId = message.receiverId ?? message.ReceiverId;
+        const msgId = message.id ?? message.Id;
+        
+        console.log('Current state:', { currentId, selectedUserId: currentSelectedUser?.id, msgSenderId, msgReceiverId, msgId });
         
         // Ensure we only add the message if it belongs to the current chat
         if (
-          (message.senderId === currentSelectedUser?.id) || 
-          (message.senderId === currentId && message.receiverId === currentSelectedUser?.id)
+          (msgSenderId === currentSelectedUser?.id) || 
+          (msgSenderId === currentId && msgReceiverId === currentSelectedUser?.id)
         ) {
           // Clear typing indicator when a message arrives from them
-          if (message.senderId === currentSelectedUser?.id) {
+          if (msgSenderId === currentSelectedUser?.id) {
              setIsTyping(false);
           }
           
           // Avoid duplicates
-          if (!prevMessages.find(m => m.id === message.id && message.id !== 0)) {
+          if (!prevMessages.find(m => (m.id ?? m.Id) === msgId && msgId !== 0)) {
              console.log('Adding message to state:', message);
              return [...prevMessages, message];
           } else {
@@ -271,19 +276,25 @@ const ChatLayout = () => {
             </div>
             
             <div className="messages-area">
-              {messages.map((msg, index) => (
+              {messages.map((msg, index) => {
+                const msgId = msg.id ?? msg.Id ?? index;
+                const msgSenderId = msg.senderId ?? msg.SenderId;
+                const msgContent = msg.content ?? msg.Content;
+                const msgTimestamp = msg.timestamp ?? msg.Timestamp;
+                
+                return (
                 <div 
-                  key={msg.id || index} 
-                  className={`message-bubble-wrapper ${msg.senderId === currentUserId ? 'sent' : 'received'}`}
+                  key={msgId} 
+                  className={`message-bubble-wrapper ${msgSenderId === currentUserId ? 'sent' : 'received'}`}
                 >
                   <div className="message-bubble">
-                    <p className="message-content">{msg.content}</p>
+                    <p className="message-content">{msgContent}</p>
                     <span className="message-time">
-                      {msg.timestamp ? format(new Date(msg.timestamp), 'HH:mm') : format(new Date(), 'HH:mm')}
+                      {msgTimestamp ? format(new Date(msgTimestamp), 'HH:mm') : format(new Date(), 'HH:mm')}
                     </span>
                   </div>
                 </div>
-              ))}
+              )})}
               
               {isTyping && (
                 <div className="message-bubble-wrapper received">
