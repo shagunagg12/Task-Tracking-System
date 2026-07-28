@@ -93,9 +93,11 @@ const ChatLayout = () => {
     if (!connection) return;
 
     const handleReceiveMessage = (message) => {
+      console.log('Received message via SignalR:', message);
       setMessages((prevMessages) => {
         const currentSelectedUser = selectedUserRef.current;
         const currentId = currentUserIdRef.current;
+        console.log('Current state:', { currentId, selectedUserId: currentSelectedUser?.id, message });
         
         // Ensure we only add the message if it belongs to the current chat
         if (
@@ -109,8 +111,13 @@ const ChatLayout = () => {
           
           // Avoid duplicates
           if (!prevMessages.find(m => m.id === message.id && message.id !== 0)) {
+             console.log('Adding message to state:', message);
              return [...prevMessages, message];
+          } else {
+             console.log('Message is a duplicate, skipping.');
           }
+        } else {
+          console.log('Message does not belong to current chat.');
         }
         return prevMessages;
       });
@@ -175,8 +182,17 @@ const ChatLayout = () => {
     if (!newMessage.trim() || !connection || !selectedUser) return;
 
     try {
-      await connection.invoke('SendMessage', currentUserId, selectedUser.id, newMessage);
-      setNewMessage('');
+      const msgText = newMessage;
+      setNewMessage(''); // Clear input immediately
+      const savedMessage = await connection.invoke('SendMessage', currentUserId, selectedUser.id, msgText);
+      
+      setMessages((prevMessages) => {
+        // Avoid duplicates in case the SignalR broadcast arrived first
+        if (!prevMessages.find(m => m.id === savedMessage.id)) {
+          return [...prevMessages, savedMessage];
+        }
+        return prevMessages;
+      });
     } catch (e) {
       console.error('Send message failed:', e);
     }

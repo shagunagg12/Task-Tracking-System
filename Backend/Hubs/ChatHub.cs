@@ -50,7 +50,7 @@ namespace Backend.Hubs
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task SendMessage(int senderId, int receiverId, string content)
+        public async Task<Message> SendMessage(int senderId, int receiverId, string content)
         {
             var message = new Message
             {
@@ -86,6 +86,8 @@ namespace Backend.Hubs
                     }
                 }
             }
+
+            return message;
         }
         
         // Broadcast typing status
