@@ -50,7 +50,7 @@ namespace Backend.Hubs
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task<Message> SendMessage(int senderId, int receiverId, string content)
+        public async Task<object> SendMessage(int senderId, int receiverId, string content)
         {
             var message = new Message
             {
@@ -63,9 +63,14 @@ namespace Backend.Hubs
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            // Clear navigation properties before serializing
-            message.Sender = null;
-            message.Receiver = null;
+            // Create a DTO to prevent EF proxy serialization cycles
+            var messageDto = new {
+                id = message.Id,
+                senderId = message.SenderId,
+                receiverId = message.ReceiverId,
+                content = message.Content,
+                timestamp = message.Timestamp
+            };
 
             // Send back to the sender (all their tabs)
             if (UserConnections.TryGetValue(senderId.ToString(), out var senderConnections))
@@ -77,7 +82,7 @@ namespace Backend.Hubs
                 }
                 foreach(var conn in conns)
                 {
-                    await Clients.Client(conn).SendAsync("ReceiveMessage", message);
+                    await Clients.Client(conn).SendAsync("ReceiveMessage", messageDto);
                 }
             }
 
@@ -91,11 +96,11 @@ namespace Backend.Hubs
                 }
                 foreach(var conn in conns) 
                 {
-                    await Clients.Client(conn).SendAsync("ReceiveMessage", message);
+                    await Clients.Client(conn).SendAsync("ReceiveMessage", messageDto);
                 }
             }
 
-            return message;
+            return messageDto;
         }
         
         // Broadcast typing status

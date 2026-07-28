@@ -85,7 +85,18 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
+var signalrConnectionString = Environment.GetEnvironmentVariable("AZURE_SIGNALR_CONNECTION_STRING");
+var signalrBuilder = builder.Services.AddSignalR();
+
+if (!string.IsNullOrWhiteSpace(signalrConnectionString) && !signalrConnectionString.Contains("your-signalr-resource"))
+{
+    Console.WriteLine("Using Azure SignalR Service...");
+    signalrBuilder.AddAzureSignalR(signalrConnectionString);
+}
+else
+{
+    Console.WriteLine("Using local in-memory SignalR (Azure SignalR connection string is missing or placeholder).");
+}
 
 
 var app = builder.Build();
