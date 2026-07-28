@@ -1,164 +1,234 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import * as signalR from '@microsoft/signalr';
 import './Chats.css';
 
 const Chats = () => {
   const [conversations, setConversations] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'groups', 'direct'
+  const [connection, setConnection] = useState(null);
+  
+  const [hasMore, setHasMore] = useState(true);
+  const [skip, setSkip] = useState(0);
+  const take = 50;
+  
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const currentChatIdRef = useRef(null);
+  const skipRef = useRef(0);
 
-  // Helper to get my name
-  const getUserName = () => {
+  // Helper to get my name/id
+  const getUserId = () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return 'Me';
+      if (!token) return null;
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
-             payload.unique_name || 
-             payload.name || 
-             'Me';
+      return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || payload.nameid || null;
     } catch(e) {
-      return 'Me';
+      return null;
     }
   };
-  const myName = getUserName();
+  const myUserId = getUserId();
+
+  // Initialize SignalR Connection
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const newConnection = new signalR.HubConnectionBuilder()
+      .withUrl('http://localhost:5024/chathub', {
+        accessTokenFactory: () => token
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    setConnection(newConnection);
+  }, []);
 
   useEffect(() => {
-    const fetchChatsData = async () => {
+    if (connection) {
+      connection.start()
+        .then(() => {
+          console.log('Connected to SignalR');
+          connection.on('ReceiveMessage', (message) => {
+            if (message.chatSessionId.toString() === currentChatIdRef.current?.toString()) {
+              setMessages(prev => {
+                // If message already exists, don't add it
+                if (prev.some(m => m.id === message.id)) return prev;
+                return [...prev, message];
+              });
+              
+              // Update last message in sidebar
+              setConversations(prev => prev.map(chat => {
+                if (chat.id.toString() === message.chatSessionId.toString()) {
+                  return { ...chat, lastMessage: message.text, time: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                }
+                return chat;
+              }));
+              
+              // Only auto scroll to bottom if we are receiving a new message (not loading old ones)
+              setTimeout(scrollToBottom, 100);
+            } else {
+               // Update unread count or last message in sidebar for other chats
+               setConversations(prev => prev.map(chat => {
+                if (chat.id.toString() === message.chatSessionId.toString()) {
+                  return { 
+                    ...chat, 
+                    lastMessage: message.text, 
+                    time: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    unread: (chat.unread || 0) + 1
+                  };
+                }
+                return chat;
+              }));
+            }
+          });
+        })
+        .catch(e => console.log('Connection failed: ', e));
+
+      return () => {
+         connection.off('ReceiveMessage');
+         connection.stop();
+      }
+    }
+  }, [connection]);
+
+  // Fetch Sessions
+  useEffect(() => {
+    const fetchSessions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5024/api/projects', {
+        const response = await fetch('http://localhost:5024/api/chats/sessions', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        const generatedConversations = [];
-        const uniqueMembers = new Map();
-
-        // 1. Process Projects as Group Chats
-        data.forEach(project => {
-          const teamNames = project.teamMembers?.map(tm => tm.name) || [];
-          generatedConversations.push({
-            id: `group_${project.id}`,
-            name: project.name,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(project.name)}&background=0D8ABC&color=fff`,
-            lastMessage: 'Welcome to the project chat!',
-            time: 'Just now',
-            unread: 0,
-            isGroup: true,
-            status: 'online',
-            members: teamNames,
-            messages: [
-              { id: Date.now() + Math.random(), sender: 'System', text: `Chat created for ${project.name}`, time: 'System', isMine: false }
-            ]
-          });
-
-          // Collect unique team members
-          project.teamMembers?.forEach(tm => {
-            if (tm.name && tm.name !== myName) {
-              if (!uniqueMembers.has(tm.name)) {
-                uniqueMembers.set(tm.name, {
-                  name: tm.name,
-                  image: tm.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(tm.name)}&background=random`
-                });
-              }
-            }
-          });
-        });
-
-        // Add some dummy individuals in case there are no projects or members (to fulfill "chat with anyone individually")
-        const extraDummies = ['Sarah Connor', 'John Doe', 'Alice Williams'];
-        extraDummies.forEach(dummy => {
-          if (!uniqueMembers.has(dummy) && dummy !== myName) {
-            uniqueMembers.set(dummy, {
-              name: dummy,
-              image: `https://ui-avatars.com/api/?name=${encodeURIComponent(dummy)}&background=random`
-            });
+        if (response.ok) {
+          const data = await response.json();
+          setConversations(data.map(c => ({
+             ...c,
+             unread: 0
+          })));
+          if (data.length > 0) {
+            setActiveChatId(data[0].id);
           }
-        });
-
-        // 2. Process Unique Members as Direct Messages
-        Array.from(uniqueMembers.values()).forEach((member, index) => {
-          generatedConversations.push({
-            id: `dm_${index}`,
-            name: member.name,
-            avatar: member.image,
-            lastMessage: 'Say hi!',
-            time: 'Just now',
-            unread: 0,
-            isGroup: false,
-            status: index % 3 === 0 ? 'away' : 'online',
-            messages: []
-          });
-        });
-
-        setConversations(generatedConversations);
-        if (generatedConversations.length > 0) {
-          setActiveChatId(generatedConversations[0].id);
         }
-
       } catch (error) {
-        console.error('Error fetching chat data:', error);
+        console.error('Error fetching chat sessions:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchChatsData();
-  }, [myName]);
+    fetchSessions();
+  }, []);
 
-  const activeChat = conversations.find(c => c.id === activeChatId);
+  const loadMessages = async (chatId, currentSkip) => {
+    try {
+      setIsMessagesLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5024/api/chats/${chatId}/messages?skip=${currentSkip}&take=${take}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // The API returns newest first (descending). We need ascending order for display.
+        const sortedData = data.reverse();
+        
+        if (sortedData.length < take) {
+           setHasMore(false);
+        } else {
+           setHasMore(true);
+        }
+
+        if (currentSkip === 0) {
+          setMessages(sortedData);
+          setTimeout(scrollToBottom, 100);
+        } else {
+          // Prepend older messages
+          const scrollHeightBefore = messagesContainerRef.current?.scrollHeight;
+          setMessages(prev => [...sortedData, ...prev]);
+          
+          // Maintain scroll position
+          setTimeout(() => {
+            if (messagesContainerRef.current) {
+               messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight - scrollHeightBefore;
+            }
+          }, 0);
+        }
+      }
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setIsMessagesLoading(false);
+    }
+  };
+
+  // Change Active Chat
+  useEffect(() => {
+    if (activeChatId) {
+       // Leave old group if any
+       if (currentChatIdRef.current && connection?.state === 'Connected') {
+          connection.invoke('LeaveChat', currentChatIdRef.current.toString()).catch(console.error);
+       }
+       
+       currentChatIdRef.current = activeChatId;
+       
+       // Join new group
+       if (connection?.state === 'Connected') {
+          connection.invoke('JoinChat', activeChatId.toString()).catch(console.error);
+       }
+       
+       setMessages([]);
+       setSkip(0);
+       skipRef.current = 0;
+       setHasMore(true);
+       
+       loadMessages(activeChatId, 0);
+
+       // Mark as read
+       setConversations(prev => prev.map(chat => 
+        chat.id === activeChatId ? { ...chat, unread: 0 } : chat
+      ));
+    }
+  }, [activeChatId, connection]);
+
+  const handleScroll = (e) => {
+     if (e.target.scrollTop === 0 && hasMore && !isMessagesLoading) {
+         const newSkip = skipRef.current + take;
+         setSkip(newSkip);
+         skipRef.current = newSkip;
+         loadMessages(activeChatId, newSkip);
+     }
+  };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [activeChat?.messages]);
-
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !activeChatId) return;
 
-    const newMessage = {
-      id: Date.now(),
-      sender: myName,
-      text: inputText,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMine: true
-    };
-
-    setConversations(prev => prev.map(chat => {
-      if (chat.id === activeChatId) {
-        return {
-          ...chat,
-          messages: [...chat.messages, newMessage],
-          lastMessage: inputText,
-          time: newMessage.time
-        };
+    if (connection?.state === 'Connected') {
+      try {
+        await connection.invoke('SendMessage', activeChatId.toString(), inputText);
+        setInputText('');
+      } catch (err) {
+        console.error("Error sending message:", err);
       }
-      return chat;
-    }));
-
-    setInputText('');
+    } else {
+      console.warn('SignalR not connected');
+    }
   };
 
-  const markAsRead = (id) => {
-    setConversations(prev => prev.map(chat => 
-      chat.id === id ? { ...chat, unread: 0 } : chat
-    ));
-    setActiveChatId(id);
-  };
+  const activeChat = conversations.find(c => c.id === activeChatId);
 
   const filteredConversations = conversations.filter(c => {
     if (filter === 'groups') return c.isGroup;
@@ -215,7 +285,7 @@ const Chats = () => {
               <div 
                 key={chat.id} 
                 className={`chat-item ${activeChatId === chat.id ? 'active' : ''} ${chat.unread > 0 ? 'unread' : ''}`}
-                onClick={() => markAsRead(chat.id)}
+                onClick={() => setActiveChatId(chat.id)}
               >
                 <div className="chat-avatar-container">
                   <img src={chat.avatar} alt={chat.name} className="chat-avatar" />
@@ -223,12 +293,12 @@ const Chats = () => {
                 </div>
                 <div className="chat-item-content">
                   <div className="chat-item-top">
-                    <span className="chat-name">{chat.name}</span>
-                    <span className="chat-time">{chat.time}</span>
+                     <span className="chat-name">{chat.name}</span>
+                     <span className="chat-time">{chat.time}</span>
                   </div>
                   <div className="chat-item-bottom">
-                    <span className="chat-last-message">{chat.lastMessage}</span>
-                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                     <span className="chat-last-message">{chat.lastMessage}</span>
+                     {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
                   </div>
                 </div>
               </div>
@@ -250,7 +320,7 @@ const Chats = () => {
                 <div>
                   <h3 className="chat-header-name">{activeChat.name}</h3>
                   <span className="chat-header-status">
-                    {activeChat.isGroup ? `Project Team (${activeChat.members?.length || 0} members)` : activeChat.status.charAt(0).toUpperCase() + activeChat.status.slice(1)}
+                    {activeChat.isGroup ? `Project Team` : activeChat.status.charAt(0).toUpperCase() + activeChat.status.slice(1)}
                   </span>
                 </div>
               </div>
@@ -263,27 +333,28 @@ const Chats = () => {
               </div>
             </div>
 
-            <div className="chat-messages-area">
-              <div className="date-divider"><span>Today</span></div>
-              {activeChat.messages.length === 0 && (
+            <div className="chat-messages-area" ref={messagesContainerRef} onScroll={handleScroll}>
+              {isMessagesLoading && <div style={{textAlign: 'center', padding: '10px', color: 'var(--text-muted)'}}>Loading older messages...</div>}
+              {messages.length === 0 && !isMessagesLoading && (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '20px' }}>
                   No messages yet. Start the conversation!
                 </div>
               )}
-              {activeChat.messages.map((msg, index) => {
-                const showSender = !msg.isMine && (index === 0 || activeChat.messages[index - 1].sender !== msg.sender);
+              {messages.map((msg, index) => {
+                const isMine = msg.senderId.toString() === myUserId?.toString();
+                const showSender = !isMine && (index === 0 || messages[index - 1].senderId !== msg.senderId);
                 return (
-                  <div key={msg.id} className={`message-wrapper ${msg.isMine ? 'mine' : 'theirs'}`}>
-                    {!msg.isMine && showSender && (
+                  <div key={msg.id} className={`message-wrapper ${isMine ? 'mine' : 'theirs'}`}>
+                    {!isMine && showSender && (
                       <img 
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender)}&background=random`} 
-                        alt={msg.sender} 
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName)}&background=random`} 
+                        alt={msg.senderName} 
                         className="message-avatar" 
                       />
                     )}
-                    {!msg.isMine && !showSender && <div className="message-avatar-spacer"></div>}
+                    {!isMine && !showSender && <div className="message-avatar-spacer"></div>}
                     <div className="message-content">
-                      {showSender && <div className="message-sender">{msg.sender}</div>}
+                      {showSender && <div className="message-sender">{msg.senderName}</div>}
                       <div className="message-bubble">
                         {msg.text}
                       </div>

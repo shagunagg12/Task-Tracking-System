@@ -18,6 +18,9 @@ namespace Backend.Data
         public DbSet<ProjectDeadline> ProjectDeadlines { get; set; }
         public DbSet<ProjectFeedback> ProjectFeedbacks { get; set; }
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
+        public DbSet<ChatSession> ChatSessions { get; set; }
+        public DbSet<ChatSessionMember> ChatSessionMembers { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,6 +65,21 @@ namespace Backend.Data
                 .WithOne(tm => tm.Project)
                 .HasForeignKey(tm => tm.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatSession>()
+                .HasMany(cs => cs.Members)
+                .WithOne(csm => csm.ChatSession)
+                .HasForeignKey(csm => csm.ChatSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatSession>()
+                .HasMany(cs => cs.Messages)
+                .WithOne(m => m.ChatSession)
+                .HasForeignKey(m => m.ChatSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasIndex(m => new { m.ChatSessionId, m.CreatedAt });
         }
     }
 }
