@@ -288,6 +288,10 @@ namespace Backend.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Password");
 
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ProfilePictureUrl");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
