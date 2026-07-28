@@ -42,16 +42,21 @@ const Chats = () => {
     webSocketService.startConnection();
 
     const unsubscribe = webSocketService.onReceiveMessage((message) => {
+      console.log("[Chats.jsx] Received raw message via WebSocket:", message);
       try {
         const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const formattedMessage = { ...message, time: formattedTime };
         
         const msgChatId = message.chatSessionId || message.ChatSessionId;
         const currentChatId = currentChatIdRef.current;
+        console.log("[Chats.jsx] Evaluating IDs -> msgChatId:", msgChatId, " | currentChatId:", currentChatId);
 
         if (msgChatId?.toString() === currentChatId?.toString()) {
+          console.log("[Chats.jsx] Match SUCCESS. Adding to messages state.");
           setMessages(prev => {
-            if (prev.some(m => m.id === formattedMessage.id)) return prev;
+            const exists = prev.some(m => m.id === formattedMessage.id);
+            console.log(`[Chats.jsx] State update running. Previous messages count: ${prev.length}. Exists? ${exists}`);
+            if (exists) return prev;
             return [...prev, formattedMessage];
           });
           
