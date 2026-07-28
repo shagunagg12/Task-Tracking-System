@@ -57,8 +57,26 @@ const Calendar = () => {
     
     setDays(getWeekDays(currentDate));
     fetchMeetings();
+    
+    // Check Google Connection Status
+    const checkGoogleStatus = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5024/api/auth/google/status', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsGoogleConnected(data.isConnected);
+        }
+      } catch (error) {
+        console.error("Failed to check Google status:", error);
+      }
+    };
+    checkGoogleStatus();
   }, [currentDate]);
 
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [meetingTitle, setMeetingTitle] = useState('');
@@ -155,11 +173,11 @@ const Calendar = () => {
           <h2>Calendar</h2>
         </div>
         <div className="calendar-header-right">
-          <button className="btn-secondary" onClick={handleConnectGoogle}>
-            🔗 Connect Google Calendar
-          </button>
-          <button className="btn-secondary"># Join with an ID</button>
-          <button className="btn-secondary"><span className="icon-video">📹</span> Meet now</button>
+          {!isGoogleConnected && (
+            <button className="btn-secondary" onClick={handleConnectGoogle}>
+              🔗 Connect Google Calendar
+            </button>
+          )}
           <button className="btn-primary" onClick={() => setIsModalOpen(true)}><span className="icon-plus">+</span> New meeting</button>
         </div>
       </header>
@@ -179,10 +197,7 @@ const Calendar = () => {
           </div>
         </div>
         <div className="toolbar-right">
-          <span className="up-to-date-text">You're up to date!</span>
-          <button className="btn-view-toggle">
-            <span className="icon-list">⊟</span> Work week <span className="chevron-down">⌄</span>
-          </button>
+          {/* Elements removed per user request */}
         </div>
       </div>
 
@@ -272,16 +287,37 @@ const Calendar = () => {
             const leftCalc = `calc(70px + ((100% - 70px) / 7) * ${dayIndex})`;
             const widthCalc = `calc((100% - 70px) / 7 - 10px)`;
 
+            let blockStyle = {
+              top: `${topOffset}px`,
+              left: leftCalc,
+              height: `${height}px`,
+              width: widthCalc
+            };
+
+            if (!isPast) {
+              const meetingColors = [
+                { border: '#4caf50', bg: 'rgba(76, 175, 80, 0.15)', text: '#a5d6a7' },
+                { border: '#2196f3', bg: 'rgba(33, 150, 243, 0.15)', text: '#90caf9' },
+                { border: '#ff9800', bg: 'rgba(255, 152, 0, 0.15)', text: '#ffcc80' },
+                { border: '#9c27b0', bg: 'rgba(156, 39, 176, 0.15)', text: '#ce93d8' },
+                { border: '#e91e63', bg: 'rgba(233, 30, 99, 0.15)', text: '#f48fb1' },
+                { border: '#00bcd4', bg: 'rgba(0, 188, 212, 0.15)', text: '#80deea' },
+                { border: '#ffeb3b', bg: 'rgba(255, 235, 59, 0.15)', text: '#fff59d' },
+                { border: '#7986cb', bg: 'rgba(121, 134, 203, 0.15)', text: '#c5cae9' }
+              ];
+              const colorIndex = meeting.id % meetingColors.length;
+              const theme = meetingColors[colorIndex];
+              blockStyle.border = `1px solid ${theme.border}80`; // 80 adds some transparency to the thin border
+              blockStyle.borderLeft = `4px solid ${theme.border}`;
+              blockStyle.backgroundColor = theme.bg;
+              blockStyle.color = theme.text;
+            }
+
             return (
               <div 
                 key={meeting.id} 
                 className={`meeting-block ${isPast ? 'meeting-past' : ''}`}
-                style={{
-                  top: `${topOffset}px`,
-                  left: leftCalc,
-                  height: `${height}px`,
-                  width: widthCalc
-                }}
+                style={blockStyle}
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedMeeting(meeting);
