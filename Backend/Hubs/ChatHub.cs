@@ -27,9 +27,16 @@ namespace Backend.Hubs
             {
                 ConnectionToUser[Context.ConnectionId] = userId;
                 var connections = UserConnections.GetOrAdd(userId, _ => new HashSet<string>());
+                bool isNewOnline = false;
                 lock(connections) 
                 {
+                    isNewOnline = connections.Count == 0;
                     connections.Add(Context.ConnectionId);
+                }
+                
+                if (isNewOnline)
+                {
+                    Clients.All.SendAsync("UserOnline", userId);
                 }
             }
             return base.OnConnectedAsync();
@@ -41,23 +48,33 @@ namespace Backend.Hubs
             {
                 if (UserConnections.TryGetValue(userId, out var connections))
                 {
+                    bool isNowOffline = false;
                     lock(connections) 
                     {
                         connections.Remove(Context.ConnectionId);
+                        isNowOffline = connections.Count == 0;
+                    }
+                    
+                    if (isNowOffline)
+                    {
+                        Clients.All.SendAsync("UserOffline", userId);
                     }
                 }
             }
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task<object> SendMessage(int senderId, int receiverId, string content)
+        public async Task<object> SendMessage(int senderId, int receiverId, string content, string? fileUrl = null, string? fileType = null, int? replyToMessageId = null)
         {
             var message = new Message
             {
                 SenderId = senderId,
                 ReceiverId = receiverId,
-                Content = content,
-                Timestamp = DateTime.UtcNow
+                Content = string.IsNullOrEmpty(content) ? (fileType == "audio" ? "[Voice Message]" : "[Attachment]") : content,
+                Timestamp = DateTime.UtcNow,
+                FileUrl = fileUrl,
+                FileType = fileType,
+                ReplyToMessageId = replyToMessageId
             };
 
             _context.Messages.Add(message);
@@ -69,7 +86,10 @@ namespace Backend.Hubs
                 senderId = message.SenderId,
                 receiverId = message.ReceiverId,
                 content = message.Content,
-                timestamp = message.Timestamp
+                timestamp = message.Timestamp,
+                fileUrl = message.FileUrl,
+                fileType = message.FileType,
+                replyToMessageId = message.ReplyToMessageId
             };
 
             // Send back to the sender (all their tabs)
@@ -118,6 +138,71 @@ namespace Backend.Hubs
                     await Clients.Client(conn).SendAsync("UserTyping", senderId);
                 }
             }
+        }
+
+        // --- Project Group Chat Methods ---
+
+        public async Task JoinProjectGroup(int projectId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"project-{projectId}");
+        }
+
+        public async Task LeaveProjectGroup(int projectId)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"project-{projectId}");
+        }
+
+        public async Task<object> SendProjectMessage(int projectId, int senderId, string content, string? fileUrl = null, string? fileType = null, int? replyToMessageId = null)
+        {
+            var message = new ProjectMessage
+            {
+                ProjectId = projectId,
+                SenderId = senderId,
+                Content = string.IsNullOrEmpty(content) ? (fileType == "audio" ? "[Voice Message]" : "[Attachment]") : content,
+                Timestamp = DateTime.UtcNow,
+                FileUrl = fileUrl,
+                FileType = fileType,
+                ReplyToMessageId = replyToMessageId
+            };
+
+            _context.ProjectMessages.Add(message);
+            await _context.SaveChangesAsync();
+
+            var senderUser = await _context.Users.FindAsync(senderId);
+
+            var messageDto = new {
+                id = message.Id,
+                projectId = message.ProjectId,
+                senderId = message.SenderId,
+                senderName = senderUser?.FullName ?? senderUser?.Email ?? "Unknown",
+                content = message.Content,
+                timestamp = message.Timestamp,
+                fileUrl = message.FileUrl,
+                fileType = message.FileType,
+                replyToMessageId = message.ReplyToMessageId
+            };
+
+            // Broadcast to everyone in the project group
+            await Clients.Group($"project-{projectId}").SendAsync("ReceiveProjectMessage", messageDto);
+
+            return messageDto;
+        }
+        
+        // Fetch all online users
+        public List<string> GetOnlineUsers()
+        {
+            var onlineUsers = new List<string>();
+            foreach (var kvp in UserConnections)
+            {
+                lock(kvp.Value)
+                {
+                    if (kvp.Value.Count > 0)
+                    {
+                        onlineUsers.Add(kvp.Key);
+                    }
+                }
+            }
+            return onlineUsers;
         }
     }
 }
