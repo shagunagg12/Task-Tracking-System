@@ -49,8 +49,7 @@ const Chats = () => {
         const msgChatId = message.chatSessionId || message.ChatSessionId;
         const currentChatId = currentChatIdRef.current;
 
-        // Bypass check to debug
-        if (true || (msgChatId && currentChatId && msgChatId.toString() === currentChatId.toString())) {
+        if (msgChatId?.toString() === currentChatId?.toString()) {
           setMessages(prev => {
             if (prev.some(m => m.id === formattedMessage.id)) return prev;
             return [...prev, formattedMessage];
