@@ -19,6 +19,14 @@ namespace Backend.Models
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
+        public bool IsRead { get; set; } = false;
+
+        public string? FileUrl { get; set; }
+
+        public string? FileType { get; set; }
+
+        public int? ReplyToMessageId { get; set; }
+
         [ForeignKey("SenderId")]
         public User? Sender { get; set; }
 
