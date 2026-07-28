@@ -115,6 +115,9 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const backendUrl = isDevelopment ? 'http://localhost:5024' : window.location.origin;
 
+    // Track the highest ID already loaded from DB — don't toast these
+    let highestLoadedId = 0;
+
     const fetchNotifications = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -125,6 +128,10 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
           const data = await res.json();
           setNotifications(data);
           setUnreadCount(data.length);
+          // Record the max ID already known — SignalR events with this ID or below are NOT new
+          if (data.length > 0) {
+            highestLoadedId = Math.max(...data.map(n => n.id || 0));
+          }
         }
       } catch (err) {
         console.error("Failed to fetch initial notifications", err);
@@ -140,8 +147,12 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     connection.on("ReceiveNotification", (notification) => {
       setNotifications(prev => [notification, ...prev].slice(0, 50));
       setUnreadCount(prev => prev + 1);
-      // Use ref to avoid stale closure
-      addToastRef.current(notification);
+      // Only toast truly NEW notifications (ID higher than what we loaded from DB)
+      const notifId = notification.id || 0;
+      if (notifId > highestLoadedId) {
+        addToastRef.current(notification);
+      }
+      highestLoadedId = Math.max(highestLoadedId, notifId);
     });
 
     connection.start()
