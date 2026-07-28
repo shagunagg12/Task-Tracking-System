@@ -49,7 +49,8 @@ const Chats = () => {
         const msgChatId = message.chatSessionId || message.ChatSessionId;
         const currentChatId = currentChatIdRef.current;
 
-        if (msgChatId && currentChatId && msgChatId.toString() === currentChatId.toString()) {
+        // Bypass check to debug
+        if (true || (msgChatId && currentChatId && msgChatId.toString() === currentChatId.toString())) {
           setMessages(prev => {
             if (prev.some(m => m.id === formattedMessage.id)) return prev;
             return [...prev, formattedMessage];
@@ -57,7 +58,7 @@ const Chats = () => {
           
           // Update last message in sidebar
           setConversations(prev => prev.map(chat => {
-            if (chat.id.toString() === msgChatId.toString()) {
+            if (chat.id.toString() === msgChatId?.toString()) {
               return { ...chat, lastMessage: message.text, time: formattedTime };
             }
             return chat;

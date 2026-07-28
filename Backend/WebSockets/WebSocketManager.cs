@@ -23,7 +23,10 @@ namespace Backend.WebSockets
 
             _userConnections.AddOrUpdate(userId, 
                 new HashSet<string> { connectionId },
-                (key, existing) => { existing.Add(connectionId); return existing; }
+                (key, existing) => { 
+                    lock(existing) { existing.Add(connectionId); }
+                    return existing; 
+                }
             );
 
             return connectionId;
@@ -43,13 +46,13 @@ namespace Backend.WebSockets
 
             if (_userConnections.TryGetValue(userId, out var userConns))
             {
-                userConns.Remove(connectionId);
+                lock(userConns) { userConns.Remove(connectionId); }
             }
 
             // Remove from any groups
             foreach (var group in _groupConnections.Values)
             {
-                group.Remove(connectionId);
+                lock(group) { group.Remove(connectionId); }
             }
         }
 
@@ -57,7 +60,10 @@ namespace Backend.WebSockets
         {
             _groupConnections.AddOrUpdate(groupId,
                 new HashSet<string> { connectionId },
-                (key, existing) => { existing.Add(connectionId); return existing; }
+                (key, existing) => { 
+                    lock(existing) { existing.Add(connectionId); }
+                    return existing; 
+                }
             );
         }
 
@@ -65,7 +71,7 @@ namespace Backend.WebSockets
         {
             if (_groupConnections.TryGetValue(groupId, out var groupConns))
             {
-                groupConns.Remove(connectionId);
+                lock(groupConns) { groupConns.Remove(connectionId); }
             }
         }
 
@@ -77,8 +83,11 @@ namespace Backend.WebSockets
                 var bytes = Encoding.UTF8.GetBytes(msgString);
                 var buffer = new ArraySegment<byte>(bytes, 0, bytes.Length);
 
+                List<string> connectionIds;
+                lock(groupConns) { connectionIds = groupConns.ToList(); }
+
                 var tasks = new List<Task>();
-                foreach (var connectionId in groupConns.ToList())
+                foreach (var connectionId in connectionIds)
                 {
                     if (_sockets.TryGetValue(connectionId, out var socket))
                     {
@@ -103,7 +112,10 @@ namespace Backend.WebSockets
             {
                 if (_userConnections.TryGetValue(userId, out var userConns))
                 {
-                    foreach (var connectionId in userConns.ToList())
+                    List<string> connectionIds;
+                    lock(userConns) { connectionIds = userConns.ToList(); }
+                    
+                    foreach (var connectionId in connectionIds)
                     {
                         if (_sockets.TryGetValue(connectionId, out var socket))
                         {
