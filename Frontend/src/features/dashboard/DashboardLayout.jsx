@@ -51,7 +51,14 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
 };
 
 const DashboardLayout = () => {
-  const [activeMenu, setActiveMenu] = useState('Overview');
+  const [activeMenu, setActiveMenu] = useState(() => {
+    return localStorage.getItem('lastActiveMenu') || 'Overview';
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('lastActiveMenu', activeMenu);
+  }, [activeMenu]);
+
   const [isBrightTheme, setIsBrightTheme] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
