@@ -21,8 +21,6 @@ namespace Backend.Controllers
         public async Task<IActionResult> GetUsersWithProjects()
         {
             var users = await _context.Users
-                .Include(u => u.Projects)
-                    .ThenInclude(p => p.Tasks)
                 .Select(u => new
                 {
                     u.Id,
@@ -33,6 +31,15 @@ namespace Backend.Controllers
                         p.Id,
                         p.Name,
                         p.Status,
+                        p.PriorityTaskTitle,
+                        p.PriorityTaskDesc,
+                        p.PriorityTaskDue,
+                        p.PriorityTaskTimeRemaining,
+                        p.Hours,
+                        p.HoursTrend,
+                        TeamMembers = p.TeamMembers.ToList(),
+                        Deadlines = p.Deadlines.ToList(),
+                        Feedbacks = p.Feedbacks.ToList(),
                         Tasks = p.Tasks.Select(t => new
                         {
                             t.Id,
@@ -52,6 +59,28 @@ namespace Backend.Controllers
         {
             public int UserId { get; set; }
             public string Name { get; set; } = string.Empty;
+            
+            // Priority Task Details
+            public string? PriorityTaskTitle { get; set; }
+            public string? PriorityTaskDesc { get; set; }
+            public string? PriorityTaskDue { get; set; }
+            public string? PriorityTaskTimeRemaining { get; set; }
+            public double? Hours { get; set; }
+            public string? HoursTrend { get; set; }
+            
+            // Team Member
+            public string? TeamMemberName { get; set; }
+            
+            // Deadline
+            public string? DeadlineTitle { get; set; }
+            public string? DeadlineDesc { get; set; }
+            public string? DeadlineDay { get; set; }
+            public string? DeadlineMonth { get; set; }
+            public string? DeadlineColor { get; set; }
+            
+            // Feedback
+            public string? FeedbackText { get; set; }
+            public string? FeedbackAuthorName { get; set; }
         }
 
         // POST: api/AdminProjects
@@ -65,13 +94,58 @@ namespace Backend.Controllers
             {
                 UserId = dto.UserId,
                 Name = dto.Name,
-                Status = "In Progress"
+                Status = "In Progress",
+                PriorityTaskTitle = dto.PriorityTaskTitle ?? string.Empty,
+                PriorityTaskDesc = dto.PriorityTaskDesc ?? string.Empty,
+                PriorityTaskDue = dto.PriorityTaskDue ?? string.Empty,
+                PriorityTaskTimeRemaining = dto.PriorityTaskTimeRemaining ?? string.Empty,
+                Hours = dto.Hours ?? 0,
+                HoursTrend = dto.HoursTrend ?? string.Empty
             };
 
             _context.Projects.Add(project);
+            await _context.SaveChangesAsync(); // Save to get the Project.Id
+
+            // Add Team Member if provided
+            if (!string.IsNullOrWhiteSpace(dto.TeamMemberName))
+            {
+                _context.ProjectTeamMembers.Add(new ProjectTeamMember
+                {
+                    ProjectId = project.Id,
+                    Name = dto.TeamMemberName,
+                    Image = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(dto.TeamMemberName)}&background=random"
+                });
+            }
+
+            // Add Deadline if provided
+            if (!string.IsNullOrWhiteSpace(dto.DeadlineTitle))
+            {
+                _context.ProjectDeadlines.Add(new ProjectDeadline
+                {
+                    ProjectId = project.Id,
+                    Title = dto.DeadlineTitle,
+                    Description = dto.DeadlineDesc ?? string.Empty,
+                    Day = dto.DeadlineDay ?? string.Empty,
+                    Month = dto.DeadlineMonth ?? string.Empty,
+                    Color = string.IsNullOrEmpty(dto.DeadlineColor) ? "green" : dto.DeadlineColor
+                });
+            }
+
+            // Add Feedback if provided
+            if (!string.IsNullOrWhiteSpace(dto.FeedbackText) && !string.IsNullOrWhiteSpace(dto.FeedbackAuthorName))
+            {
+                _context.ProjectFeedbacks.Add(new ProjectFeedback
+                {
+                    ProjectId = project.Id,
+                    Text = dto.FeedbackText,
+                    AuthorName = dto.FeedbackAuthorName,
+                    AuthorImage = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(dto.FeedbackAuthorName)}&background=random"
+                });
+            }
+
             await _context.SaveChangesAsync();
 
-            return Ok(new { project.Id, project.Name, project.Status, Tasks = new List<object>() });
+            return Ok(project);
         }
 
         public class CreateTaskDto
@@ -100,6 +174,25 @@ namespace Backend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { task.Id, task.Title, task.Description, task.Status, task.StatusClass });
+        }
+
+        public class UpdateTaskStatusDto
+        {
+            public string Status { get; set; } = string.Empty;
+            public string StatusClass { get; set; } = string.Empty;
+        }
+
+        [HttpPatch("tasks/{taskId}/status")]
+        public async Task<IActionResult> UpdateTaskStatus(int taskId, [FromBody] UpdateTaskStatusDto dto)
+        {
+            var task = await _context.ProjectTasks.FindAsync(taskId);
+            if (task == null) return NotFound("Task not found");
+
+            task.Status = dto.Status;
+            task.StatusClass = dto.StatusClass;
+
+            await _context.SaveChangesAsync();
+            return Ok(task);
         }
         public class UpdateProjectDetailsDto
         {

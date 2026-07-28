@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Folder, CheckSquare, Plus, Search, ChevronRight, Briefcase 
 } from 'lucide-react';
+import ProjectKanbanBoard from './ProjectKanbanBoard';
 import './SuperAdminProjects.css';
 
 const SuperAdminProjects = () => {
@@ -10,15 +11,28 @@ const SuperAdminProjects = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Modals state
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showTeamModal, setShowTeamModal] = useState(false);
-  const [showDeadlineModal, setShowDeadlineModal] = useState(false);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [kanbanProject, setKanbanProject] = useState(null);
   
-  const [newProjectName, setNewProjectName] = useState('');
+  // Unified Project Creation State
+  const [newProject, setNewProject] = useState({
+    name: '',
+    priorityTaskTitle: '',
+    priorityTaskDesc: '',
+    priorityTaskDue: '',
+    priorityTaskTimeRemaining: '',
+    hours: '',
+    hoursTrend: '',
+    teamMemberName: '',
+    deadlineTitle: '',
+    deadlineDesc: '',
+    deadlineDay: '',
+    deadlineMonth: '',
+    deadlineColor: 'green',
+    feedbackText: '',
+    feedbackAuthorName: ''
+  });
   
   // Task & Project states
   const [activeProjectId, setActiveProjectId] = useState(null);
@@ -55,16 +69,39 @@ const SuperAdminProjects = () => {
 
   const handleAssignProject = async (e) => {
     e.preventDefault();
-    if (!newProjectName.trim() || !selectedUser) return;
+    if (!newProject.name.trim() || !selectedUser) return;
     
     try {
+      const payload = {
+        userId: selectedUser.id,
+        name: newProject.name,
+        priorityTaskTitle: newProject.priorityTaskTitle,
+        priorityTaskDesc: newProject.priorityTaskDesc,
+        priorityTaskDue: newProject.priorityTaskDue,
+        priorityTaskTimeRemaining: newProject.priorityTaskTimeRemaining,
+        hours: newProject.hours ? parseFloat(newProject.hours) : 0,
+        hoursTrend: newProject.hoursTrend,
+        teamMemberName: newProject.teamMemberName,
+        deadlineTitle: newProject.deadlineTitle,
+        deadlineDesc: newProject.deadlineDesc,
+        deadlineDay: newProject.deadlineDay,
+        deadlineMonth: newProject.deadlineMonth,
+        deadlineColor: newProject.deadlineColor,
+        feedbackText: newProject.feedbackText,
+        feedbackAuthorName: newProject.feedbackAuthorName
+      };
+
       const response = await fetch('http://localhost:5024/api/AdminProjects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: selectedUser.id, name: newProjectName })
+        body: JSON.stringify(payload)
       });
       if (response.ok) {
-        setNewProjectName('');
+        setNewProject({
+          name: '', priorityTaskTitle: '', priorityTaskDesc: '', priorityTaskDue: '', priorityTaskTimeRemaining: '',
+          hours: '', hoursTrend: '', teamMemberName: '', deadlineTitle: '', deadlineDesc: '', deadlineDay: '',
+          deadlineMonth: '', deadlineColor: 'green', feedbackText: '', feedbackAuthorName: ''
+        });
         setShowProjectModal(false);
         fetchUsers(); // Refresh data
       }
@@ -93,80 +130,6 @@ const SuperAdminProjects = () => {
     }
   };
 
-  const handleUpdateDetails = async (e) => {
-    e.preventDefault();
-    if (!activeProjectId) return;
-    try {
-      const response = await fetch(`http://localhost:5024/api/AdminProjects/${activeProjectId}/details`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newDetails)
-      });
-      if (response.ok) {
-        setShowDetailsModal(false);
-        fetchUsers();
-      }
-    } catch (error) {
-      console.error('Failed to update details:', error);
-    }
-  };
-
-  const handleAddTeamMember = async (e) => {
-    e.preventDefault();
-    if (!activeProjectId || !newTeamMember.name.trim()) return;
-    try {
-      const response = await fetch(`http://localhost:5024/api/AdminProjects/${activeProjectId}/team-members`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTeamMember)
-      });
-      if (response.ok) {
-        setNewTeamMember({ name: '' });
-        setShowTeamModal(false);
-        fetchUsers();
-      }
-    } catch (error) {
-      console.error('Failed to add team member:', error);
-    }
-  };
-
-  const handleAddDeadline = async (e) => {
-    e.preventDefault();
-    if (!activeProjectId || !newDeadline.title.trim()) return;
-    try {
-      const response = await fetch(`http://localhost:5024/api/AdminProjects/${activeProjectId}/deadlines`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newDeadline)
-      });
-      if (response.ok) {
-        setNewDeadline({ title: '', description: '', day: '', month: '', color: 'green' });
-        setShowDeadlineModal(false);
-        fetchUsers();
-      }
-    } catch (error) {
-      console.error('Failed to add deadline:', error);
-    }
-  };
-
-  const handleAddFeedback = async (e) => {
-    e.preventDefault();
-    if (!activeProjectId || !newFeedback.text.trim()) return;
-    try {
-      const response = await fetch(`http://localhost:5024/api/AdminProjects/${activeProjectId}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newFeedback)
-      });
-      if (response.ok) {
-        setNewFeedback({ text: '', authorName: '' });
-        setShowFeedbackModal(false);
-        fetchUsers();
-      }
-    } catch (error) {
-      console.error('Failed to add feedback:', error);
-    }
-  };
 
   if (loading) {
     return <div className="sap-loading">Loading Enterprise Data...</div>;
@@ -227,60 +190,38 @@ const SuperAdminProjects = () => {
                       <div className="sap-project-header">
                          <div className="sap-project-title">
                             <div className="sap-project-icon"><Folder size={20} /></div>
-                            <h3>{project.name}</h3>
+                            <div>
+                               <h3>{project.name}</h3>
+                               <span className="sap-project-meta">Created recently</span>
+                            </div>
                          </div>
-                         <span className="sap-status-badge">{project.status}</span>
+                         <span className={`sap-status-badge ${project.status === 'Completed' ? 'completed' : 'in-progress'}`}>
+                           {project.status || 'In Progress'}
+                         </span>
                       </div>
                       
-                      <div className="sap-project-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '0 20px', marginBottom: '15px' }}>
-                        <button className="sap-btn-icon" style={{background: 'rgba(255,255,255,0.05)', padding: '6px 10px'}} onClick={() => { 
-                          setActiveProjectId(project.id); 
-                          setNewDetails({
-                            priorityTaskTitle: project.priorityTaskTitle || '',
-                            priorityTaskDesc: project.priorityTaskDesc || '',
-                            priorityTaskDue: project.priorityTaskDue || '',
-                            priorityTaskTimeRemaining: project.priorityTaskTimeRemaining || '',
-                            hours: project.hours || 0,
-                            hoursTrend: project.hoursTrend || ''
-                          });
-                          setShowDetailsModal(true); 
-                        }}>Edit Details</button>
-                        <button className="sap-btn-icon" style={{background: 'rgba(255,255,255,0.05)', padding: '6px 10px'}} onClick={() => { setActiveProjectId(project.id); setShowTeamModal(true); }}>+ Team Member</button>
-                        <button className="sap-btn-icon" style={{background: 'rgba(255,255,255,0.05)', padding: '6px 10px'}} onClick={() => { setActiveProjectId(project.id); setShowDeadlineModal(true); }}>+ Deadline</button>
-                        <button className="sap-btn-icon" style={{background: 'rgba(255,255,255,0.05)', padding: '6px 10px'}} onClick={() => { setActiveProjectId(project.id); setShowFeedbackModal(true); }}>+ Feedback</button>
+                      <div className="sap-project-stats">
+                         <div className="sap-stat">
+                            <span className="sap-stat-value">{project.tasks?.length || 0}</span>
+                            <span className="sap-stat-label">Tasks</span>
+                         </div>
+                         <div className="sap-stat">
+                            <span className="sap-stat-value">{project.teamMembers?.length || 0}</span>
+                            <span className="sap-stat-label">Members</span>
+                         </div>
+                         <div className="sap-stat">
+                            <span className="sap-stat-value">{project.deadlines?.length || 0}</span>
+                            <span className="sap-stat-label">Deadlines</span>
+                         </div>
                       </div>
                       
-                      <div className="sap-tasks-section">
-                         <div className="sap-tasks-header">
-                            <h4>Tasks ({project.tasks?.length || 0})</h4>
-                            <button 
-                              className="sap-btn-icon" 
-                              onClick={() => {
-                                setActiveProjectId(project.id);
-                                setNewTask({ title: '', description: '' });
-                                setShowTaskModal(true);
-                              }}
-                            >
-                              <Plus size={14} /> Add Task
-                            </button>
-                         </div>
-                         
-                         {project.tasks && project.tasks.length > 0 ? (
-                           <ul className="sap-tasks-list">
-                             {project.tasks.map(task => (
-                               <li key={task.id} className="sap-task-item">
-                                  <CheckSquare size={16} className={`sap-task-icon ${task.statusClass}`} />
-                                  <div className="sap-task-details">
-                                     <span className="sap-task-title">{task.title}</span>
-                                     <span className="sap-task-desc">{task.description}</span>
-                                  </div>
-                                  <span className={`sap-task-status ${task.statusClass}`}>{task.status}</span>
-                               </li>
-                             ))}
-                           </ul>
-                         ) : (
-                           <div className="sap-empty-tasks">No tasks assigned yet.</div>
-                         )}
+                      <div className="sap-tasks-section" style={{ padding: '0', marginTop: 'auto' }}>
+                         <button 
+                           className="sap-btn-manage-tasks" 
+                           onClick={() => setKanbanProject(project)}
+                         >
+                            <CheckSquare size={18} /> Manage Project & Tasks
+                         </button>
                       </div>
                    </motion.div>
                  ))
@@ -306,22 +247,61 @@ const SuperAdminProjects = () => {
       <AnimatePresence>
         {showProjectModal && (
           <motion.div className="sap-modal-backdrop" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-            <motion.div className="sap-modal" initial={{scale: 0.9, y: 20}} animate={{scale: 1, y: 0}} exit={{scale: 0.9, y: 20}}>
+            <motion.div className="sap-modal" initial={{scale: 0.9, y: 20}} animate={{scale: 1, y: 0}} exit={{scale: 0.9, y: 20}} style={{ maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto' }}>
               <h2>Assign New Project</h2>
               <form onSubmit={handleAssignProject}>
                 <div className="sap-form-group">
-                  <label>Project Name</label>
-                  <input 
-                    type="text" 
-                    value={newProjectName} 
-                    onChange={e => setNewProjectName(e.target.value)} 
-                    placeholder="e.g. Q3 Marketing Campaign"
-                    autoFocus 
-                  />
+                  <label>Project Name *</label>
+                  <input type="text" value={newProject.name} onChange={e => setNewProject({...newProject, name: e.target.value})} placeholder="e.g. Q3 Marketing Campaign" required autoFocus />
                 </div>
-                <div className="sap-modal-actions">
+                
+                <h3 style={{ marginTop: '20px', fontSize: '16px', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>Initial Team Member (Optional)</h3>
+                <div className="sap-form-group">
+                  <label>Member Name</label>
+                  <input type="text" value={newProject.teamMemberName} onChange={e => setNewProject({...newProject, teamMemberName: e.target.value})} placeholder="e.g. Alice Smith" />
+                </div>
+
+                <h3 style={{ marginTop: '20px', fontSize: '16px', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>Initial Deadline (Optional)</h3>
+                <div className="sap-form-group">
+                  <label>Deadline Title</label>
+                  <input type="text" value={newProject.deadlineTitle} onChange={e => setNewProject({...newProject, deadlineTitle: e.target.value})} placeholder="e.g. Milestone Deadline" />
+                </div>
+                <div className="sap-form-group">
+                  <label>Description</label>
+                  <input type="text" value={newProject.deadlineDesc} onChange={e => setNewProject({...newProject, deadlineDesc: e.target.value})} placeholder="e.g. Important delivery" />
+                </div>
+                <div className="sap-form-group" style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label>Day</label>
+                    <input type="text" value={newProject.deadlineDay} onChange={e => setNewProject({...newProject, deadlineDay: e.target.value})} placeholder="e.g. 29" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label>Month</label>
+                    <input type="text" value={newProject.deadlineMonth} onChange={e => setNewProject({...newProject, deadlineMonth: e.target.value})} placeholder="e.g. AUG" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label>Color</label>
+                    <select value={newProject.deadlineColor} onChange={e => setNewProject({...newProject, deadlineColor: e.target.value})} style={{width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px'}}>
+                      <option value="green">Green</option>
+                      <option value="orange">Orange</option>
+                      <option value="red">Red</option>
+                    </select>
+                  </div>
+                </div>
+
+                <h3 style={{ marginTop: '20px', fontSize: '16px', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>Initial Feedback (Optional)</h3>
+                <div className="sap-form-group">
+                  <label>Feedback Text</label>
+                  <textarea value={newProject.feedbackText} onChange={e => setNewProject({...newProject, feedbackText: e.target.value})} placeholder="e.g. Great work so far!" rows="2"></textarea>
+                </div>
+                <div className="sap-form-group">
+                  <label>Author Name</label>
+                  <input type="text" value={newProject.feedbackAuthorName} onChange={e => setNewProject({...newProject, feedbackAuthorName: e.target.value})} placeholder="e.g. Manager" />
+                </div>
+
+                <div className="sap-modal-actions" style={{ position: 'sticky', bottom: '-20px', background: '#1a1a1a', padding: '20px 0 0 0', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                   <button type="button" className="sap-btn-secondary" onClick={() => setShowProjectModal(false)}>Cancel</button>
-                  <button type="submit" className="sap-btn-primary">Assign Project</button>
+                  <button type="submit" className="sap-btn-primary">Assign Full Project</button>
                 </div>
               </form>
             </motion.div>
@@ -360,126 +340,30 @@ const SuperAdminProjects = () => {
             </motion.div>
           </motion.div>
         )}
-        {showDetailsModal && (
-          <motion.div className="sap-modal-backdrop" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-            <motion.div className="sap-modal" initial={{scale: 0.9, y: 20}} animate={{scale: 1, y: 0}} exit={{scale: 0.9, y: 20}}>
-              <h2>Edit Project Details</h2>
-              <form onSubmit={handleUpdateDetails}>
-                <div className="sap-form-group">
-                  <label>Priority Task Title</label>
-                  <input type="text" value={newDetails.priorityTaskTitle} onChange={e => setNewDetails({...newDetails, priorityTaskTitle: e.target.value})} placeholder="e.g. Server Migration" />
-                </div>
-                <div className="sap-form-group">
-                  <label>Priority Task Description</label>
-                  <textarea value={newDetails.priorityTaskDesc} onChange={e => setNewDetails({...newDetails, priorityTaskDesc: e.target.value})} placeholder="Details..." rows="2"></textarea>
-                </div>
-                <div className="sap-form-group" style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label>Due Date</label>
-                    <input type="text" value={newDetails.priorityTaskDue} onChange={e => setNewDetails({...newDetails, priorityTaskDue: e.target.value})} placeholder="e.g. Aug 23" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label>Time Remaining</label>
-                    <input type="text" value={newDetails.priorityTaskTimeRemaining} onChange={e => setNewDetails({...newDetails, priorityTaskTimeRemaining: e.target.value})} placeholder="e.g. 46h remaining" />
-                  </div>
-                </div>
-                <div className="sap-form-group" style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label>Hours Devoted</label>
-                    <input type="number" step="0.1" value={newDetails.hours} onChange={e => setNewDetails({...newDetails, hours: parseFloat(e.target.value)})} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label>Hours Trend</label>
-                    <input type="text" value={newDetails.hoursTrend} onChange={e => setNewDetails({...newDetails, hoursTrend: e.target.value})} placeholder="e.g. ↗ 12%" />
-                  </div>
-                </div>
-                <div className="sap-modal-actions">
-                  <button type="button" className="sap-btn-secondary" onClick={() => setShowDetailsModal(false)}>Cancel</button>
-                  <button type="submit" className="sap-btn-primary">Save Details</button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
+      </AnimatePresence>
 
-        {showTeamModal && (
-          <motion.div className="sap-modal-backdrop" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-            <motion.div className="sap-modal" initial={{scale: 0.9, y: 20}} animate={{scale: 1, y: 0}} exit={{scale: 0.9, y: 20}}>
-              <h2>Add Team Member</h2>
-              <form onSubmit={handleAddTeamMember}>
-                <div className="sap-form-group">
-                  <label>Member Name</label>
-                  <input type="text" value={newTeamMember.name} onChange={e => setNewTeamMember({ name: e.target.value })} placeholder="e.g. Alice Smith" autoFocus />
-                </div>
-                <div className="sap-modal-actions">
-                  <button type="button" className="sap-btn-secondary" onClick={() => setShowTeamModal(false)}>Cancel</button>
-                  <button type="submit" className="sap-btn-primary">Add Member</button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {showDeadlineModal && (
-          <motion.div className="sap-modal-backdrop" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-            <motion.div className="sap-modal" initial={{scale: 0.9, y: 20}} animate={{scale: 1, y: 0}} exit={{scale: 0.9, y: 20}}>
-              <h2>Add Deadline</h2>
-              <form onSubmit={handleAddDeadline}>
-                <div className="sap-form-group">
-                  <label>Title</label>
-                  <input type="text" value={newDeadline.title} onChange={e => setNewDeadline({...newDeadline, title: e.target.value})} placeholder="e.g. Milestone Deadline" autoFocus />
-                </div>
-                <div className="sap-form-group">
-                  <label>Description</label>
-                  <input type="text" value={newDeadline.description} onChange={e => setNewDeadline({...newDeadline, description: e.target.value})} placeholder="e.g. Important delivery" />
-                </div>
-                <div className="sap-form-group" style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label>Day</label>
-                    <input type="text" value={newDeadline.day} onChange={e => setNewDeadline({...newDeadline, day: e.target.value})} placeholder="e.g. 29" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label>Month</label>
-                    <input type="text" value={newDeadline.month} onChange={e => setNewDeadline({...newDeadline, month: e.target.value})} placeholder="e.g. AUG" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label>Color</label>
-                    <select value={newDeadline.color} onChange={e => setNewDeadline({...newDeadline, color: e.target.value})} style={{width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px'}}>
-                      <option value="green">Green</option>
-                      <option value="orange">Orange</option>
-                      <option value="red">Red</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="sap-modal-actions">
-                  <button type="button" className="sap-btn-secondary" onClick={() => setShowDeadlineModal(false)}>Cancel</button>
-                  <button type="submit" className="sap-btn-primary">Add Deadline</button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {showFeedbackModal && (
-          <motion.div className="sap-modal-backdrop" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
-            <motion.div className="sap-modal" initial={{scale: 0.9, y: 20}} animate={{scale: 1, y: 0}} exit={{scale: 0.9, y: 20}}>
-              <h2>Add Feedback</h2>
-              <form onSubmit={handleAddFeedback}>
-                <div className="sap-form-group">
-                  <label>Feedback Text</label>
-                  <textarea value={newFeedback.text} onChange={e => setNewFeedback({...newFeedback, text: e.target.value})} placeholder="e.g. Great work so far!" rows="3" autoFocus></textarea>
-                </div>
-                <div className="sap-form-group">
-                  <label>Author Name</label>
-                  <input type="text" value={newFeedback.authorName} onChange={e => setNewFeedback({...newFeedback, authorName: e.target.value})} placeholder="e.g. Manager" />
-                </div>
-                <div className="sap-modal-actions">
-                  <button type="button" className="sap-btn-secondary" onClick={() => setShowFeedbackModal(false)}>Cancel</button>
-                  <button type="submit" className="sap-btn-primary">Add Feedback</button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
+      <AnimatePresence>
+        {kanbanProject && (
+          <ProjectKanbanBoard 
+            project={kanbanProject} 
+            onClose={() => setKanbanProject(null)} 
+            onTasksChanged={() => {
+              // Re-fetch users to get updated tasks, then update the selected user and the kanban project
+              fetch('http://localhost:5024/api/AdminProjects/users')
+                .then(res => res.json())
+                .then(data => {
+                  setUsers(data);
+                  const updatedUser = data.find(u => u.id === selectedUser.id);
+                  if (updatedUser) {
+                    setSelectedUser(updatedUser);
+                    const updatedProject = updatedUser.projects.find(p => p.id === kanbanProject.id);
+                    if (updatedProject) {
+                      setKanbanProject(updatedProject);
+                    }
+                  }
+                });
+            }}
+          />
         )}
       </AnimatePresence>
     </div>
