@@ -16,15 +16,12 @@ function App() {
     return localStorage.getItem('isAdmin') === 'true';
   });
 
-  const [showAdminPanel, setShowAdminPanel] = useState(() => {
-    return localStorage.getItem('isAdmin') === 'true'; // Default to admin panel if they are admin
-  });
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   const handleLogin = (user) => {
     setIsAuthenticated(true);
     if (user && user.isAdmin) {
       setIsAdmin(true);
-      setShowAdminPanel(true);
     }
   };
 

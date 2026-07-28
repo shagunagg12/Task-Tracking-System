@@ -103,6 +103,10 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
+  if (isAdmin) {
+    menuItems.push({ id: 'AdminPanel', icon: '🛡️', text: 'Admin Panel' });
+  }
+
   return (
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
       {/* LEFT SIDEBAR */}
@@ -117,7 +121,13 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
               <li 
                 key={item.id}
                 className={`menu-item ${activeMenu === item.id ? 'active' : ''}`}
-                onClick={() => setActiveMenu(item.id)}
+                onClick={() => {
+                  if (item.id === 'AdminPanel') {
+                    onSwitchToAdmin();
+                  } else {
+                    setActiveMenu(item.id);
+                  }
+                }}
               >
                 <span className="menu-icon">{item.icon}</span>
                 <span className="menu-text">{item.text}</span>
@@ -147,30 +157,6 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {isAdmin && (
-                <button 
-                  onClick={onSwitchToAdmin}
-                  style={{ 
-                    background: 'transparent', 
-                    border: '1px solid var(--border-color)', 
-                    color: 'var(--text-main)', 
-                    cursor: 'pointer', 
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                  title="Switch to Admin Panel"
-                >
-                  🛡️ Admin Panel
-                </button>
-              )}
               <button 
                 onClick={() => {
                   localStorage.removeItem('token');
