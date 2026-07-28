@@ -18,6 +18,36 @@ namespace Backend.Controllers
             _context = context;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized();
+            }
+
+            var dbUsers = await _context.Users
+                .Where(u => u.Id != currentUserId)
+                .Select(u => new
+                {
+                    id = u.Id,
+                    name = u.FullName,
+                    email = u.Email
+                })
+                .ToListAsync();
+
+            var users = dbUsers.Select(u => new
+            {
+                id = u.id,
+                name = string.IsNullOrEmpty(u.name) ? u.email : u.name,
+                email = u.email,
+                avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(u.name) ? u.email : u.name)}&background=random"
+            });
+
+            return Ok(users);
+        }
+
         [HttpGet("search")]
         public async Task<IActionResult> SearchUsers([FromQuery] string q)
         {
@@ -34,16 +64,23 @@ namespace Backend.Controllers
 
             var query = q.ToLower();
             
-            var users = await _context.Users
+            var dbUsers = await _context.Users
                 .Where(u => u.Id != currentUserId && u.FullName.ToLower().Contains(query))
                 .Select(u => new
                 {
                     id = u.Id,
                     name = u.FullName,
-                    avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random"
+                    email = u.Email
                 })
                 .Take(10)
                 .ToListAsync();
+
+            var users = dbUsers.Select(u => new
+            {
+                id = u.id,
+                name = string.IsNullOrEmpty(u.name) ? u.email : u.name,
+                avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(u.name) ? u.email : u.name)}&background=random"
+            });
 
             return Ok(users);
         }

@@ -3,7 +3,7 @@ import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
-import Chats from '../chats/Chats';
+import ChatLayout from '../chat/ChatLayout';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -96,10 +96,10 @@ const DashboardLayout = () => {
     { id: 'Projects', icon: '💼', text: 'Projects' },
     { id: 'Standings', icon: '🏆', text: 'Standings' },
     { id: 'Calendar', icon: '📅', text: 'Calendar' },
-    { id: 'Chats', icon: '💬', text: 'Chats' },
     { id: 'Achievements', icon: '🌟', text: 'Achievements' },
     { id: 'Rewards', icon: '🎁', text: 'Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
+    { id: 'Chat', icon: '💬', text: 'Chat' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
@@ -197,15 +197,17 @@ const DashboardLayout = () => {
           </div>
         </header>
 
-        <div className={`content-scroll ${activeMenu === 'Chats' ? 'no-padding' : ''}`}>
+        <div className="content-scroll">
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
           ) : activeMenu === 'Projects' ? (
             <AssignedProjects />
           ) : activeMenu === 'Report' ? (
             <Report />
-          ) : activeMenu === 'Chats' ? (
-            <Chats />
+          ) : activeMenu === 'Chat' ? (
+            <div style={{ height: 'calc(100vh - 120px)', padding: '0 20px 20px 20px' }}>
+              <ChatLayout />
+            </div>
           ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
@@ -550,7 +552,7 @@ const DashboardLayout = () => {
         </div>
 
       </aside>
-      {activeMenu !== 'Chats' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
+      <Chatbot isSidebarOpen={isRightSidebarOpen} />
     </div>
   );
 };
