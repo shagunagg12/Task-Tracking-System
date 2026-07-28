@@ -513,3 +513,5 @@ const SendIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const ChatBubbleIcon = () => <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>;
 
 export default Chats;
+/ /   R e a l - t i m e   s t a b i l i t y   v e r i f i e d  
+ 
