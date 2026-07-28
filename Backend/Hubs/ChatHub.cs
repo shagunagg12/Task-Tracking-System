@@ -4,8 +4,11 @@ using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace Backend.Hubs
 {
+    [Authorize]
     public class ChatHub : Hub
     {
         private readonly ApplicationDbContext _context;
@@ -30,12 +33,13 @@ namespace Backend.Hubs
             var userIdString = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
             {
-                // Unauthenticated or invalid user
+                Console.WriteLine("SendMessage failed: Unauthenticated user.");
                 return;
             }
 
             if (!int.TryParse(chatSessionId, out int sessionId))
             {
+                Console.WriteLine($"SendMessage failed: Invalid chatSessionId {chatSessionId}.");
                 return;
             }
 
@@ -64,8 +68,19 @@ namespace Backend.Hubs
                 .Select(m => m.UserId.ToString())
                 .ToListAsync();
 
-            // Broadcast to all members of the chat session
+            // Broadcast to all members of the chat session directly (if User ID mapping works)
             await Clients.Users(sessionMembers).SendAsync("ReceiveMessage", new
+            {
+                id = message.Id,
+                chatSessionId = message.ChatSessionId,
+                senderId = message.SenderId,
+                senderName = senderName,
+                text = message.Text,
+                createdAt = message.CreatedAt
+            });
+
+            // Fallback: Also broadcast to the SignalR group explicitly to ensure the active chat viewers receive it immediately
+            await Clients.Group(chatSessionId).SendAsync("ReceiveMessage", new
             {
                 id = message.Id,
                 chatSessionId = message.ChatSessionId,
