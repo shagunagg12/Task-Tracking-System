@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,7 +75,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ws/chat"))
                 {
                     context.Token = accessToken;
                 }
@@ -92,7 +93,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSignalR();
+builder.Services.AddSingleton<Backend.WebSockets.WebSocketManager>();
+builder.Services.AddTransient<Backend.WebSockets.ChatWebSocketHandler>();
 
 var app = builder.Build();
 
@@ -101,7 +103,32 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<Backend.Hubs.ChatHub>("/chathub");
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromMinutes(2)
+});
+
+app.Map("/ws/chat", async (HttpContext context, Backend.WebSockets.ChatWebSocketHandler handler) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        var result = await context.AuthenticateAsync();
+        if (result.Succeeded)
+        {
+            context.User = result.Principal;
+            using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+            await handler.HandleAsync(context, webSocket);
+        }
+        else
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        }
+    }
+    else
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+    }
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

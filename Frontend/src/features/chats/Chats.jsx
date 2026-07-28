@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import * as signalR from '@microsoft/signalr';
-import signalRService from './signalrService';
+import webSocketService from './webSocketService';
 import './Chats.css';
 
 const Chats = () => {
@@ -38,11 +37,11 @@ const Chats = () => {
   };
   const myUserId = getUserId();
 
-  // Initialize SignalR Connection
+  // Initialize WebSocket Connection
   useEffect(() => {
-    signalRService.startConnection();
+    webSocketService.startConnection();
 
-    const unsubscribe = signalRService.onReceiveMessage((message) => {
+    const unsubscribe = webSocketService.onReceiveMessage((message) => {
       try {
         const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const formattedMessage = { ...message, time: formattedTime };
@@ -218,13 +217,13 @@ const Chats = () => {
     if (activeChatId) {
        // Leave old group if any
        if (currentChatIdRef.current) {
-          signalRService.leaveChat(currentChatIdRef.current);
+          webSocketService.leaveChat(currentChatIdRef.current);
        }
        
        currentChatIdRef.current = activeChatId;
        
        // Join new group
-       signalRService.joinChat(activeChatId);
+       webSocketService.joinChat(activeChatId);
        
        setMessages([]);
        setSkip(0);
@@ -257,7 +256,7 @@ const Chats = () => {
     if (e) e.preventDefault();
     if (inputText.trim() && activeChatId) {
       try {
-        await signalRService.sendMessage(activeChatId, inputText);
+        await webSocketService.sendMessage(activeChatId, inputText);
         setInputText('');
       } catch (err) {
         console.error("Error sending message:", err);
