@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DashboardLayout from './features/dashboard/DashboardLayout';
+import SuperAdminLayout from './features/admin/SuperAdminLayout';
 import Preloader from './components/common/Preloader';
 import Login from './components/Login';
 import './styles/index.css';
@@ -11,13 +12,24 @@ function App() {
     return !!localStorage.getItem('token');
   });
 
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return localStorage.getItem('isAdmin') === 'true';
+  });
+
+  const handleLogin = (user) => {
+    setIsAuthenticated(true);
+    if (user && user.isAdmin) {
+      setIsAdmin(true);
+    }
+  };
+
   return (
     <>
       {loading && <Preloader onFinish={() => setLoading(false)} />}
       {!isAuthenticated ? (
-        <Login onLogin={() => setIsAuthenticated(true)} />
+        <Login onLogin={handleLogin} />
       ) : (
-        <DashboardLayout />
+        isAdmin ? <SuperAdminLayout /> : <DashboardLayout />
       )}
     </>
   );

@@ -60,25 +60,54 @@ namespace Backend.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            bool isAdmin = false;
+            int userId = 0;
+            string userFullName = string.Empty;
+            string userEmail = dto.Email;
+            
+            // 1. Check Admins Table First
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == dto.Email);
+            if (admin != null)
             {
-                return Unauthorized(new { message = "Invalid email or password." });
+                if (!BCrypt.Net.BCrypt.Verify(dto.Password, admin.PasswordHash))
+                {
+                    return Unauthorized(new { message = "Invalid email or password." });
+                }
+                isAdmin = true;
+                userId = admin.Id;
+                userFullName = "Admin";
+            }
+            else
+            {
+                // 2. Fallback to normal Users table
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+                if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+                {
+                    return Unauthorized(new { message = "Invalid email or password." });
+                }
+                userId = user.Id;
+                userFullName = user.FullName;
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "super_secret_fallback_key_that_is_long_enough_12345!";
             var key = Encoding.ASCII.GetBytes(jwtSecret);
 
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, userEmail),
+                new Claim(ClaimTypes.Name, userFullName)
+            };
+
+            if (isAdmin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, user.FullName)
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -88,7 +117,7 @@ namespace Backend.Controllers
             return Ok(new
             {
                 token = tokenHandler.WriteToken(token),
-                user = new { user.Id, user.FullName, user.Email }
+                user = new { Id = userId, FullName = userFullName, Email = userEmail, isAdmin = isAdmin }
             });
         }
     }

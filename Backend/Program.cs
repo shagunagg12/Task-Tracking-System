@@ -137,6 +137,21 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (!context.Admins.Any(a => a.Email == "connect2rachit882@gmail.com"))
+    {
+        var admin = new Backend.Models.Admin
+        {
+            Email = "connect2rachit882@gmail.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rachit@12")
+        };
+        context.Admins.Add(admin);
+        context.SaveChanges();
+    }
+}
+
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)

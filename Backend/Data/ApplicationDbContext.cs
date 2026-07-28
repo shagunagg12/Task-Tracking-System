@@ -11,6 +11,7 @@ namespace Backend.Data
         {
         }
 
+        public DbSet<Admin> Admins { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserProfile> Profiles { get; set; }
         public DbSet<Project> Projects { get; set; }

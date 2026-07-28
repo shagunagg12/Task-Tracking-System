@@ -39,6 +39,11 @@ export default function Login({ onLogin }) {
       } else {
         // Save the JWT token
         localStorage.setItem('token', data.token);
+        if (data.user && data.user.isAdmin) {
+          localStorage.setItem('isAdmin', 'true');
+        } else {
+          localStorage.removeItem('isAdmin');
+        }
         if (onLogin) onLogin(data.user);
       }
     } catch (err) {
