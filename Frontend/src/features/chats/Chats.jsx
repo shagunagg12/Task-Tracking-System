@@ -11,6 +11,10 @@ const Chats = () => {
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'groups', 'direct'
   const [connection, setConnection] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   
   const [hasMore, setHasMore] = useState(true);
   const [skip, setSkip] = useState(0);
@@ -96,35 +100,79 @@ const Chats = () => {
   }, [connection]);
 
   // Fetch Sessions
-  useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5024/api/chats/sessions', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setConversations(data.map(c => ({
-             ...c,
-             unread: 0
-          })));
-          if (data.length > 0) {
-            setActiveChatId(data[0].id);
-          }
+  const fetchSessions = useCallback(async (setActive = true) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5024/api/chats/sessions', {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-      } catch (error) {
-        console.error('Error fetching chat sessions:', error);
-      } finally {
-        setIsLoading(false);
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setConversations(data.map(c => ({
+           ...c,
+           unread: 0
+        })));
+        if (setActive && data.length > 0 && !activeChatId) {
+          setActiveChatId(data[0].id);
+        }
       }
-    };
+    } catch (error) {
+      console.error('Error fetching chat sessions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeChatId]);
 
-    fetchSessions();
-  }, []);
+  useEffect(() => {
+    fetchSessions(true);
+  }, [fetchSessions]);
+
+  // Search Users
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery.trim().length > 0) {
+        setIsSearching(true);
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`http://localhost:5024/api/users/search?q=${encodeURIComponent(searchQuery)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            setSearchResults(await response.json());
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleStartDM = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5024/api/chats/dm/${userId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        await fetchSessions(false); // Refresh list
+        setActiveChatId(data.sessionId);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    } catch (e) {
+      console.error("Error starting DM:", e);
+    }
+  };
 
   const loadMessages = async (chatId, currentSkip) => {
     try {
@@ -257,7 +305,12 @@ const Chats = () => {
         <div className="chats-search">
           <div className="search-input-wrapper">
             <SearchIcon />
-            <input type="text" placeholder="Search chats..." />
+            <input 
+              type="text" 
+              placeholder="Search users or chats..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
         
@@ -278,7 +331,35 @@ const Chats = () => {
         </div>
 
         <div className="chats-list">
-          {filteredConversations.length === 0 ? (
+          {searchQuery.trim().length > 0 ? (
+            <div className="search-results">
+              {isSearching ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Searching...</div>
+              ) : searchResults.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found.</div>
+              ) : (
+                searchResults.map(user => (
+                  <div 
+                    key={user.id} 
+                    className="chat-item"
+                    onClick={() => handleStartDM(user.id)}
+                  >
+                    <div className="chat-avatar-container">
+                      <img src={user.avatar} alt={user.name} className="chat-avatar" />
+                    </div>
+                    <div className="chat-item-content">
+                      <div className="chat-item-top">
+                         <span className="chat-name">{user.name}</span>
+                      </div>
+                      <div className="chat-item-bottom">
+                         <span className="chat-last-message">Start a direct message</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : filteredConversations.length === 0 ? (
             <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No chats found.</div>
           ) : (
             filteredConversations.map(chat => (
