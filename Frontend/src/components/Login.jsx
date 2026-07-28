@@ -13,7 +13,8 @@ export default function Login({ onLogin }) {
     setError(null);
     setSuccess(null);
 
-    const endpoint = isRegistering ? 'http://localhost:5024/api/auth/register' : 'http://localhost:5024/api/auth/login';
+    const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+    const endpoint = isRegistering ? `${API_URL}/auth/register` : `${API_URL}/auth/login`;
     const bodyData = isRegistering 
       ? { fullName, email, password } 
       : { email, password };
