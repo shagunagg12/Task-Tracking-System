@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Building2, Shield, CheckSquare, 
   Briefcase, Calendar, Clock, DollarSign, Star, 
   BarChart2, LineChart, Bell, FileText, Activity, Settings, 
-  Search, Plus, ChevronDown, Moon, Sun, X
+  Search, Plus, ChevronDown, Moon, Sun, X, CheckCircle2,
+  AlertCircle, Briefcase as BriefcaseIcon, ChevronRight, Inbox
 } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 import './SuperAdminLayout.css';
@@ -12,18 +13,101 @@ import SuperAdminProjects from './SuperAdminProjects';
 import SuperAdminUsers from './SuperAdminUsers';
 import SuperAdminReports from './SuperAdminReports';
 
+// ─── Toast Notification Component ────────────────────────────────────────────
+const ToastNotification = ({ toast, onDismiss }) => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Animate in
+    const t1 = setTimeout(() => setVisible(true), 50);
+    // Auto-dismiss after 5s
+    const t2 = setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => onDismiss(toast.id), 400);
+    }, 5000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [toast.id, onDismiss]);
+
+  const typeConfig = {
+    task_update:    { icon: <CheckCircle2 size={20} />, color: '#bef264', label: 'Task Update' },
+    project_update: { icon: <BriefcaseIcon size={20} />, color: '#60a5fa', label: 'Project Update' },
+    default:        { icon: <AlertCircle size={20} />, color: '#fbbf24', label: 'Activity' },
+  };
+  const cfg = typeConfig[toast.type] || typeConfig.default;
+  const time = toast.createdAt ? new Date(toast.createdAt) : new Date();
+
+  return (
+    <div className={`sa-toast ${visible ? 'sa-toast-visible' : ''}`}>
+      <div className="sa-toast-accent" style={{ background: cfg.color }} />
+      <div className="sa-toast-icon" style={{ color: cfg.color }}>
+        {cfg.icon}
+      </div>
+      <div className="sa-toast-body">
+        <div className="sa-toast-label" style={{ color: cfg.color }}>{cfg.label}</div>
+        <div className="sa-toast-title">{toast.title}</div>
+        <div className="sa-toast-msg">{toast.message}</div>
+        <div className="sa-toast-time">{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+      </div>
+      <button className="sa-toast-close" onClick={() => { setVisible(false); setTimeout(() => onDismiss(toast.id), 400); }}>
+        <X size={14} />
+      </button>
+      <div className="sa-toast-progress" style={{ '--toast-color': cfg.color }} />
+    </div>
+  );
+};
+
+// ─── Notification Panel Item ──────────────────────────────────────────────────
+const NotifItem = ({ notif }) => {
+  const typeConfig = {
+    task_update:    { icon: <CheckCircle2 size={16} />, color: '#bef264', label: 'Task' },
+    project_update: { icon: <BriefcaseIcon size={16} />, color: '#60a5fa', label: 'Project' },
+    default:        { icon: <AlertCircle size={16} />, color: '#fbbf24', label: 'System' },
+  };
+  const cfg = typeConfig[notif.type] || typeConfig.default;
+  const time = notif.createdAt ? new Date(notif.createdAt) : new Date();
+  const timeStr = time.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div className="sa-notif-item">
+      <div className="sa-notif-item-icon" style={{ background: `${cfg.color}18`, color: cfg.color }}>
+        {cfg.icon}
+      </div>
+      <div className="sa-notif-item-body">
+        <div className="sa-notif-item-header">
+          <span className="sa-notif-item-badge" style={{ background: `${cfg.color}20`, color: cfg.color }}>{cfg.label}</span>
+          <span className="sa-notif-item-time">{timeStr}</span>
+        </div>
+        <div className="sa-notif-item-title">{notif.title}</div>
+        <div className="sa-notif-item-msg">{notif.message}</div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Layout ─────────────────────────────────────────────────────────────
 const SuperAdminLayout = ({ onSwitchToUser }) => {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = useRef(null);
+  const toastIdRef = useRef(0);
+
+  const addToast = (notification) => {
+    const id = ++toastIdRef.current;
+    setToasts(prev => [...prev, { ...notification, id }]);
+  };
+
+  const dismissToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   useEffect(() => {
-    // Determine the base URL for SignalR
     const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const backendUrl = isDevelopment ? 'http://localhost:5024' : window.location.origin;
 
-    // Fetch initial notifications from DB
     const fetchNotifications = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -33,6 +117,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
         if (res.ok) {
           const data = await res.json();
           setNotifications(data);
+          setUnreadCount(data.length);
         }
       } catch (err) {
         console.error("Failed to fetch initial notifications", err);
@@ -47,20 +132,34 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
 
     connection.on("ReceiveNotification", (notification) => {
       setNotifications(prev => [notification, ...prev].slice(0, 50));
-      // Optional: Add a toast popup here if desired
+      setUnreadCount(prev => prev + 1);
+      addToast(notification);
     });
 
     connection.start()
-      .then(() => console.log("Connected to Admin Dashboard Hub for Notifications"))
+      .then(() => console.log("Connected to Admin Dashboard Hub"))
       .catch(err => console.error("SignalR Connection Error: ", err));
 
-    return () => {
-      connection.stop();
+    return () => { connection.stop(); };
+  }, []);
+
+  // Close notification panel on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
     };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const toggleTheme = () => setIsDarkTheme(!isDarkTheme);
-  const unreadCount = notifications.length;
+
+  const handleOpenNotifications = () => {
+    setShowNotifications(!showNotifications);
+    setUnreadCount(0); // mark as read
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -146,36 +245,61 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
             <button className="sa-icon-btn" onClick={toggleTheme}>
               {isDarkTheme ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <div style={{ position: 'relative' }}>
-              <button className="sa-icon-btn" onClick={() => setShowNotifications(!showNotifications)}>
+
+            {/* ── Notification Bell ── */}
+            <div style={{ position: 'relative' }} ref={notifRef}>
+              <button className="sa-icon-btn" onClick={handleOpenNotifications}>
                 <Bell size={20} />
-                {unreadCount > 0 && <span className="sa-notification-dot"></span>}
+                {unreadCount > 0 && (
+                  <span className="sa-notification-dot">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </button>
-              
+
               {showNotifications && (
-                <div className="sa-notifications-dropdown" style={{
-                  position: 'absolute', top: '100%', right: '0', width: '320px', 
-                  background: 'var(--sa-card)', border: '1px solid var(--sa-border)', 
-                  borderRadius: '12px', padding: '16px', zIndex: 100,
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                     <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--sa-text)' }}>Notifications</h3>
-                     <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', color: 'var(--sa-muted)', cursor: 'pointer' }}><X size={16} /></button>
+                <div className="sa-notif-panel">
+                  {/* Panel Header */}
+                  <div className="sa-notif-panel-header">
+                    <div>
+                      <h3 className="sa-notif-panel-title">Notifications</h3>
+                      <p className="sa-notif-panel-sub">{notifications.length} total activities</p>
+                    </div>
+                    <button className="sa-notif-close-btn" onClick={() => setShowNotifications(false)}>
+                      <X size={16} />
+                    </button>
                   </div>
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+
+                  {/* Filter Tabs */}
+                  <div className="sa-notif-tabs">
+                    <button className="sa-notif-tab sa-notif-tab-active">All</button>
+                    <button className="sa-notif-tab">Tasks</button>
+                    <button className="sa-notif-tab">Projects</button>
+                  </div>
+
+                  {/* Notification List */}
+                  <div className="sa-notif-list">
                     {notifications.length === 0 ? (
-                       <p style={{ color: 'var(--sa-muted)', fontSize: '0.85rem' }}>No new notifications.</p>
+                      <div className="sa-notif-empty">
+                        <Inbox size={36} style={{ opacity: 0.3, marginBottom: '8px' }} />
+                        <p>No notifications yet.</p>
+                        <span>User activity will appear here in real-time.</span>
+                      </div>
                     ) : (
-                       notifications.map((notif, idx) => (
-                         <div key={idx} style={{ padding: '10px', borderBottom: '1px solid var(--sa-border)', fontSize: '0.85rem' }}>
-                           <strong style={{ color: 'var(--sa-primary)', display: 'block', marginBottom: '4px' }}>{notif.title}</strong>
-                           <span style={{ color: 'var(--sa-text)' }}>{notif.message}</span>
-                           <div style={{ color: 'var(--sa-muted)', fontSize: '0.75rem', marginTop: '4px' }}>{new Date(notif.time).toLocaleTimeString()}</div>
-                         </div>
-                       ))
+                      notifications.map((notif, idx) => (
+                        <NotifItem key={idx} notif={notif} />
+                      ))
                     )}
                   </div>
+
+                  {/* Panel Footer */}
+                  {notifications.length > 0 && (
+                    <div className="sa-notif-panel-footer">
+                      <button className="sa-notif-view-all">
+                        View All Activity <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -209,6 +333,13 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
              </div>
            )}
         </main>
+      </div>
+
+      {/* ── TOAST CONTAINER (bottom-right) ── */}
+      <div className="sa-toast-container">
+        {toasts.map(toast => (
+          <ToastNotification key={toast.id} toast={toast} onDismiss={dismissToast} />
+        ))}
       </div>
     </div>
   );
