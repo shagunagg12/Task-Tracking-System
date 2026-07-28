@@ -53,59 +53,60 @@ const Chats = () => {
 
   useEffect(() => {
     if (connection) {
+      // Bind event handler BEFORE starting the connection
+      connection.on('ReceiveMessage', (message) => {
+        console.log('SignalR ReceiveMessage:', message);
+        const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const formattedMessage = { ...message, time: formattedTime };
+
+        if (message.chatSessionId.toString() === currentChatIdRef.current?.toString()) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === formattedMessage.id)) return prev;
+            return [...prev, formattedMessage];
+          });
+          
+          // Update last message in sidebar
+          setConversations(prev => prev.map(chat => {
+            if (chat.id.toString() === message.chatSessionId.toString()) {
+              return { ...chat, lastMessage: message.text, time: formattedTime };
+            }
+            return chat;
+          }));
+          
+          setTimeout(scrollToBottom, 100);
+        } else {
+           // Update unread count or last message in sidebar for other chats
+           setConversations(prev => prev.map(chat => {
+            if (chat.id.toString() === message.chatSessionId.toString()) {
+              return { 
+                ...chat, 
+                lastMessage: message.text, 
+                time: formattedTime,
+                unread: (chat.unread || 0) + 1
+              };
+            }
+            return chat;
+          }));
+        }
+      });
+
       connection.start()
         .then(() => {
           console.log('Connected to SignalR');
-          
           if (currentChatIdRef.current) {
             connection.invoke('JoinChat', currentChatIdRef.current.toString()).catch(console.error);
           }
-
-          connection.on('ReceiveMessage', (message) => {
-            const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const formattedMessage = { ...message, time: formattedTime };
-
-            if (message.chatSessionId.toString() === currentChatIdRef.current?.toString()) {
-              setMessages(prev => {
-                // If message already exists, don't add it
-                if (prev.some(m => m.id === formattedMessage.id)) return prev;
-                return [...prev, formattedMessage];
-              });
-              
-              // Update last message in sidebar
-              setConversations(prev => prev.map(chat => {
-                if (chat.id.toString() === message.chatSessionId.toString()) {
-                  return { ...chat, lastMessage: message.text, time: formattedTime };
-                }
-                return chat;
-              }));
-              
-              // Only auto scroll to bottom if we are receiving a new message (not loading old ones)
-              setTimeout(scrollToBottom, 100);
-            } else {
-               // Update unread count or last message in sidebar for other chats
-               setConversations(prev => prev.map(chat => {
-                if (chat.id.toString() === message.chatSessionId.toString()) {
-                  return { 
-                    ...chat, 
-                    lastMessage: message.text, 
-                    time: formattedTime,
-                    unread: (chat.unread || 0) + 1
-                  };
-                }
-                return chat;
-              }));
-            }
-          });
         })
-        .catch(e => console.log('Connection failed: ', e));
+        .catch(e => console.error('Connection failed: ', e));
 
       return () => {
          connection.off('ReceiveMessage');
          connection.stop();
-      }
+      };
     }
   }, [connection]);
+              
+
 
   // Fetch Sessions
   const fetchSessions = useCallback(async (setActive = true) => {
