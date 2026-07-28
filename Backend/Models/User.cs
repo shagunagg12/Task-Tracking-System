@@ -16,6 +16,12 @@ namespace Backend.Models
         [Column("Password")]
         public string PasswordHash { get; set; } = string.Empty;
 
+        public string? GoogleAccessToken { get; set; }
+        public string? GoogleRefreshToken { get; set; }
+        
+        [Column("ProfilePictureUrl")]
+        public string? ProfilePictureUrl { get; set; }
+
         // Navigation property
         public UserProfile? Profile { get; set; }
         public ICollection<Project> Projects { get; set; } = new List<Project>();

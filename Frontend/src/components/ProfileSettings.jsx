@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function ProfileSettings() {
   const [profile, setProfile] = useState({
@@ -7,13 +7,17 @@ export default function ProfileSettings() {
     designation: '',
     department: '',
     location: '',
-    bio: ''
+    bio: '',
+    profilePictureUrl: ''
   });
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
+  
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchProfile();
@@ -35,7 +39,8 @@ export default function ProfileSettings() {
           designation: data.designation || '',
           department: data.department || '',
           location: data.location || '',
-          bio: data.bio || ''
+          bio: data.bio || '',
+          profilePictureUrl: data.profilePictureUrl || ''
         });
       } else {
         setError("Could not load profile data.");
@@ -52,6 +57,47 @@ export default function ProfileSettings() {
       ...profile,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setError(null);
+    setMessage(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5024/api/profile/picture', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(prev => ({ ...prev, profilePictureUrl: data.url }));
+        localStorage.setItem('profilePic', data.url);
+        
+        // Dispatch an event to update the sidebar instantly without reload
+        window.dispatchEvent(new Event('profilePicUpdated'));
+        
+        setMessage("Profile picture updated successfully!");
+      } else {
+        const errData = await res.text();
+        setError(`Failed to upload image: ${errData}`);
+      }
+    } catch (err) {
+      setError("Failed to upload image. Please check your connection.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -94,6 +140,40 @@ export default function ProfileSettings() {
       {message && <div style={{ backgroundColor: 'rgba(81, 207, 102, 0.1)', color: '#51cf66', padding: '12px', borderRadius: '8px', marginBottom: '20px' }}>{message}</div>}
       {error && <div style={{ backgroundColor: 'rgba(255, 107, 107, 0.1)', color: '#ff6b6b', padding: '12px', borderRadius: '8px', marginBottom: '20px' }}>{error}</div>}
       
+      <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <img 
+          src={profile.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&background=random&size=128`} 
+          alt="Profile" 
+          style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }} 
+        />
+        <div>
+          <input 
+            type="file" 
+            accept="image/*" 
+            ref={fileInputRef} 
+            onChange={handleImageUpload} 
+            style={{ display: 'none' }} 
+          />
+          <button 
+            type="button" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingImage}
+            style={{ 
+              padding: '8px 16px', 
+              backgroundColor: 'var(--bg-card)', 
+              color: 'var(--text-main)', 
+              border: '1px solid var(--border-color)', 
+              borderRadius: '6px', 
+              cursor: uploadingImage ? 'not-allowed' : 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            {uploadingImage ? 'Uploading...' : 'Change Picture'}
+          </button>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>JPG, GIF or PNG. Max size of 800K</p>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxWidth: '800px' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <label style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--text-muted)' }}>Full Name</label>

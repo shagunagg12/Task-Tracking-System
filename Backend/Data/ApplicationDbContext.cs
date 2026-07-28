@@ -18,6 +18,8 @@ namespace Backend.Data
         public DbSet<ProjectDeadline> ProjectDeadlines { get; set; }
         public DbSet<ProjectFeedback> ProjectFeedbacks { get; set; }
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
+        public DbSet<Meeting> Meetings { get; set; }
+        public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -61,6 +63,24 @@ namespace Backend.Data
                 .HasMany(p => p.TeamMembers)
                 .WithOne(tm => tm.Project)
                 .HasForeignKey(tm => tm.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Meeting>()
+                .HasOne(m => m.Organizer)
+                .WithMany() // No need to add Meetings to User model unless required
+                .HasForeignKey(m => m.OrganizerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Meeting>()
+                .HasMany(m => m.Participants)
+                .WithOne(mp => mp.Meeting)
+                .HasForeignKey(mp => mp.MeetingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MeetingParticipant>()
+                .HasOne(mp => mp.User)
+                .WithMany()
+                .HasForeignKey(mp => mp.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

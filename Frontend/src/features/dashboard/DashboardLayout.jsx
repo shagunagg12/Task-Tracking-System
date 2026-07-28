@@ -3,6 +3,7 @@ import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
+import Calendar from './Calendar';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -67,21 +68,38 @@ const DashboardLayout = () => {
     setIsLeftSidebarOpen(!isLeftSidebarOpen);
   };
 
-  const getUserName = () => {
+  const getUserData = () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return 'User';
+      if (!token) return { name: 'User', pic: '' };
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+      const name = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
              payload.unique_name || 
              payload.name || 
              'User';
+             
+      let pic = localStorage.getItem('profilePic');
+      if (!pic) {
+        pic = payload['ProfilePictureUrl'] || '';
+        if (pic) localStorage.setItem('profilePic', pic);
+      }
+      return { name, pic };
     } catch(e) {
-      return 'User';
+      return { name: 'User', pic: '' };
     }
   };
 
-  const userName = getUserName();
+  const initialData = getUserData();
+  const [userPic, setUserPic] = useState(initialData.pic);
+  const userName = initialData.name;
+
+  useEffect(() => {
+    const handlePicUpdate = () => {
+      setUserPic(localStorage.getItem('profilePic') || '');
+    };
+    window.addEventListener('profilePicUpdated', handlePicUpdate);
+    return () => window.removeEventListener('profilePicUpdated', handlePicUpdate);
+  }, []);
 
   const menuItems = [
     { id: 'Overview', icon: '📊', text: 'Overview' },
@@ -131,7 +149,7 @@ const DashboardLayout = () => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img 
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`} 
+                src={userPic ? userPic : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`} 
                 alt="User" 
                 style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
               />
@@ -189,6 +207,11 @@ const DashboardLayout = () => {
           </div>
         </header>
 
+        {activeMenu === 'Calendar' ? (
+          <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <Calendar />
+          </div>
+        ) : (
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
@@ -432,6 +455,7 @@ const DashboardLayout = () => {
              </div>
           )}
         </div>
+        )}
       </main>
 
       {/* RIGHT SIDEBAR */}
