@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   LayoutDashboard, Users, Building2, Shield, CheckSquare, 
   Briefcase, Calendar, Clock, DollarSign, Star, 
@@ -26,7 +27,8 @@ const ToastNotification = ({ toast, onDismiss }) => {
       setTimeout(() => onDismiss(toast.id), 400);
     }, 5000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [toast.id, onDismiss]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast.id]);
 
   const typeConfig = {
     task_update:    { icon: <CheckCircle2 size={20} />, color: '#bef264', label: 'Task Update' },
@@ -94,15 +96,20 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef(null);
   const toastIdRef = useRef(0);
+  const addToastRef = useRef(null);
 
-  const addToast = (notification) => {
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // Keep addToast in a ref so the SignalR closure always has the latest version
+  const addToast = useCallback((notification) => {
     const id = ++toastIdRef.current;
     setToasts(prev => [...prev, { ...notification, id }]);
-  };
+  }, []);
 
-  const dismissToast = (id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  };
+  // Sync ref to latest callback
+  addToastRef.current = addToast;
 
   useEffect(() => {
     const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -133,7 +140,8 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     connection.on("ReceiveNotification", (notification) => {
       setNotifications(prev => [notification, ...prev].slice(0, 50));
       setUnreadCount(prev => prev + 1);
-      addToast(notification);
+      // Use ref to avoid stale closure
+      addToastRef.current(notification);
     });
 
     connection.start()
@@ -187,6 +195,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
   ];
 
   return (
+    <>
     <div className={`sa-layout ${isDarkTheme ? 'sa-dark' : 'sa-light'}`}>
       
       {/* SIDEBAR */}
@@ -334,14 +343,18 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
            )}
         </main>
       </div>
+    </div>
 
-      {/* ── TOAST CONTAINER (bottom-right) ── */}
+    {/* ── TOAST PORTAL (renders directly to document.body to escape overflow:hidden) ── */}
+    {createPortal(
       <div className="sa-toast-container">
         {toasts.map(toast => (
           <ToastNotification key={toast.id} toast={toast} onDismiss={dismissToast} />
         ))}
-      </div>
-    </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 };
 
