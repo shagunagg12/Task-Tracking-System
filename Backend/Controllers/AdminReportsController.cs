@@ -26,28 +26,34 @@ namespace Backend.Controllers
                 .Include(p => p.TeamMembers)
                 .ToListAsync();
 
-            // Compute top performers (users with the most completed tasks)
+            // Return ALL users and their tasks to allow the Admin Panel to show individual reports
             var users = await _context.Users
                 .Include(u => u.Projects)
                     .ThenInclude(p => p.Tasks)
+                .Include(u => u.Profile)
                 .ToListAsync();
 
-            var topPerformers = users.Select(u => new
+            var userReports = users.Select(u => new
             {
                 Id = u.Id,
                 Name = u.FullName,
                 Email = u.Email,
-                TasksCompleted = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "Completed" || t.Status == "Done"),
+                Department = u.Profile?.Department ?? "Unassigned",
+                TotalProjects = u.Projects.Count,
+                TotalTasks = u.Projects.SelectMany(p => p.Tasks).Count(),
+                CompletedTasks = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "Completed" || t.Status == "Done"),
+                InProgressTasks = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "In Progress"),
+                PendingTasks = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "Todo"),
+                BlockedTasks = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "Blocked"),
                 Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random"
             })
-            .OrderByDescending(u => u.TasksCompleted)
-            .Take(5)
+            .OrderByDescending(u => u.CompletedTasks)
             .ToList();
 
             return Ok(new
             {
                 Projects = projects,
-                TopPerformers = topPerformers
+                UserReports = userReports
             });
         }
     }
