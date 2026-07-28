@@ -9,7 +9,7 @@ import './SuperAdminLayout.css';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import SuperAdminProjects from './SuperAdminProjects';
 
-const SuperAdminLayout = () => {
+const SuperAdminLayout = ({ onSwitchToUser }) => {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
   const [isDarkTheme, setIsDarkTheme] = useState(true);
 
@@ -87,6 +87,15 @@ const SuperAdminLayout = () => {
             
             <div className="sa-nav-divider"></div>
             
+            <button 
+              className="sa-btn-outline" 
+              onClick={onSwitchToUser}
+              style={{ marginRight: '8px', fontSize: '13px' }}
+              title="Switch to User Dashboard"
+            >
+              Back to User View
+            </button>
+
             <button className="sa-icon-btn" onClick={toggleTheme}>
               {isDarkTheme ? <Sun size={20} /> : <Moon size={20} />}
             </button>

@@ -101,5 +101,109 @@ namespace Backend.Controllers
 
             return Ok(new { task.Id, task.Title, task.Description, task.Status, task.StatusClass });
         }
+        public class UpdateProjectDetailsDto
+        {
+            public string PriorityTaskTitle { get; set; } = string.Empty;
+            public string PriorityTaskDesc { get; set; } = string.Empty;
+            public string PriorityTaskDue { get; set; } = string.Empty;
+            public string PriorityTaskTimeRemaining { get; set; } = string.Empty;
+            public double Hours { get; set; }
+            public string HoursTrend { get; set; } = string.Empty;
+        }
+
+        [HttpPatch("{projectId}/details")]
+        public async Task<IActionResult> UpdateProjectDetails(int projectId, [FromBody] UpdateProjectDetailsDto dto)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null) return NotFound("Project not found");
+
+            project.PriorityTaskTitle = dto.PriorityTaskTitle;
+            project.PriorityTaskDesc = dto.PriorityTaskDesc;
+            project.PriorityTaskDue = dto.PriorityTaskDue;
+            project.PriorityTaskTimeRemaining = dto.PriorityTaskTimeRemaining;
+            project.Hours = dto.Hours;
+            project.HoursTrend = dto.HoursTrend;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Project details updated", project });
+        }
+
+        public class AddTeamMemberDto
+        {
+            public string Name { get; set; } = string.Empty;
+        }
+
+        [HttpPost("{projectId}/team-members")]
+        public async Task<IActionResult> AddTeamMember(int projectId, [FromBody] AddTeamMemberDto dto)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null) return NotFound("Project not found");
+
+            var member = new ProjectTeamMember
+            {
+                ProjectId = projectId,
+                Name = dto.Name,
+                Image = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(dto.Name)}&background=random"
+            };
+
+            _context.ProjectTeamMembers.Add(member);
+            await _context.SaveChangesAsync();
+            return Ok(member);
+        }
+
+        public class AddDeadlineDto
+        {
+            public string Title { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+            public string Day { get; set; } = string.Empty;
+            public string Month { get; set; } = string.Empty;
+            public string Color { get; set; } = string.Empty;
+        }
+
+        [HttpPost("{projectId}/deadlines")]
+        public async Task<IActionResult> AddDeadline(int projectId, [FromBody] AddDeadlineDto dto)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null) return NotFound("Project not found");
+
+            var deadline = new ProjectDeadline
+            {
+                ProjectId = projectId,
+                Title = dto.Title,
+                Description = dto.Description,
+                Day = dto.Day,
+                Month = dto.Month,
+                Color = string.IsNullOrEmpty(dto.Color) ? "green" : dto.Color
+            };
+
+            _context.ProjectDeadlines.Add(deadline);
+            await _context.SaveChangesAsync();
+            return Ok(deadline);
+        }
+
+        public class AddFeedbackDto
+        {
+            public string Text { get; set; } = string.Empty;
+            public string AuthorName { get; set; } = string.Empty;
+        }
+
+        [HttpPost("{projectId}/feedback")]
+        public async Task<IActionResult> AddFeedback(int projectId, [FromBody] AddFeedbackDto dto)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null) return NotFound("Project not found");
+
+            var feedback = new ProjectFeedback
+            {
+                ProjectId = projectId,
+                Text = dto.Text,
+                AuthorName = dto.AuthorName,
+                AuthorImage = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(dto.AuthorName)}&background=random"
+            };
+
+            _context.ProjectFeedbacks.Add(feedback);
+            await _context.SaveChangesAsync();
+            return Ok(feedback);
+        }
     }
 }

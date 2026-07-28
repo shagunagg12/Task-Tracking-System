@@ -22,10 +22,25 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProjects()
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(email))
             {
                 return Unauthorized();
+            }
+
+            int actualUserId;
+
+            // Find the actual User ID for this email from the Users table
+            var userAccount = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (userAccount != null)
+            {
+                actualUserId = userAccount.Id;
+            }
+            else
+            {
+                // Fallback to the ID from the token (in case they manually assigned projects matching the Admin's ID)
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                int.TryParse(userIdStr, out actualUserId);
             }
 
             var projects = await _context.Projects
@@ -33,7 +48,7 @@ namespace Backend.Controllers
                 .Include(p => p.Deadlines)
                 .Include(p => p.Feedbacks)
                 .Include(p => p.TeamMembers)
-                .Where(p => p.UserId == userId)
+                .Where(p => p.UserId == actualUserId)
                 .ToListAsync();
 
             return Ok(projects);
@@ -48,11 +63,13 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
+            var isAdmin = User.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+
             var task = await _context.ProjectTasks
                 .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == taskId && t.Project != null && t.Project.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.Project != null && (isAdmin || t.Project.UserId == userId));
 
-            if (task == null) return NotFound(new { message = "Task not found." });
+            if (task == null) return NotFound(new { message = "Task not found or access denied." });
 
             task.Status = request.Status;
             if (request.Status == "Completed") task.StatusClass = "status-completed";
@@ -74,10 +91,12 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            var project = await _context.Projects
-                .FirstOrDefaultAsync(p => p.Id == projectId && p.UserId == userId);
+            var isAdmin = User.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
 
-            if (project == null) return NotFound(new { message = "Project not found." });
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == projectId && (isAdmin || p.UserId == userId));
+
+            if (project == null) return NotFound(new { message = "Project not found or access denied." });
 
             project.Status = request.Status;
             await _context.SaveChangesAsync();

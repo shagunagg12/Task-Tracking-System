@@ -50,7 +50,7 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
   return <span>{prefix}{formatNumber(count)}{suffix}</span>;
 };
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [activeMenu, setActiveMenu] = useState(() => {
     return localStorage.getItem('lastActiveMenu') || 'Overview';
   });
@@ -146,33 +146,59 @@ const DashboardLayout = () => {
               <span style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-main)' }}>{userName}</span>
             </div>
             
-            <button 
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.reload();
-              }}
-              style={{ 
-                background: 'transparent', 
-                border: 'none', 
-                color: 'var(--text-muted)', 
-                cursor: 'pointer', 
-                padding: '8px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)'; e.currentTarget.style.color = '#ff6b6b'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-              title="Logout"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {isAdmin && (
+                <button 
+                  onClick={onSwitchToAdmin}
+                  style={{ 
+                    background: 'transparent', 
+                    border: '1px solid var(--border-color)', 
+                    color: 'var(--text-main)', 
+                    cursor: 'pointer', 
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  title="Switch to Admin Panel"
+                >
+                  🛡️ Admin Panel
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.reload();
+                }}
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: 'var(--text-muted)', 
+                  cursor: 'pointer', 
+                  padding: '8px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)'; e.currentTarget.style.color = '#ff6b6b'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                title="Logout"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </aside>
