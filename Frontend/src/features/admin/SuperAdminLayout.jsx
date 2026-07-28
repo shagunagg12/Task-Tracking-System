@@ -3,8 +3,9 @@ import {
   LayoutDashboard, Users, Building2, Shield, CheckSquare, 
   Briefcase, Calendar, Clock, DollarSign, Star, 
   BarChart2, LineChart, Bell, FileText, Activity, Settings, 
-  Search, Plus, ChevronDown, Moon, Sun
+  Search, Plus, ChevronDown, Moon, Sun, X
 } from 'lucide-react';
+import * as signalR from '@microsoft/signalr';
 import './SuperAdminLayout.css';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import SuperAdminProjects from './SuperAdminProjects';
@@ -14,8 +15,35 @@ import SuperAdminReports from './SuperAdminReports';
 const SuperAdminLayout = ({ onSwitchToUser }) => {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    // Determine the base URL for SignalR
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const backendUrl = isDevelopment ? 'http://localhost:5024' : window.location.origin;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${backendUrl}/hubs/admindashboard`)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveNotification", (notification) => {
+      setNotifications(prev => [notification, ...prev].slice(0, 50));
+      // Optional: Add a toast popup here if desired
+    });
+
+    connection.start()
+      .then(() => console.log("Connected to Admin Dashboard Hub for Notifications"))
+      .catch(err => console.error("SignalR Connection Error: ", err));
+
+    return () => {
+      connection.stop();
+    };
+  }, []);
 
   const toggleTheme = () => setIsDarkTheme(!isDarkTheme);
+  const unreadCount = notifications.length;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -101,10 +129,39 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
             <button className="sa-icon-btn" onClick={toggleTheme}>
               {isDarkTheme ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button className="sa-icon-btn">
-              <Bell size={20} />
-              <span className="sa-notification-dot"></span>
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button className="sa-icon-btn" onClick={() => setShowNotifications(!showNotifications)}>
+                <Bell size={20} />
+                {unreadCount > 0 && <span className="sa-notification-dot"></span>}
+              </button>
+              
+              {showNotifications && (
+                <div className="sa-notifications-dropdown" style={{
+                  position: 'absolute', top: '100%', right: '0', width: '320px', 
+                  background: 'var(--sa-card)', border: '1px solid var(--sa-border)', 
+                  borderRadius: '12px', padding: '16px', zIndex: 100,
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                     <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--sa-text)' }}>Notifications</h3>
+                     <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', color: 'var(--sa-muted)', cursor: 'pointer' }}><X size={16} /></button>
+                  </div>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {notifications.length === 0 ? (
+                       <p style={{ color: 'var(--sa-muted)', fontSize: '0.85rem' }}>No new notifications.</p>
+                    ) : (
+                       notifications.map((notif, idx) => (
+                         <div key={idx} style={{ padding: '10px', borderBottom: '1px solid var(--sa-border)', fontSize: '0.85rem' }}>
+                           <strong style={{ color: 'var(--sa-primary)', display: 'block', marginBottom: '4px' }}>{notif.title}</strong>
+                           <span style={{ color: 'var(--sa-text)' }}>{notif.message}</span>
+                           <div style={{ color: 'var(--sa-muted)', fontSize: '0.75rem', marginTop: '4px' }}>{new Date(notif.time).toLocaleTimeString()}</div>
+                         </div>
+                       ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             
             <div className="sa-profile-dropdown" onClick={handleLogout}>
               <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="Profile" className="sa-avatar" />

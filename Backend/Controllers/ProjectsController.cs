@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
+using Backend.Hubs;
 
 namespace Backend.Controllers
 {
@@ -13,10 +15,12 @@ namespace Backend.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<AdminDashboardHub> _hubContext;
 
-        public ProjectsController(ApplicationDbContext context)
+        public ProjectsController(ApplicationDbContext context, IHubContext<AdminDashboardHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -79,6 +83,17 @@ namespace Backend.Controllers
             else task.StatusClass = ""; // fallback
             
             await _context.SaveChangesAsync();
+            
+            // Emit real-time notification to Super Admin Dashboard
+            var userName = User.FindFirstValue(ClaimTypes.Name) ?? "A user";
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", new {
+                title = "Task Updated",
+                message = $"{userName} updated task '{task.Title}' to {request.Status}",
+                time = DateTime.UtcNow,
+                type = "task_update"
+            });
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate"); // Update admin dashboard stats
+
             return Ok(new { message = "Status updated successfully", task });
         }
 
@@ -100,6 +115,17 @@ namespace Backend.Controllers
 
             project.Status = request.Status;
             await _context.SaveChangesAsync();
+            
+            // Emit real-time notification to Super Admin Dashboard
+            var userName = User.FindFirstValue(ClaimTypes.Name) ?? "A user";
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", new {
+                title = "Project Status Updated",
+                message = $"{userName} updated project '{project.Name}' to {request.Status}",
+                time = DateTime.UtcNow,
+                type = "project_update"
+            });
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate");
+
             return Ok(new { message = "Project status updated successfully", project });
         }
 
