@@ -5,6 +5,7 @@ class WebSocketService {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 10;
     this.isIntentionalDisconnect = false;
+    this.activeChatId = null;
   }
 
   startConnection() {
@@ -27,6 +28,10 @@ class WebSocketService {
     this.socket.onopen = () => {
       console.log('WebSocketService Connected');
       this.reconnectAttempts = 0; // Reset attempts on success
+      if (this.activeChatId) {
+        this.socket.send(JSON.stringify({ type: 'JoinChat', chatId: this.activeChatId.toString() }));
+        console.log('WebSocketService joined chat upon connection', this.activeChatId);
+      }
     };
 
     this.socket.onmessage = (event) => {
@@ -71,6 +76,7 @@ class WebSocketService {
   }
 
   joinChat(chatId) {
+    this.activeChatId = chatId;
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type: 'JoinChat', chatId: chatId.toString() }));
       console.log('WebSocketService joined chat', chatId);
@@ -78,6 +84,9 @@ class WebSocketService {
   }
 
   leaveChat(chatId) {
+    if (this.activeChatId === chatId) {
+      this.activeChatId = null;
+    }
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type: 'LeaveChat', chatId: chatId.toString() }));
     }
