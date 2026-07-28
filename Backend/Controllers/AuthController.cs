@@ -77,7 +77,8 @@ namespace Backend.Controllers
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, user.FullName)
+                    new Claim(ClaimTypes.Name, user.FullName),
+                    new Claim("ProfilePictureUrl", user.ProfilePictureUrl ?? "")
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -88,7 +89,7 @@ namespace Backend.Controllers
             return Ok(new
             {
                 token = tokenHandler.WriteToken(token),
-                user = new { user.Id, user.FullName, user.Email }
+                user = new { user.Id, user.FullName, user.Email, user.ProfilePictureUrl }
             });
         }
     }
