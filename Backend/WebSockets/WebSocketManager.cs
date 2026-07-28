@@ -93,7 +93,13 @@ namespace Backend.WebSockets
                     {
                         if (socket.State == WebSocketState.Open)
                         {
-                            tasks.Add(socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None));
+                            tasks.Add(Task.Run(async () => {
+                                try {
+                                    await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+                                } catch (Exception ex) {
+                                    Console.WriteLine("Broadcast Group Error: " + ex.Message);
+                                }
+                            }));
                         }
                     }
                 }
@@ -121,7 +127,13 @@ namespace Backend.WebSockets
                         {
                             if (socket.State == WebSocketState.Open)
                             {
-                                tasks.Add(socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None));
+                                tasks.Add(Task.Run(async () => {
+                                    try {
+                                        await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+                                    } catch (Exception ex) {
+                                        Console.WriteLine("Broadcast User Error: " + ex.Message);
+                                    }
+                                }));
                             }
                         }
                     }
