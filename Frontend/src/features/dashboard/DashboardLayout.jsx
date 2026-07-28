@@ -552,7 +552,7 @@ const DashboardLayout = () => {
         </div>
 
       </aside>
-      <Chatbot isSidebarOpen={isRightSidebarOpen} />
+      {activeMenu !== 'Chat' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
     </div>
   );
 };

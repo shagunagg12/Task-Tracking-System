@@ -14,7 +14,7 @@ const AssignedProjects = () => {
     const fetchProjects = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5024/api/projects', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/projects`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -90,7 +90,7 @@ const AssignedProjects = () => {
     // 3. Make the API call
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5024/api/projects/tasks/${task.id}/status`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/projects/tasks/${task.id}/status`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -111,7 +111,7 @@ const AssignedProjects = () => {
             setProjectsData(prev => prev.map(p => p.id == projectId ? { ...p, status: 'In Progress' } : p));
             
             // Fire off background request to save reverted status
-            fetch(`http://localhost:5024/api/projects/${projectId}/status`, {
+            fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -134,7 +134,7 @@ const AssignedProjects = () => {
     
     try {
         const token = localStorage.getItem('token');
-        const projResponse = await fetch(`http://localhost:5024/api/projects/${projectId}/status`, {
+        const projResponse = await fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/status`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
