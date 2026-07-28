@@ -18,6 +18,9 @@ namespace Backend.Models
 
         public string? GoogleAccessToken { get; set; }
         public string? GoogleRefreshToken { get; set; }
+        
+        [Column("ProfilePictureUrl")]
+        public string? ProfilePictureUrl { get; set; }
 
         // Navigation property
         public UserProfile? Profile { get; set; }
