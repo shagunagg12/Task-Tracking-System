@@ -107,6 +107,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
+app.MapHub<AdminDashboardHub>("/adminDashboardHub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

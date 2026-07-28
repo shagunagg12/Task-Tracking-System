@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import './SuperAdminLayout.css';
 import SuperAdminDashboard from './SuperAdminDashboard';
+import SuperAdminProjects from './SuperAdminProjects';
 
 const SuperAdminLayout = () => {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -109,6 +110,8 @@ const SuperAdminLayout = () => {
         <main className="sa-content-area">
            {activeMenu === 'Dashboard' ? (
              <SuperAdminDashboard />
+           ) : activeMenu === 'Projects' ? (
+             <SuperAdminProjects />
            ) : (
              <div className="sa-placeholder">
                 <div className="sa-placeholder-icon">{menuItems.find(m => m.id === activeMenu)?.icon}</div>
