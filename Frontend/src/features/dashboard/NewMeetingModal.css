@@ -162,7 +162,14 @@
   width: 24px;
   display: flex;
   justify-content: center;
-  color: var(--text-muted);
+  align-items: center;
+}
+
+.row-icon svg {
+  color: var(--accent-green);
+  stroke-width: 1.5;
+  width: 20px;
+  height: 20px;
 }
 
 .form-input {
