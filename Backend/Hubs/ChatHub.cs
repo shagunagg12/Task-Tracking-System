@@ -89,6 +89,17 @@ namespace Backend.Hubs
                 text = message.Text,
                 createdAt = message.CreatedAt
             });
+
+            // Diagnostic Fallback: Broadcast to everyone to guarantee delivery
+            await Clients.All.SendAsync("ReceiveMessage", new
+            {
+                id = message.Id,
+                chatSessionId = message.ChatSessionId,
+                senderId = message.SenderId,
+                senderName = senderName,
+                text = message.Text,
+                createdAt = message.CreatedAt
+            });
         }
     }
 }
