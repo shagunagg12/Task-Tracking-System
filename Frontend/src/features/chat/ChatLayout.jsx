@@ -15,6 +15,8 @@ const ChatLayout = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
   const [connection, setConnection] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const messagesEndRef = useRef(null);
@@ -83,6 +85,11 @@ const ChatLayout = () => {
           (message.senderId === selectedUser?.id) || 
           (message.senderId === currentUserId && message.receiverId === selectedUser?.id)
         ) {
+          // Clear typing indicator when a message arrives from them
+          if (message.senderId === selectedUser?.id) {
+             setIsTyping(false);
+          }
+          
           // Avoid duplicates
           if (!prevMessages.find(m => m.id === message.id && message.id !== 0)) {
              return [...prevMessages, message];
@@ -92,12 +99,26 @@ const ChatLayout = () => {
       });
     };
 
+    const handleUserTyping = (senderId) => {
+      if (selectedUser && senderId === selectedUser.id) {
+        setIsTyping(true);
+        
+        // Auto-hide typing indicator after 3 seconds
+        if (typingTimeout) clearTimeout(typingTimeout);
+        const timeout = setTimeout(() => setIsTyping(false), 3000);
+        setTypingTimeout(timeout);
+      }
+    };
+
     connection.on('ReceiveMessage', handleReceiveMessage);
+    connection.on('UserTyping', handleUserTyping);
 
     return () => {
       connection.off('ReceiveMessage', handleReceiveMessage);
+      connection.off('UserTyping', handleUserTyping);
+      if (typingTimeout) clearTimeout(typingTimeout);
     };
-  }, [connection, selectedUser, currentUserId]);
+  }, [connection, selectedUser, currentUserId, typingTimeout]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -121,6 +142,15 @@ const ChatLayout = () => {
     // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleTyping = (e) => {
+    setNewMessage(e.target.value);
+    
+    // Notify the other user that we are typing
+    if (connection && selectedUser) {
+      connection.invoke('SendTyping', currentUserId, selectedUser.id).catch(e => console.error('Typing indicator failed:', e));
+    }
+  };
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -209,6 +239,17 @@ const ChatLayout = () => {
                   </div>
                 </div>
               ))}
+              
+              {isTyping && (
+                <div className="message-bubble-wrapper received">
+                  <div className="message-bubble typing-bubble">
+                    <span className="typing-dot"></span>
+                    <span className="typing-dot"></span>
+                    <span className="typing-dot"></span>
+                  </div>
+                </div>
+              )}
+              
               <div ref={messagesEndRef} />
             </div>
             
@@ -217,7 +258,7 @@ const ChatLayout = () => {
                 type="text" 
                 placeholder="Type a message..." 
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={handleTyping}
               />
               <button type="submit" disabled={!newMessage.trim()}>
                 <Send size={18} />

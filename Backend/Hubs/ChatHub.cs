@@ -9,9 +9,11 @@ namespace Backend.Hubs
     public class ChatHub : Hub
     {
         private readonly ApplicationDbContext _context;
-        // In a production app, use Redis or a database to track connections,
-        // but an in-memory dictionary works for a single instance.
-        private static readonly ConcurrentDictionary<string, string> UserConnections = new();
+        
+        // Track connection ID -> User ID
+        private static readonly ConcurrentDictionary<string, string> ConnectionToUser = new();
+        // Track User ID -> Set of connection IDs (for multiple tabs)
+        private static readonly ConcurrentDictionary<string, HashSet<string>> UserConnections = new();
 
         public ChatHub(ApplicationDbContext context)
         {
@@ -23,17 +25,27 @@ namespace Backend.Hubs
             var userId = Context.GetHttpContext()?.Request.Query["userId"].ToString();
             if (!string.IsNullOrEmpty(userId))
             {
-                UserConnections[userId] = Context.ConnectionId;
+                ConnectionToUser[Context.ConnectionId] = userId;
+                var connections = UserConnections.GetOrAdd(userId, _ => new HashSet<string>());
+                lock(connections) 
+                {
+                    connections.Add(Context.ConnectionId);
+                }
             }
             return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception? exception)
         {
-            var item = UserConnections.FirstOrDefault(x => x.Value == Context.ConnectionId);
-            if (item.Key != null)
+            if (ConnectionToUser.TryRemove(Context.ConnectionId, out var userId))
             {
-                UserConnections.TryRemove(item.Key, out _);
+                if (UserConnections.TryGetValue(userId, out var connections))
+                {
+                    lock(connections) 
+                    {
+                        connections.Remove(Context.ConnectionId);
+                    }
+                }
             }
             return base.OnDisconnectedAsync(exception);
         }
@@ -51,13 +63,43 @@ namespace Backend.Hubs
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
-            // Send back to the sender so their UI updates immediately with DB info
-            await Clients.Caller.SendAsync("ReceiveMessage", message);
-
-            // If the receiver is online, push to them
-            if (UserConnections.TryGetValue(receiverId.ToString(), out var receiverConnectionId))
+            // Send back to the sender (all their tabs)
+            if (UserConnections.TryGetValue(senderId.ToString(), out var senderConnections))
             {
-                await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", message);
+                lock(senderConnections)
+                {
+                    foreach(var conn in senderConnections)
+                    {
+                        Clients.Client(conn).SendAsync("ReceiveMessage", message);
+                    }
+                }
+            }
+
+            // Push to receiver (all their tabs)
+            if (UserConnections.TryGetValue(receiverId.ToString(), out var receiverConnections))
+            {
+                lock(receiverConnections) 
+                {
+                    foreach(var conn in receiverConnections) 
+                    {
+                        Clients.Client(conn).SendAsync("ReceiveMessage", message);
+                    }
+                }
+            }
+        }
+        
+        // Broadcast typing status
+        public async Task SendTyping(int senderId, int receiverId)
+        {
+            if (UserConnections.TryGetValue(receiverId.ToString(), out var receiverConnections))
+            {
+                lock(receiverConnections) 
+                {
+                    foreach(var conn in receiverConnections) 
+                    {
+                        Clients.Client(conn).SendAsync("UserTyping", senderId);
+                    }
+                }
             }
         }
     }
