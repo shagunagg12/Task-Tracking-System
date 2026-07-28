@@ -179,6 +179,7 @@ namespace Backend.Controllers
             // Create new DM session
             var newSession = new ChatSession
             {
+                Name = "Direct Message",
                 IsGroupChat = false,
                 CreatedAt = DateTime.UtcNow
             };
