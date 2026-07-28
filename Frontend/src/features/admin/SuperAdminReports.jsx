@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Download, FileText, X, Activity, Briefcase, CheckCircle, Clock } from 'lucide-react';
+import { Search, Download, FileText, X, Activity, Briefcase, CheckCircle, Clock, BarChart2, TrendingUp, Users } from 'lucide-react';
 import '../dashboard/Report.css';
 import './SuperAdminReports.css';
 
@@ -54,11 +54,32 @@ const PieChart = ({ data }) => {
   );
 };
 
+// New Mini Sparkline Component
+const MiniSparkline = ({ completed, inProgress, pending }) => {
+  const total = completed + inProgress + pending || 1;
+  const bars = [
+    { height: Math.max((completed / total) * 24, 4), color: 'var(--accent-green)', filled: true },
+    { height: Math.max((inProgress / total) * 24, 4), color: '#38bdf8', filled: true },
+    { height: Math.max((pending / total) * 24, 4), color: '#fbbf24', filled: false },
+    { height: Math.max((completed / total) * 24, 4) * 0.8, color: 'var(--accent-green)', filled: true },
+    { height: Math.max(((completed+inProgress) / total) * 24, 4), color: 'var(--sa-primary)', filled: true }
+  ];
+  
+  return (
+    <div className="sa-sparkline-container">
+      {bars.map((bar, i) => (
+        <div key={i} className={`sa-spark-bar ${bar.filled ? 'filled' : ''}`} style={{ height: `${bar.height}px`, background: bar.color }} />
+      ))}
+    </div>
+  );
+};
+
 const SuperAdminReports = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('efficiency');
   
   // Drawer state
   const [selectedUser, setSelectedUser] = useState(null);
@@ -67,6 +88,9 @@ const SuperAdminReports = () => {
   // Gauge animation inside drawer
   const [needleAngle, setNeedleAngle] = useState(-90);
   const [gaugeOffset, setGaugeOffset] = useState(283);
+
+  // Global metrics
+  const [globalMetrics, setGlobalMetrics] = useState({ totalTasks: 0, completedTasks: 0, avgEfficiency: 0 });
 
   useEffect(() => {
     fetchReportData();
@@ -77,7 +101,20 @@ const SuperAdminReports = () => {
       const response = await fetch('http://localhost:5024/api/AdminReports/overview');
       if (response.ok) {
         const data = await response.json();
-        setUsers(data.userReports || []);
+        const userReports = data.userReports || [];
+        setUsers(userReports);
+        
+        let total = 0;
+        let completed = 0;
+        userReports.forEach(u => {
+          total += u.totalTasks;
+          completed += u.completedTasks;
+        });
+        setGlobalMetrics({
+          totalTasks: total,
+          completedTasks: completed,
+          avgEfficiency: total > 0 ? Math.round((completed/total)*100) : 0
+        });
       }
     } catch (error) {
       console.error('Failed to fetch admin reports', error);
@@ -86,12 +123,28 @@ const SuperAdminReports = () => {
     }
   };
 
+  const getBadgeClass = (dept) => {
+    const d = dept.toLowerCase();
+    if (d.includes('eng') || d.includes('dev')) return 'engineering';
+    if (d.includes('mark') || d.includes('sale')) return 'marketing';
+    if (d.includes('design') || d.includes('ui')) return 'design';
+    return 'default';
+  };
+
   const departments = ['All', ...new Set(users.map(u => u.department))];
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesDept = departmentFilter === 'All' || u.department === departmentFilter;
     return matchesSearch && matchesDept;
+  }).sort((a, b) => {
+    if (sortBy === 'efficiency') {
+       const effA = a.totalTasks > 0 ? a.completedTasks/a.totalTasks : 0;
+       const effB = b.totalTasks > 0 ? b.completedTasks/b.totalTasks : 0;
+       return effB - effA;
+    }
+    if (sortBy === 'tasks') return b.completedTasks - a.completedTasks;
+    return 0;
   });
 
   const openUserReport = (user) => {
@@ -129,15 +182,10 @@ const SuperAdminReports = () => {
     document.body.removeChild(link);
   };
 
-  const triggerPrintDrawer = (user) => {
-    // A real implementation would open a print layout specifically for this user
-    alert(`Downloading PDF report for ${user.name}...`);
-  };
-
   return (
     <div className="sau-container">
       {/* Header Section */}
-      <div className="sau-header">
+      <div className="sau-header" style={{ marginBottom: '24px' }}>
         <div>
           <h1 className="sau-title">Reports Control Center</h1>
           <p className="sau-subtitle">View, manage, and export detailed performance reports for every employee.</p>
@@ -149,20 +197,64 @@ const SuperAdminReports = () => {
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="sau-controls">
-        <div className="sau-search">
-          <Search size={18} className="sau-search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search employee reports..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      {/* Premium Glassmorphic Scorecards */}
+      <div className="sa-scorecards">
+        <div className="sa-glass-card">
+          <div className="sa-gc-icon"><Activity size={24} /></div>
+          <div className="sa-gc-info">
+             <div className="sa-gc-val">{globalMetrics.avgEfficiency}%</div>
+             <div className="sa-gc-lbl">Org Health Score</div>
+          </div>
         </div>
-        <div className="sau-filters">
-          <select className="sau-select" value={departmentFilter} onChange={e => setDepartmentFilter(e.target.value)}>
-            {departments.map(dept => <option key={dept} value={dept}>{dept === 'All' ? 'All Departments' : dept}</option>)}
+        <div className="sa-glass-card">
+          <div className="sa-gc-icon" style={{color:'#38bdf8', background:'rgba(56,189,248,0.1)'}}><CheckCircle size={24} /></div>
+          <div className="sa-gc-info">
+             <div className="sa-gc-val">{globalMetrics.completedTasks}</div>
+             <div className="sa-gc-lbl">Total Output</div>
+          </div>
+        </div>
+        <div className="sa-glass-card">
+          <div className="sa-gc-icon" style={{color:'#a855f7', background:'rgba(168,85,247,0.1)'}}><Briefcase size={24} /></div>
+          <div className="sa-gc-info">
+             <div className="sa-gc-val">{globalMetrics.totalTasks}</div>
+             <div className="sa-gc-lbl">Active Workload</div>
+          </div>
+        </div>
+        <div className="sa-glass-card">
+          <div className="sa-gc-icon" style={{color:'#f59e0b', background:'rgba(245,158,11,0.1)'}}><Users size={24} /></div>
+          <div className="sa-gc-info">
+             <div className="sa-gc-val">{users.length}</div>
+             <div className="sa-gc-lbl">Employees</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Premium Sophisticated Filter Bar */}
+      <div className="sa-filter-bar">
+        <div className="sa-filter-pills">
+           {departments.map(dept => (
+              <button 
+                key={dept} 
+                className={`sa-filter-pill ${departmentFilter === dept ? 'active' : ''}`}
+                onClick={() => setDepartmentFilter(dept)}
+              >
+                {dept === 'All' ? 'All Departments' : dept}
+              </button>
+           ))}
+        </div>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div className="sau-search" style={{ margin: 0, width: '250px' }}>
+            <Search size={18} className="sau-search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search reports..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <select className="sau-select" style={{ margin: 0 }} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <option value="efficiency">Sort by Efficiency</option>
+            <option value="tasks">Sort by Tasks Done</option>
           </select>
         </div>
       </div>
@@ -179,6 +271,7 @@ const SuperAdminReports = () => {
                 <th>Department</th>
                 <th>Projects</th>
                 <th>Tasks (Done / Total)</th>
+                <th>Trend</th>
                 <th>Efficiency</th>
                 <th>Actions</th>
               </tr>
@@ -186,7 +279,7 @@ const SuperAdminReports = () => {
             <tbody>
               {filteredUsers.map(user => {
                 const efficiency = user.totalTasks > 0 ? Math.round((user.completedTasks / user.totalTasks) * 100) : 0;
-                
+                const badgeClass = getBadgeClass(user.department);
                 return (
                   <tr key={user.id} className="sau-row-clickable" onClick={() => openUserReport(user)}>
                     <td>
@@ -198,28 +291,35 @@ const SuperAdminReports = () => {
                         </div>
                       </div>
                     </td>
-                    <td><span className="sau-status-badge active">{user.department}</span></td>
-                    <td><strong>{user.totalProjects}</strong></td>
+                    <td>
+                       <span className={`sa-badge-glow ${badgeClass}`}>
+                         {user.department === 'Unassigned' ? 'Team' : user.department}
+                       </span>
+                    </td>
+                    <td><strong style={{fontSize:'1.1rem'}}>{user.totalProjects}</strong></td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                         <span style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>{user.completedTasks}</span>
+                         <span style={{ color: 'var(--accent-green)', fontWeight: 'bold', fontSize:'1.1rem' }}>{user.completedTasks}</span>
                          <span style={{ color: 'var(--sa-muted)' }}>/ {user.totalTasks}</span>
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                           <div style={{ width: `${efficiency}%`, height: '100%', background: efficiency > 70 ? 'var(--accent-green)' : efficiency > 30 ? '#fbbf24' : '#ef4444' }} />
+                      <MiniSparkline completed={user.completedTasks} inProgress={user.inProgressTasks} pending={user.pendingTasks} />
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '1.05rem', fontWeight:'bold', width:'40px' }}>{efficiency}%</span>
+                        <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)' }}>
+                           <div style={{ width: `${efficiency}%`, height: '100%', background: efficiency > 70 ? 'var(--accent-green)' : efficiency > 30 ? '#fbbf24' : '#ef4444', boxShadow: '0 0 10px currentColor' }} />
                         </div>
-                        <span style={{ fontSize: '0.85rem' }}>{efficiency}%</span>
                       </div>
                     </td>
                     <td>
                       <div className="sau-actions-cell">
                         <button className="sau-action-btn" onClick={(e) => { e.stopPropagation(); openUserReport(user); }} title="View Detailed Report">
-                          <FileText size={16} />
+                          <BarChart2 size={16} />
                         </button>
-                        <button className="sau-action-btn" onClick={(e) => { e.stopPropagation(); triggerPrintDrawer(user); }} title="Download PDF">
+                        <button className="sau-action-btn" onClick={(e) => { e.stopPropagation(); alert('Downloading PDF...'); }} title="Download PDF">
                           <Download size={16} />
                         </button>
                       </div>
@@ -229,7 +329,7 @@ const SuperAdminReports = () => {
               })}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="sau-empty-state">No employee reports found.</td>
+                  <td colSpan="7" className="sau-empty-state">No employee reports found.</td>
                 </tr>
               )}
             </tbody>
@@ -246,7 +346,7 @@ const SuperAdminReports = () => {
               <div className="sau-drawer-header">
                 <h2>{selectedUser.name}'s Report</h2>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                   <button className="sap-btn-icon" onClick={() => triggerPrintDrawer(selectedUser)}><Download size={18} /></button>
+                   <button className="sap-btn-icon" onClick={() => alert('Downloading PDF...')}><Download size={18} /></button>
                    <button className="sap-btn-icon" onClick={() => setShowDrawer(false)}><X size={20} /></button>
                 </div>
               </div>
