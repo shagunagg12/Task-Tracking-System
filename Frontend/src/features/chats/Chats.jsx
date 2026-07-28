@@ -238,7 +238,7 @@ const Chats = () => {
         chat.id === activeChatId ? { ...chat, unread: 0 } : chat
       ));
     }
-  }, [activeChatId, connection]);
+  }, [activeChatId]);
 
   const handleScroll = (e) => {
      if (e.target.scrollTop === 0 && hasMore && !isMessagesLoading) {
