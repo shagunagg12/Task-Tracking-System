@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as signalR from '@microsoft/signalr';
+import signalRService from './signalrService';
 import './Chats.css';
 
 const Chats = () => {
@@ -10,7 +11,6 @@ const Chats = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'groups', 'direct'
-  const [connection, setConnection] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -40,79 +40,54 @@ const Chats = () => {
 
   // Initialize SignalR Connection
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5024/chathub', {
-        accessTokenFactory: () => token
-      })
-      .withAutomaticReconnect()
-      .build();
+    signalRService.startConnection();
 
-    setConnection(newConnection);
-  }, []);
+    const unsubscribe = signalRService.onReceiveMessage((message) => {
+      try {
+        const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const formattedMessage = { ...message, time: formattedTime };
+        
+        const msgChatId = message.chatSessionId || message.ChatSessionId;
+        const currentChatId = currentChatIdRef.current;
 
-  useEffect(() => {
-    if (connection) {
-      // Bind event handler BEFORE starting the connection
-      connection.on('ReceiveMessage', (message) => {
-        console.log('SignalR ReceiveMessage:', message);
-        try {
-          const formattedTime = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          const formattedMessage = { ...message, time: formattedTime };
+        if (msgChatId && currentChatId && msgChatId.toString() === currentChatId.toString()) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === formattedMessage.id)) return prev;
+            return [...prev, formattedMessage];
+          });
           
-          const msgChatId = message.chatSessionId || message.ChatSessionId;
-          const currentChatId = currentChatIdRef.current;
-
-          if (msgChatId && currentChatId && msgChatId.toString() === currentChatId.toString()) {
-            setMessages(prev => {
-              if (prev.some(m => m.id === formattedMessage.id)) return prev;
-              return [...prev, formattedMessage];
-            });
-            
-            // Update last message in sidebar
-            setConversations(prev => prev.map(chat => {
-              if (chat.id.toString() === msgChatId.toString()) {
-                return { ...chat, lastMessage: message.text, time: formattedTime };
-              }
-              return chat;
-            }));
-            
-            setTimeout(scrollToBottom, 100);
-          } else if (msgChatId) {
-             // Update unread count or last message in sidebar for other chats
-             setConversations(prev => prev.map(chat => {
-              if (chat.id.toString() === msgChatId.toString()) {
-                return { 
-                  ...chat, 
-                  lastMessage: message.text, 
-                  time: formattedTime,
-                  unread: (chat.unread || 0) + 1
-                };
-              }
-              return chat;
-            }));
-          }
-        } catch (err) {
-          console.error("Error processing ReceiveMessage:", err);
+          // Update last message in sidebar
+          setConversations(prev => prev.map(chat => {
+            if (chat.id.toString() === msgChatId.toString()) {
+              return { ...chat, lastMessage: message.text, time: formattedTime };
+            }
+            return chat;
+          }));
+          
+          setTimeout(scrollToBottom, 100);
+        } else if (msgChatId) {
+           // Update unread count or last message in sidebar for other chats
+           setConversations(prev => prev.map(chat => {
+            if (chat.id.toString() === msgChatId.toString()) {
+              return { 
+                ...chat, 
+                lastMessage: message.text, 
+                time: formattedTime,
+                unread: (chat.unread || 0) + 1
+              };
+            }
+            return chat;
+          }));
         }
-      });
+      } catch (err) {
+        console.error("Error processing ReceiveMessage:", err);
+      }
+    });
 
-      connection.start()
-        .then(() => {
-          console.log('Connected to SignalR');
-          if (currentChatIdRef.current) {
-            console.log('SignalR connected: Joining chat', currentChatIdRef.current.toString());
-            connection.invoke('JoinChat', currentChatIdRef.current.toString()).catch(console.error);
-          }
-        })
-        .catch(e => console.error('Connection failed: ', e));
-
-      return () => {
-         connection.off('ReceiveMessage');
-         connection.stop();
-      };
-    }
-  }, [connection]);
+    return () => {
+       unsubscribe();
+    };
+  }, []);
               
 
 
@@ -242,20 +217,14 @@ const Chats = () => {
   useEffect(() => {
     if (activeChatId) {
        // Leave old group if any
-       if (currentChatIdRef.current && connection?.state === 'Connected') {
-          console.log('Leaving chat group', currentChatIdRef.current.toString());
-          connection.invoke('LeaveChat', currentChatIdRef.current.toString()).catch(console.error);
+       if (currentChatIdRef.current) {
+          signalRService.leaveChat(currentChatIdRef.current);
        }
        
        currentChatIdRef.current = activeChatId;
        
        // Join new group
-       if (connection?.state === 'Connected') {
-          console.log('ActiveChatId changed: Joining chat group', activeChatId.toString());
-          connection.invoke('JoinChat', activeChatId.toString()).catch(console.error);
-       } else {
-          console.log('ActiveChatId changed: Cannot join chat yet, connection state is', connection?.state);
-       }
+       signalRService.joinChat(activeChatId);
        
        setMessages([]);
        setSkip(0);
@@ -285,18 +254,14 @@ const Chats = () => {
   };
 
   const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputText.trim() || !activeChatId) return;
-
-    if (connection?.state === 'Connected') {
+    if (e) e.preventDefault();
+    if (inputText.trim() && activeChatId) {
       try {
-        await connection.invoke('SendMessage', activeChatId.toString(), inputText);
+        await signalRService.sendMessage(activeChatId, inputText);
         setInputText('');
       } catch (err) {
         console.error("Error sending message:", err);
       }
-    } else {
-      console.warn('SignalR not connected');
     }
   };
 
