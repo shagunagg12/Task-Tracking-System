@@ -189,29 +189,11 @@ const ChatLayout = () => {
     const msgText = newMessage;
     setNewMessage(''); // Clear input immediately
     
-    const tempId = `temp-${Date.now()}`;
-    const tempMessage = {
-      id: tempId,
-      senderId: currentUserId,
-      receiverId: selectedUser.id,
-      content: msgText,
-      timestamp: new Date().toISOString()
-    };
-    
-    // Optimistic UI update - show message instantly
-    setMessages(prev => [...prev, tempMessage]);
-
     try {
-      const savedMessage = await connection.invoke('SendMessage', currentUserId, selectedUser.id, msgText);
-      
-      setMessages((prevMessages) => {
-        // Replace temp message with the real one from the server
-        return prevMessages.map(m => m.id === tempId ? savedMessage : m);
-      });
+      await connection.invoke('SendMessage', currentUserId, selectedUser.id, msgText);
+      // ReceiveMessage event will handle appending it to the UI
     } catch (e) {
       console.error('Send message failed:', e);
-      // Remove the temp message if sending failed
-      setMessages(prev => prev.filter(m => m.id !== tempId));
     }
   };
 

@@ -66,24 +66,28 @@ namespace Backend.Hubs
             // Send back to the sender (all their tabs)
             if (UserConnections.TryGetValue(senderId.ToString(), out var senderConnections))
             {
+                List<string> conns;
                 lock(senderConnections)
                 {
-                    foreach(var conn in senderConnections)
-                    {
-                        Clients.Client(conn).SendAsync("ReceiveMessage", message);
-                    }
+                    conns = senderConnections.ToList();
+                }
+                foreach(var conn in conns)
+                {
+                    await Clients.Client(conn).SendAsync("ReceiveMessage", message);
                 }
             }
 
             // Push to receiver (all their tabs)
             if (UserConnections.TryGetValue(receiverId.ToString(), out var receiverConnections))
             {
+                List<string> conns;
                 lock(receiverConnections) 
                 {
-                    foreach(var conn in receiverConnections) 
-                    {
-                        Clients.Client(conn).SendAsync("ReceiveMessage", message);
-                    }
+                    conns = receiverConnections.ToList();
+                }
+                foreach(var conn in conns) 
+                {
+                    await Clients.Client(conn).SendAsync("ReceiveMessage", message);
                 }
             }
 
