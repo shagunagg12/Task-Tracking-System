@@ -37,6 +37,10 @@ const Chats = () => {
   };
   const myUserId = getUserId();
 
+  useEffect(() => {
+    console.log("[Chats.jsx] Rendered. Current messages count:", messages.length);
+  });
+
   // Initialize WebSocket Connection
   useEffect(() => {
     webSocketService.startConnection();
