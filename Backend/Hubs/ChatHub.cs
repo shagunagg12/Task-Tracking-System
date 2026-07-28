@@ -63,6 +63,10 @@ namespace Backend.Hubs
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
+            // Clear navigation properties before serializing
+            message.Sender = null;
+            message.Receiver = null;
+
             // Send back to the sender (all their tabs)
             if (UserConnections.TryGetValue(senderId.ToString(), out var senderConnections))
             {
@@ -99,12 +103,14 @@ namespace Backend.Hubs
         {
             if (UserConnections.TryGetValue(receiverId.ToString(), out var receiverConnections))
             {
+                List<string> conns;
                 lock(receiverConnections) 
                 {
-                    foreach(var conn in receiverConnections) 
-                    {
-                        Clients.Client(conn).SendAsync("UserTyping", senderId);
-                    }
+                    conns = receiverConnections.ToList();
+                }
+                foreach(var conn in conns) 
+                {
+                    await Clients.Client(conn).SendAsync("UserTyping", senderId);
                 }
             }
         }
