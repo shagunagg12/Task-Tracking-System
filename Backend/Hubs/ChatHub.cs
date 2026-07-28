@@ -59,8 +59,13 @@ namespace Backend.Hubs
             var sender = await _context.Users.FindAsync(userId);
             string senderName = sender?.FullName ?? "Unknown";
 
-            // Broadcast to group
-            await Clients.Group(chatSessionId).SendAsync("ReceiveMessage", new
+            var sessionMembers = await _context.ChatSessionMembers
+                .Where(m => m.ChatSessionId == sessionId)
+                .Select(m => m.UserId.ToString())
+                .ToListAsync();
+
+            // Broadcast to all members of the chat session
+            await Clients.Users(sessionMembers).SendAsync("ReceiveMessage", new
             {
                 id = message.Id,
                 chatSessionId = message.ChatSessionId,

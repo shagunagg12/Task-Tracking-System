@@ -195,7 +195,10 @@ const Chats = () => {
       if (response.ok) {
         const data = await response.json();
         // The API returns newest first (descending). We need ascending order for display.
-        const sortedData = data.reverse();
+        const sortedData = data.reverse().map(msg => ({
+          ...msg,
+          time: new Date(msg.createdAt + (msg.createdAt.endsWith('Z') ? '' : 'Z')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
         
         if (sortedData.length < take) {
            setHasMore(false);

@@ -135,8 +135,7 @@ namespace Backend.Controllers
                     senderId = m.SenderId,
                     senderName = m.Sender.FullName,
                     text = m.Text,
-                    createdAt = m.CreatedAt,
-                    time = m.CreatedAt.ToString("HH:mm")
+                    createdAt = m.CreatedAt
                 })
                 .ToListAsync();
 
