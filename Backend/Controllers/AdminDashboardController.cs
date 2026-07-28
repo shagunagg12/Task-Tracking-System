@@ -67,5 +67,16 @@ namespace Backend.Controllers
 
             return Ok(stats);
         }
+
+        [HttpGet("notifications")]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var notifications = await _context.AppNotifications
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(50)
+                .ToListAsync();
+
+            return Ok(notifications);
+        }
     }
 }

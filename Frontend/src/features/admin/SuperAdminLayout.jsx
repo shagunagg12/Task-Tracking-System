@@ -23,6 +23,23 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const backendUrl = isDevelopment ? 'http://localhost:5024' : window.location.origin;
 
+    // Fetch initial notifications from DB
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${backendUrl}/api/AdminDashboard/notifications`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch initial notifications", err);
+      }
+    };
+    fetchNotifications();
+
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${backendUrl}/hubs/admindashboard`)
       .withAutomaticReconnect()

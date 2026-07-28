@@ -86,12 +86,19 @@ namespace Backend.Controllers
             
             // Emit real-time notification to Super Admin Dashboard
             var userName = User.FindFirstValue(ClaimTypes.Name) ?? "A user";
-            await _hubContext.Clients.All.SendAsync("ReceiveNotification", new {
-                title = "Task Updated",
-                message = $"{userName} updated task '{task.Title}' to {request.Status}",
-                time = DateTime.UtcNow,
-                type = "task_update"
-            });
+            var notification = new AppNotification
+            {
+                Title = "Task Updated",
+                Message = $"{userName} updated task '{task.Title}' to {request.Status}",
+                Type = "task_update",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            
+            _context.AppNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
             await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate"); // Update admin dashboard stats
 
             return Ok(new { message = "Status updated successfully", task });
@@ -118,12 +125,19 @@ namespace Backend.Controllers
             
             // Emit real-time notification to Super Admin Dashboard
             var userName = User.FindFirstValue(ClaimTypes.Name) ?? "A user";
-            await _hubContext.Clients.All.SendAsync("ReceiveNotification", new {
-                title = "Project Status Updated",
-                message = $"{userName} updated project '{project.Name}' to {request.Status}",
-                time = DateTime.UtcNow,
-                type = "project_update"
-            });
+            var notification = new AppNotification
+            {
+                Title = "Project Status Updated",
+                Message = $"{userName} updated project '{project.Name}' to {request.Status}",
+                Type = "project_update",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            _context.AppNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
             await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate");
 
             return Ok(new { message = "Project status updated successfully", project });

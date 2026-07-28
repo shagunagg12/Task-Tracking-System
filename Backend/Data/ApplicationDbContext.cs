@@ -20,6 +20,7 @@ namespace Backend.Data
         public DbSet<ProjectFeedback> ProjectFeedbacks { get; set; }
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<AppNotification> AppNotifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
