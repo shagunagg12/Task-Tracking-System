@@ -101,6 +101,7 @@ const Chats = () => {
         .then(() => {
           console.log('Connected to SignalR');
           if (currentChatIdRef.current) {
+            console.log('SignalR connected: Joining chat', currentChatIdRef.current.toString());
             connection.invoke('JoinChat', currentChatIdRef.current.toString()).catch(console.error);
           }
         })
@@ -242,6 +243,7 @@ const Chats = () => {
     if (activeChatId) {
        // Leave old group if any
        if (currentChatIdRef.current && connection?.state === 'Connected') {
+          console.log('Leaving chat group', currentChatIdRef.current.toString());
           connection.invoke('LeaveChat', currentChatIdRef.current.toString()).catch(console.error);
        }
        
@@ -249,7 +251,10 @@ const Chats = () => {
        
        // Join new group
        if (connection?.state === 'Connected') {
+          console.log('ActiveChatId changed: Joining chat group', activeChatId.toString());
           connection.invoke('JoinChat', activeChatId.toString()).catch(console.error);
+       } else {
+          console.log('ActiveChatId changed: Cannot join chat yet, connection state is', connection?.state);
        }
        
        setMessages([]);
