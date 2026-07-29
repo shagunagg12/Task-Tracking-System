@@ -186,6 +186,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('isAdmin');
+    localStorage.removeItem('isSuperAdmin');
     window.location.reload();
   };
 

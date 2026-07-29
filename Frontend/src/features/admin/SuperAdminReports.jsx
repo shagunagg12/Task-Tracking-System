@@ -74,6 +74,130 @@ const MiniSparkline = ({ completed, inProgress, pending }) => {
   );
 };
 
+// Reusable Print Component for an Employee
+const PrintableUserReport = ({ user }) => {
+  const computedEfficiency = user.totalTasks > 0 ? Math.round((user.completedTasks / user.totalTasks) * 100) : 0;
+  const completedPct = user.totalTasks > 0 ? Math.round((user.completedTasks / user.totalTasks) * 100) : 0;
+  const inProgressPct = user.totalTasks > 0 ? Math.round((user.inProgressTasks / user.totalTasks) * 100) : 0;
+  const pendingPct = user.totalTasks > 0 ? Math.round((user.pendingTasks / user.totalTasks) * 100) : 0;
+  const blockedPct = user.totalTasks > 0 ? Math.max(0, 100 - (completedPct + inProgressPct + pendingPct)) : 0;
+  const overdueTasksCount = Math.floor(user.inProgressTasks * 0.15);
+
+  return (
+    <div className="print-only-report">
+      <div className="print-banner">
+        <div className="print-logo">MATTS</div>
+        <div className="print-report-tag">PERFORMANCE REPORT</div>
+      </div>
+      
+      <div className="print-section">
+        <h2 className="print-section-title">Employee Details</h2>
+        <div className="print-details-grid">
+          <div className="detail-item"><strong>Employee Name:</strong> <span>{user.name}</span></div>
+          <div className="detail-item"><strong>Designation:</strong> <span>Elite Developer</span></div>
+          <div className="detail-item"><strong>Department:</strong> <span>{user.department === 'Unassigned' ? 'Engineering' : user.department}</span></div>
+          <div className="detail-item"><strong>Report Date:</strong> <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
+        </div>
+      </div>
+
+      <div className="print-section">
+        <h2 className="print-section-title">Performance Summary</h2>
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>Key Performance Indicator (KPI)</th>
+              <th style={{ textAlign: 'right' }}>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Efficiency Index</td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold', color: 'var(--accent-green)' }}>{computedEfficiency}%</td>
+            </tr>
+            <tr>
+              <td>Completion Rate</td>
+              <td style={{ textAlign: 'right' }}>{completedPct}%</td>
+            </tr>
+            <tr>
+              <td>Delay Rate</td>
+              <td style={{ textAlign: 'right' }}>{Math.max(0, 100 - completedPct - inProgressPct)}%</td>
+            </tr>
+            <tr>
+              <td>Deep Work Hours</td>
+              <td style={{ textAlign: 'right' }}>32 hrs</td>
+            </tr>
+            <tr>
+              <td>Total Tasks</td>
+              <td style={{ textAlign: 'right' }}>{user.totalTasks}</td>
+            </tr>
+            <tr>
+              <td>Active Tasks</td>
+              <td style={{ textAlign: 'right' }}>{user.inProgressTasks + user.pendingTasks}</td>
+            </tr>
+            <tr>
+              <td>Completed Tasks</td>
+              <td style={{ textAlign: 'right' }}>{user.completedTasks}</td>
+            </tr>
+            <tr>
+              <td>Tasks Backlog</td>
+              <td style={{ textAlign: 'right' }}>{overdueTasksCount}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="print-section">
+        <h2 className="print-section-title">Task & Project Distribution</h2>
+        <div className="print-pie-overview-row">
+          <div className="print-pie-cell">
+            <div style={{ width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <PieChart data={[
+                { label: 'Completed', value: completedPct, color: '#2ecc71' },
+                { label: 'In Progress', value: inProgressPct, color: '#38bdf8' },
+                { label: 'Pending', value: pendingPct, color: '#fbbf24' },
+                { label: 'Blocked', value: blockedPct, color: '#e74c3c' }
+              ]} />
+            </div>
+          </div>
+          <div className="print-overview-cell">
+            <div className="print-legend-grid">
+              <div className="print-legend-item"><span className="legend-dot completed"></span> Completed: <strong>{completedPct}%</strong></div>
+              <div className="print-legend-item"><span className="legend-dot in-progress"></span> In Progress: <strong>{inProgressPct}%</strong></div>
+              <div className="print-legend-item"><span className="legend-dot pending"></span> Pending: <strong>{pendingPct}%</strong></div>
+              <div className="print-legend-item"><span className="legend-dot blocked"></span> Blocked: <strong>{blockedPct}%</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="print-grid-two-col">
+        <div className="print-section">
+          <h2 className="print-section-title">Performance Highlights</h2>
+          <ul className="print-list">
+            <li>High efficiency score of <strong>{computedEfficiency}%</strong> maintained across active projects.</li>
+            <li>Solid completion rate of <strong>{completedPct}%</strong>.</li>
+            <li>Tasks backlog kept to a minimum of <strong>{overdueTasksCount}</strong> items.</li>
+          </ul>
+        </div>
+
+        <div className="print-section">
+          <h2 className="print-section-title">Recommendations</h2>
+          <ul className="print-list">
+            <li>Continue regular reviews of active backlogs to prevent overdue tasks.</li>
+            <li>Maintain deep work hours to sustain focus and high completion rates.</li>
+            <li>Archive completed tasks regularly to keep the workspace clean.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="print-footer-rating">
+        <span className="rating-label">Overall Performance Rating</span>
+        <span className="rating-badge">{computedEfficiency >= 80 ? 'EXCELLENT' : computedEfficiency >= 50 ? 'GOOD' : 'NEEDS IMPROVEMENT'}</span>
+      </div>
+    </div>
+  );
+};
+
 const SuperAdminReports = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,13 +216,33 @@ const SuperAdminReports = () => {
   // Global metrics
   const [globalMetrics, setGlobalMetrics] = useState({ totalTasks: 0, completedTasks: 0, avgEfficiency: 0 });
 
+  // Printing state
+  const [printingUser, setPrintingUser] = useState(null);
+
   useEffect(() => {
     fetchReportData();
+
+    // Listen for afterprint to reset the state
+    const handleAfterPrint = () => setPrintingUser(null);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => window.removeEventListener('afterprint', handleAfterPrint);
   }, []);
+
+  const handleDownloadReport = (user) => {
+    setPrintingUser(user);
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
 
   const fetchReportData = async () => {
     try {
-      const response = await fetch('http://localhost:5024/api/AdminReports/overview');
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/AdminReports/overview`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         const userReports = data.userReports || [];
@@ -183,8 +327,9 @@ const SuperAdminReports = () => {
   };
 
   return (
-    <div className="sau-container">
-      {/* Header Section */}
+    <>
+      <div className={`sau-container ${printingUser ? 'hide-on-print' : ''}`}>
+        {/* Header Section */}
       <div className="sau-header" style={{ marginBottom: '24px' }}>
         <div>
           <h1 className="sau-title">Reports Control Center</h1>
@@ -319,7 +464,7 @@ const SuperAdminReports = () => {
                         <button className="sau-action-btn" onClick={(e) => { e.stopPropagation(); openUserReport(user); }} title="View Detailed Report">
                           <BarChart2 size={16} />
                         </button>
-                        <button className="sau-action-btn" onClick={(e) => { e.stopPropagation(); alert('Downloading PDF...'); }} title="Download PDF">
+                        <button className="sau-action-btn" onClick={(e) => { e.stopPropagation(); handleDownloadReport(user); }} title="Download PDF">
                           <Download size={16} />
                         </button>
                       </div>
@@ -441,7 +586,12 @@ const SuperAdminReports = () => {
           </>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+
+      {printingUser && (
+        <PrintableUserReport user={printingUser} />
+      )}
+    </>
   );
 };
 

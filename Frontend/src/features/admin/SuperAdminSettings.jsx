@@ -1,246 +1,320 @@
-import React, { useState } from 'react';
-import { Save, Bell, Lock, Monitor, Globe, Shield, User, Palette } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Bell, Lock, Monitor, Globe, Shield, User, Palette, Users, ShieldAlert } from 'lucide-react';
 import './SuperAdminSettings.css';
 
 const SuperAdminSettings = () => {
-  const [activeTab, setActiveTab] = useState('general');
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState('superadmins');
 
-  const [settings, setSettings] = useState({
-    workspaceName: 'Matts Enterprise',
-    supportEmail: 'admin@matts.com',
-    timezone: 'UTC',
-    emailNotifications: true,
-    pushNotifications: false,
-    darkMode: true,
-    maintenanceMode: false,
-    twoFactorAuth: false
-  });
+  const [superAdmins, setSuperAdmins] = useState([]);
 
-  const handleToggle = (key) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null, action: 'promote' });
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const [isSuperAdminSession, setIsSuperAdminSession] = useState(false);
+  const [loginCreds, setLoginCreds] = useState({ email: '', password: '' });
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [employees, setEmployees] = useState([]);
+
+  const handleSuperAdminLogin = async (e) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setLoginError('');
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5024/api';
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginCreds)
+      });
+      const data = await res.json();
+      if (res.ok && data.user && data.user.isSuperAdmin) {
+        setIsSuperAdminSession(true);
+        setLoginCreds({ email: '', password: '' });
+        fetchEmployees();
+      } else {
+        setLoginError('Invalid credentials or not a Super Admin.');
+      }
+    } catch (err) {
+      setLoginError('Network error.');
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setSettings(prev => ({ ...prev, [name]: value }));
+  const fetchEmployees = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5024/api/AdminUsers', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEmployees(data);
+      }
+    } catch (e) { console.error(e); }
   };
 
-  const handleSave = () => {
-    setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSaving(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-    }, 1200);
+  const requestPromoteEmployee = (user) => {
+    setConfirmModal({ isOpen: true, user, action: 'promote' });
   };
+
+  const requestDemoteEmployee = (user) => {
+    setConfirmModal({ isOpen: true, user, action: 'demote' });
+  };
+
+  const showToast = (message, type) => {
+    setToastMessage({ message, type });
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const executeAction = async () => {
+    const { user, action } = confirmModal;
+    if (!user) return;
+    setConfirmModal({ isOpen: false, user: null, action: 'promote' });
+    
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = action === 'promote' 
+        ? `http://localhost:5024/api/AdminUsers/${user.id}/promote`
+        : `http://localhost:5024/api/AdminUsers/${user.id}/demote`;
+        
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const successMsg = action === 'promote' ? `${user.fullName} promoted to Admin!` : `${user.fullName} demoted to Employee!`;
+        showToast(successMsg, 'success');
+        fetchEmployees();
+      } else {
+        const data = await res.json();
+        showToast(data.message || `Failed to ${action}`, 'error');
+      }
+    } catch (e) {
+      showToast(`Error trying to ${action} user`, 'error');
+    }
+  };
+
+  const fetchSuperAdmins = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5024/api/superadmins', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSuperAdmins(data);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'superadmins') {
+      fetchSuperAdmins();
+    }
+  }, [activeTab]);
+
+
+
+
 
   return (
     <div className="sa-dashboard">
       <header className="sa-dash-header">
         <div>
           <h1 className="sa-dash-title">Platform Settings</h1>
-          <p className="sa-dash-subtitle">Manage your enterprise workspace preferences and security configurations.</p>
+          <p className="sa-dash-subtitle">Manage Super Admins and capabilities.</p>
         </div>
-        <button 
-          className="sa-btn-primary" 
-          onClick={handleSave}
-          disabled={isSaving}
-          style={saveSuccess ? { background: '#10b981', color: '#fff' } : {}}
-        >
-          {isSaving ? (
-            'Saving...'
-          ) : saveSuccess ? (
-            'Saved Successfully!'
-          ) : (
-            <>
-              <Save size={18} />
-              Save Changes
-            </>
-          )}
-        </button>
       </header>
 
       <div className="sa-settings-layout">
         <aside className="sa-settings-sidebar">
           <nav className="sa-settings-nav">
             <button 
-              className={`sa-settings-tab ${activeTab === 'general' ? 'active' : ''}`}
-              onClick={() => setActiveTab('general')}
+              className={`sa-settings-tab ${activeTab === 'superadmins' ? 'active' : ''}`}
+              onClick={() => setActiveTab('superadmins')}
             >
-              <Globe size={18} />
-              General
-            </button>
-            <button 
-              className={`sa-settings-tab ${activeTab === 'security' ? 'active' : ''}`}
-              onClick={() => setActiveTab('security')}
-            >
-              <Shield size={18} />
-              Security
-            </button>
-            <button 
-              className={`sa-settings-tab ${activeTab === 'notifications' ? 'active' : ''}`}
-              onClick={() => setActiveTab('notifications')}
-            >
-              <Bell size={18} />
-              Notifications
-            </button>
-            <button 
-              className={`sa-settings-tab ${activeTab === 'appearance' ? 'active' : ''}`}
-              onClick={() => setActiveTab('appearance')}
-            >
-              <Palette size={18} />
-              Appearance
+              <Users size={18} />
+              Super Admins
             </button>
           </nav>
         </aside>
 
         <main className="sa-settings-content">
           <div className="sa-settings-card fade-in">
-            {activeTab === 'general' && (
+
+            {activeTab === 'superadmins' && (
               <>
                 <div className="sa-card-header">
-                  <h2>General Settings</h2>
-                  <p>Basic configuration for your enterprise workspace.</p>
+                  <h2>Super Admins Management</h2>
+                  <p>Authenticate as a Super Admin to unlock advanced capabilities.</p>
                 </div>
                 
-                <div className="sa-form-group">
-                  <label>Workspace Name</label>
-                  <div className="sa-input-wrapper">
-                    <Monitor size={18} className="sa-input-icon" />
-                    <input 
-                      type="text" 
-                      name="workspaceName" 
-                      value={settings.workspaceName} 
-                      onChange={handleChange}
-                    />
+                {!isSuperAdminSession ? (
+                  <form className="sa-superadmin-form" onSubmit={handleSuperAdminLogin}>
+                    <h3>Sign In as Super Admin</h3>
+                    {loginError && <div className="sa-alert error">{loginError}</div>}
+                    
+                    <div className="sa-form-group">
+                      <label>Email Address</label>
+                      <div className="sa-input-wrapper">
+                        <Globe size={18} className="sa-input-icon" />
+                        <input 
+                          type="email" 
+                          required 
+                          value={loginCreds.email} 
+                          onChange={(e) => setLoginCreds({...loginCreds, email: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="sa-form-group">
+                      <label>Password</label>
+                      <div className="sa-input-wrapper">
+                        <Lock size={18} className="sa-input-icon" />
+                        <input 
+                          type="password" 
+                          required 
+                          value={loginCreds.password} 
+                          onChange={(e) => setLoginCreds({...loginCreds, password: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
+                    <button type="submit" className="sa-btn-primary" disabled={isLoggingIn}>
+                      {isLoggingIn ? 'Signing in...' : 'Sign In'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="sa-superadmin-unlocked">
+                    <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '8px', marginBottom: '24px', color: '#10b981', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <ShieldAlert size={20} /> Super Admin Capabilities Unlocked
+                    </div>
+                    
+                    <div className="sa-superadmin-list">
+                      <h3>Employee Promotion Management</h3>
+                      <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '14px' }}>Promote standard employees to full Admins.</p>
+                      <table className="sa-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {employees.map(user => (
+                            <tr key={user.id}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <img 
+                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`} 
+                                    alt={user.fullName} 
+                                    style={{ width: '32px', height: '32px', borderRadius: '50%' }}
+                                  />
+                                  {user.fullName}
+                                </div>
+                              </td>
+                              <td>{user.email}</td>
+                              <td>{user.role}</td>
+                              <td>
+                                {user.role !== 'Admin' ? (
+                                  <button 
+                                    className="sa-btn-primary" 
+                                    style={{ background: '#10b981', padding: '6px 12px', fontSize: '13px' }}
+                                    onClick={() => requestPromoteEmployee(user)}
+                                  >
+                                    Promote to Admin
+                                  </button>
+                                ) : (
+                                  <button 
+                                    className="sa-btn-outline" 
+                                    style={{ padding: '6px 12px', fontSize: '13px', borderColor: '#ef4444', color: '#ef4444' }}
+                                    onClick={() => requestDemoteEmployee(user)}
+                                  >
+                                    Remove Admin
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          {employees.length === 0 && (
+                            <tr><td colSpan="4" style={{ textAlign: 'center' }}>No employees found.</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="sa-form-group">
-                  <label>Support Email</label>
-                  <div className="sa-input-wrapper">
-                    <User size={18} className="sa-input-icon" />
-                    <input 
-                      type="email" 
-                      name="supportEmail" 
-                      value={settings.supportEmail} 
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                <div className="sa-divider" style={{ margin: '32px 0' }}></div>
 
-                <div className="sa-form-group">
-                  <label>Default Timezone</label>
-                  <select name="timezone" value={settings.timezone} onChange={handleChange} className="sau-select" style={{ width: '100%', padding: '12px 16px' }}>
-                    <option value="UTC">UTC (Universal Coordinated Time)</option>
-                    <option value="EST">EST (Eastern Standard Time)</option>
-                    <option value="PST">PST (Pacific Standard Time)</option>
-                    <option value="IST">IST (Indian Standard Time)</option>
-                  </select>
-                </div>
-              </>
-            )}
-
-            {activeTab === 'security' && (
-              <>
-                <div className="sa-card-header">
-                  <h2>Security Configuration</h2>
-                  <p>Protect your enterprise data and manage access policies.</p>
-                </div>
-                
-                <div className="sa-toggle-row">
-                  <div className="sa-toggle-info">
-                    <h3>Two-Factor Authentication (2FA)</h3>
-                    <p>Require 2FA for all administrative accounts.</p>
-                  </div>
-                  <label className="sa-switch">
-                    <input type="checkbox" checked={settings.twoFactorAuth} onChange={() => handleToggle('twoFactorAuth')} />
-                    <span className="sa-slider"></span>
-                  </label>
-                </div>
-
-                <div className="sa-divider"></div>
-
-                <div className="sa-form-group">
-                  <label>Admin Password Reset</label>
-                  <div className="sa-input-wrapper">
-                    <Lock size={18} className="sa-input-icon" />
-                    <input type="password" placeholder="Enter new master password" />
-                  </div>
-                  <button className="sa-btn-secondary mt-3">Update Password</button>
-                </div>
-              </>
-            )}
-
-            {activeTab === 'notifications' && (
-              <>
-                <div className="sa-card-header">
-                  <h2>Notification Preferences</h2>
-                  <p>Control how and when the system sends alerts.</p>
-                </div>
-                
-                <div className="sa-toggle-row">
-                  <div className="sa-toggle-info">
-                    <h3>Email Notifications</h3>
-                    <p>Receive daily summaries and critical system alerts via email.</p>
-                  </div>
-                  <label className="sa-switch">
-                    <input type="checkbox" checked={settings.emailNotifications} onChange={() => handleToggle('emailNotifications')} />
-                    <span className="sa-slider"></span>
-                  </label>
-                </div>
-
-                <div className="sa-toggle-row">
-                  <div className="sa-toggle-info">
-                    <h3>Push Notifications</h3>
-                    <p>Real-time browser notifications for important events.</p>
-                  </div>
-                  <label className="sa-switch">
-                    <input type="checkbox" checked={settings.pushNotifications} onChange={() => handleToggle('pushNotifications')} />
-                    <span className="sa-slider"></span>
-                  </label>
-                </div>
-              </>
-            )}
-
-            {activeTab === 'appearance' && (
-              <>
-                <div className="sa-card-header">
-                  <h2>Appearance & Behavior</h2>
-                  <p>Customize the look and feel of the admin dashboard.</p>
-                </div>
-                
-                <div className="sa-toggle-row">
-                  <div className="sa-toggle-info">
-                    <h3>Dark Mode</h3>
-                    <p>Use a darker, high-contrast theme across the application.</p>
-                  </div>
-                  <label className="sa-switch">
-                    <input type="checkbox" checked={settings.darkMode} onChange={() => handleToggle('darkMode')} />
-                    <span className="sa-slider"></span>
-                  </label>
-                </div>
-
-                <div className="sa-divider"></div>
-
-                <div className="sa-toggle-row">
-                  <div className="sa-toggle-info">
-                    <h3>Maintenance Mode</h3>
-                    <p className="text-warning">Prevents non-admin users from accessing the system.</p>
-                  </div>
-                  <label className="sa-switch danger">
-                    <input type="checkbox" checked={settings.maintenanceMode} onChange={() => handleToggle('maintenanceMode')} />
-                    <span className="sa-slider"></span>
-                  </label>
+                <div className="sa-superadmin-list">
+                  <h3>Existing Super Admins</h3>
+                  <table className="sa-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {superAdmins.map(admin => (
+                        <tr key={admin.id}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <img 
+                                src={admin.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.fullName)}&background=random`} 
+                                alt={admin.fullName} 
+                                style={{ width: '32px', height: '32px', borderRadius: '50%' }}
+                              />
+                              {admin.fullName}
+                            </div>
+                          </td>
+                          <td>{admin.email}</td>
+                        </tr>
+                      ))}
+                      {superAdmins.length === 0 && (
+                        <tr><td colSpan="2" style={{ textAlign: 'center' }}>No super admins found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </>
             )}
           </div>
         </main>
       </div>
+
+      {confirmModal.isOpen && (
+        <div className="sa-custom-modal-overlay">
+          <div className="sa-custom-modal">
+            <h3>{confirmModal.action === 'promote' ? 'Promote to Admin?' : 'Demote from Admin?'}</h3>
+            <p>
+              Are you sure you want to {confirmModal.action === 'promote' ? 'promote' : 'demote'} <strong>{confirmModal.user?.fullName}</strong> 
+              {confirmModal.action === 'promote' ? ' to Admin?' : ' back to an Employee?'}
+            </p>
+            <div className="sa-custom-modal-actions">
+              <button className="sa-btn-outline" onClick={() => setConfirmModal({ isOpen: false, user: null, action: 'promote' })}>Cancel</button>
+              <button 
+                className="sa-btn-primary" 
+                style={{ background: confirmModal.action === 'promote' ? '#10b981' : '#ef4444' }} 
+                onClick={executeAction}
+              >
+                {confirmModal.action === 'promote' ? 'Yes, Promote' : 'Yes, Demote'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toastMessage && (
+        <div className={`sa-custom-toast ${toastMessage.type}`}>
+          {toastMessage.message}
+        </div>
+      )}
     </div>
   );
 };

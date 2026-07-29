@@ -74,6 +74,10 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
         if (res.ok) {
           const data = await res.json();
           setUserProfileData(data);
+          if (data.fullName) {
+            setUserName(data.fullName);
+            localStorage.setItem('userName', data.fullName);
+          }
           
           const tasks = [];
           if (!data.designation || !data.department || !data.location || !data.bio) {
@@ -144,14 +148,21 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
   const initialData = getUserData();
   const [userPic, setUserPic] = useState(initialData.pic);
-  const userName = initialData.name;
+  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || initialData.name);
 
   useEffect(() => {
     const handlePicUpdate = () => {
       setUserPic(localStorage.getItem('profilePic') || '');
     };
+    const handleProfileUpdate = () => {
+      setUserName(localStorage.getItem('userName') || initialData.name);
+    };
     window.addEventListener('profilePicUpdated', handlePicUpdate);
-    return () => window.removeEventListener('profilePicUpdated', handlePicUpdate);
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profilePicUpdated', handlePicUpdate);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   const menuItems = [
@@ -229,6 +240,8 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
               <button 
                 onClick={() => {
                   localStorage.removeItem('token');
+                  localStorage.removeItem('isAdmin');
+                  localStorage.removeItem('isSuperAdmin');
                   window.location.reload();
                 }}
                 style={{ 

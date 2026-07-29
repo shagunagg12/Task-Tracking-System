@@ -45,6 +45,11 @@ export default function Login({ onLogin }) {
         } else {
           localStorage.removeItem('isAdmin');
         }
+        if (data.user && data.user.isSuperAdmin) {
+          localStorage.setItem('isSuperAdmin', 'true');
+        } else {
+          localStorage.removeItem('isSuperAdmin');
+        }
         if (onLogin) onLogin(data.user);
       }
     } catch (err) {

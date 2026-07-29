@@ -78,6 +78,7 @@ namespace Backend.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
+            bool isSuperAdmin = false;
             bool isAdmin = false;
             int userId = 0;
             string userFullName = string.Empty;
@@ -85,9 +86,26 @@ namespace Backend.Controllers
             
             string userProfilePictureUrl = string.Empty;
             
-            // 1. Check Admins Table First
-            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == dto.Email);
-            if (admin != null)
+            // 0. Check SuperAdmins Table First
+            var superAdmin = await _context.SuperAdmins.FirstOrDefaultAsync(s => s.Email == dto.Email);
+            if (superAdmin != null)
+            {
+                if (!BCrypt.Net.BCrypt.Verify(dto.Password, superAdmin.PasswordHash))
+                {
+                    await LogFailedLogin(dto.Email);
+                    return Unauthorized(new { message = "Invalid email or password." });
+                }
+                
+                isSuperAdmin = true;
+                userId = superAdmin.Id;
+                userFullName = superAdmin.FullName;
+                userProfilePictureUrl = superAdmin.ProfilePictureUrl ?? "";
+            }
+            else
+            {
+                // 1. Check Admins Table
+                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == dto.Email);
+                if (admin != null)
             {
                 if (!BCrypt.Net.BCrypt.Verify(dto.Password, admin.PasswordHash))
                 {
@@ -122,6 +140,7 @@ namespace Backend.Controllers
                 userFullName = user.FullName;
                 userProfilePictureUrl = user.ProfilePictureUrl ?? "";
             }
+            } // Close the outer else block for SuperAdmin
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "super_secret_fallback_key_that_is_long_enough_12345!";
@@ -134,7 +153,13 @@ namespace Backend.Controllers
                 new Claim(ClaimTypes.Name, userFullName)
             };
 
-            if (isAdmin)
+            if (isSuperAdmin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "SuperAdmin"));
+                // SuperAdmins also get Admin privileges
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+            else if (isAdmin)
             {
                 claims.Add(new Claim(ClaimTypes.Role, "Admin"));
             }
@@ -153,7 +178,7 @@ namespace Backend.Controllers
             return Ok(new
             {
                 token = tokenHandler.WriteToken(token),
-                user = new { Id = userId, FullName = userFullName, Email = userEmail, isAdmin = isAdmin, ProfilePictureUrl = userProfilePictureUrl }
+                user = new { Id = userId, FullName = userFullName, Email = userEmail, isAdmin = (isAdmin || isSuperAdmin), isSuperAdmin = isSuperAdmin, ProfilePictureUrl = userProfilePictureUrl }
             });
         }
 

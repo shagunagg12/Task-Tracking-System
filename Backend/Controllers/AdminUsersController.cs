@@ -25,13 +25,62 @@ namespace Backend.Controllers
                     u.Id,
                     u.FullName,
                     u.Email,
-                    Role = "Employee",
+                    Role = _context.Admins.Any(a => a.Email == u.Email) ? "Admin" : "Employee",
                     Status = "Active",
                     Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random"
                 })
                 .ToListAsync();
 
             return Ok(users);
+        }
+
+        [HttpPost("{id}/promote")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> PromoteToAdmin(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found" });
+
+            if (await _context.Admins.AnyAsync(a => a.Email == user.Email))
+            {
+                return BadRequest(new { message = "User is already an Admin" });
+            }
+
+            var newAdmin = new Admin
+            {
+                Email = user.Email,
+                FullName = user.FullName,
+                PasswordHash = user.PasswordHash,
+                Designation = "Admin",
+                Department = "Management",
+                Location = "",
+                Bio = "System Administrator",
+                ProfilePictureUrl = user.ProfilePictureUrl
+            };
+
+            _context.Admins.Add(newAdmin);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "User successfully promoted to Admin" });
+        }
+
+        [HttpPost("{id}/demote")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> DemoteFromAdmin(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found" });
+
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == user.Email);
+            if (admin == null)
+            {
+                return BadRequest(new { message = "User is not an Admin" });
+            }
+
+            _context.Admins.Remove(admin);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "User successfully demoted to Employee" });
         }
 
         public class CreateUserDto

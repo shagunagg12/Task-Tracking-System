@@ -25,9 +25,21 @@ namespace Backend.Data
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
 
+        public DbSet<SuperAdmin> SuperAdmins { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<SuperAdmin>().HasData(
+                new SuperAdmin
+                {
+                    Id = 1,
+                    Email = "connect2rachit882@gmail.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rachit@12"),
+                    FullName = "Rachit"
+                }
+            );
 
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)

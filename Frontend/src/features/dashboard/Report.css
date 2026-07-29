@@ -1268,7 +1268,8 @@
   #chatbot,
   .chat-widget,
   .common-chat-trigger,
-  button {
+  button,
+  .hide-on-print {
     display: none !important;
   }
 
@@ -1276,7 +1277,10 @@
   .layout-container,
   .main-content,
   .content-scroll,
-  .report-container {
+  .report-container,
+  .sa-layout,
+  .sa-main,
+  .sa-content-area {
     background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;

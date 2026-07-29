@@ -114,7 +114,7 @@ const Report = () => {
   
   // 1. Task Summary Calculations
   const totalTasksCount = hasRealData ? allTasks.length : 142;
-  const completedTasksCount = hasRealData ? allTasks.filter(t => t.status === 'Done').length : 96;
+  const completedTasksCount = hasRealData ? allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length : 96;
   const activeTasksCount = hasRealData ? allTasks.filter(t => t.status === 'In Progress' || t.status === 'Todo').length : 38;
   const blockedTasksCount = hasRealData ? allTasks.filter(t => t.status === 'Blocked').length : 8;
   // Overdue: tasks that are active and have an passed deadline (simulated or actual)
@@ -129,11 +129,11 @@ const Report = () => {
 
   // 5. Efficiency Score Formula - Calculated as overall project task completion percentage
   const computedEfficiency = hasRealData 
-    ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'Done').length / allTasks.length) * 100) : 0)
+    ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length / allTasks.length) * 100) : 0)
     : 75;
 
   // Status Distribution Percentages normalized to add up to exactly 100%
-  const completedPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'Done').length / allTasks.length) * 100) : 75;
+  const completedPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length / allTasks.length) * 100) : 75;
   const inProgressPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'In Progress').length / allTasks.length) * 100) : 15;
   const pendingPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'Todo').length / allTasks.length) * 100) : 10;
   const blockedPct = 100 - (completedPct + inProgressPct + pendingPct); // Ensure sum is exactly 100%

@@ -118,6 +118,8 @@ export default function ProfileSettings() {
       });
       
       if (res.ok) {
+        if (profile.fullName) localStorage.setItem('userName', profile.fullName);
+        window.dispatchEvent(new Event('profileUpdated'));
         setMessage("Profile updated successfully!");
       } else {
         setError("Failed to update profile.");
