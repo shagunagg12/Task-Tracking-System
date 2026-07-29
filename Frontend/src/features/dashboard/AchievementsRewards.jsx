@@ -6,6 +6,33 @@ const AchievementsRewards = () => {
   const [redeemedItems, setRedeemedItems] = useState([]);
   const [redemptionSuccess, setRedemptionSuccess] = useState(null);
 
+  const [efficiencyMilestones, setEfficiencyMilestones] = useState([
+    {
+      id: 'weekly-streak',
+      title: 'Weekly Consistency Streak',
+      requirement: 'Maintain >90% efficiency for 7 days in a row',
+      rewardPoints: 100,
+      status: 'claimable',
+      progress: { current: 7, total: 7 }
+    },
+    {
+      id: 'monthly-consistency',
+      title: 'Monthly Peak Performance',
+      requirement: 'Maintain continuous 90% efficiency for 1 month',
+      rewardPoints: 500,
+      status: 'in-progress',
+      progress: { current: 21, total: 30 }
+    },
+    {
+      id: 'excellence-bonus',
+      title: 'Overall Excellence Bonus',
+      requirement: 'Achieve an efficiency score of 95% or higher',
+      rewardPoints: 250,
+      status: 'claimed',
+      progress: { current: 96, total: 95 }
+    }
+  ]);
+
   const achievements = [
     {
       id: 1,
@@ -112,13 +139,22 @@ const AchievementsRewards = () => {
     }
   };
 
+  const handleClaimBonus = (milestone) => {
+    if (milestone.status === 'claimable') {
+      setPoints(prev => prev + milestone.rewardPoints);
+      setEfficiencyMilestones(prev => prev.map(m => m.id === milestone.id ? { ...m, status: 'claimed' } : m));
+      setRedemptionSuccess(`Claimed +${milestone.rewardPoints} points for completing "${milestone.title}"! 🎉`);
+      setTimeout(() => setRedemptionSuccess(null), 4000);
+    }
+  };
+
   return (
     <div className="achievements-rewards-container">
       {/* HEADER SUMMARY */}
       <div className="ar-hero-header">
         <div className="ar-hero-info">
           <h1>Achievements & Rewards</h1>
-          <p>Earn points by completing tasks and unlock premium rewards!</p>
+          <p>Earn points by completing tasks and maintaining high efficiency!</p>
         </div>
         <div className="ar-stats-row">
           <div className="ar-stat-card points-card">
@@ -150,6 +186,47 @@ const AchievementsRewards = () => {
           <span>🎉</span> {redemptionSuccess}
         </div>
       )}
+
+      {/* EFFICIENCY CREDIT SYSTEM */}
+      <div className="ar-efficiency-credits-container">
+        <div className="ar-section-header">
+          <h2>🎯 Efficiency Milestones & Credits</h2>
+          <p>Earn point credits by keeping your efficiency levels high.</p>
+        </div>
+        <div className="ar-milestones-grid">
+          {efficiencyMilestones.map(m => (
+            <div key={m.id} className={`ar-milestone-card ${m.status}`}>
+              <div className="ar-milestone-info">
+                <h3>{m.title}</h3>
+                <p className="ar-req-desc">{m.requirement}</p>
+                <div className="ar-milestone-progress">
+                  <div className="ar-progress-text">
+                    Progress: {m.progress.current} / {m.progress.total} {m.id === 'excellence-bonus' ? '%' : 'days'}
+                  </div>
+                  <div className="ar-progress-track">
+                    <div 
+                      className="ar-progress-fill" 
+                      style={{ width: `${Math.min((m.progress.current / m.progress.total) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+              <div className="ar-milestone-action">
+                <span className="ar-milestone-points">🪙 +{m.rewardPoints} pts</span>
+                <button 
+                  className={`claim-btn ${m.status}`}
+                  disabled={m.status !== 'claimable'}
+                  onClick={() => handleClaimBonus(m)}
+                >
+                  {m.status === 'claimable' && 'Claim Points'}
+                  {m.status === 'claimed' && 'Claimed ✓'}
+                  {m.status === 'in-progress' && 'In Progress'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* TWO COLUMN GRID */}
       <div className="ar-grid">

@@ -383,3 +383,125 @@
 .locked-reward {
   opacity: 0.75;
 }
+
+/* EFFICIENCY CREDITS & MILESTONES */
+.ar-efficiency-credits-container {
+  background: var(--bg-card);
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.ar-section-header {
+  margin-bottom: 20px;
+}
+
+.ar-section-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.ar-section-header p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.ar-milestones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.ar-milestone-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.01);
+  transition: all 0.3s ease;
+}
+
+.ar-milestone-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ar-milestone-card.claimable {
+  border-color: rgba(185, 246, 90, 0.4);
+  background: radial-gradient(circle at top right, rgba(185, 246, 90, 0.08) 0%, rgba(185, 246, 90, 0.01) 100%);
+  box-shadow: 0 4px 20px rgba(185, 246, 90, 0.05);
+  animation: pulseHighlight 2s infinite alternate;
+}
+
+@keyframes pulseHighlight {
+  0% { border-color: rgba(185, 246, 90, 0.3); }
+  100% { border-color: rgba(185, 246, 90, 0.6); }
+}
+
+.ar-milestone-info h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ar-req-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.ar-milestone-progress {
+  margin-top: auto;
+  margin-bottom: 16px;
+}
+
+.ar-milestone-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+}
+
+.ar-milestone-points {
+  font-weight: 700;
+  color: #fbbf24;
+  font-size: 13px;
+}
+
+.claim-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.claim-btn.claimable {
+  background: var(--accent-green);
+  color: #1a1a1a;
+}
+
+.claim-btn.claimable:hover {
+  background: #a3e635;
+  box-shadow: 0 4px 10px rgba(185, 246, 90, 0.3);
+}
+
+.claim-btn.claimed {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.claim-btn.in-progress {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
