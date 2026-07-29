@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import * as signalR from '@microsoft/signalr';
 import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
@@ -60,6 +62,23 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [showPendingTasks, setShowPendingTasks] = useState(false);
   const [pendingTasks, setPendingTasks] = useState([]);
   const [userProfileData, setUserProfileData] = useState(null);
+  
+  // Toasts and Modals
+  const [toasts, setToasts] = useState([]);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  
+  const addToast = (toast) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, ...toast }]);
+    setTimeout(() => dismissToast(id), 5000);
+  };
+
+  const dismissToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -97,6 +116,19 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             setPendingTasks(tasks);
             setShowPendingTasks(true);
           }
+
+          // Fetch notifications
+          try {
+            const notifRes = await fetch(`http://localhost:5024/api/DepartmentNotifications/${encodeURIComponent(data.department)}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (notifRes.ok) {
+              const notifData = await notifRes.json();
+              setNotifications(notifData);
+            }
+          } catch(err) {
+            console.error(err);
+          }
         }
       } catch (err) {
         console.error("Error fetching profile", err);
@@ -104,6 +136,39 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
     };
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!userProfileData) return;
+
+    // Connect to SignalR
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5024/adminHub")
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveUserNotification", (notification) => {
+      // Check if notification belongs to this user's department
+      if (notification.department === userProfileData.department) {
+        addToast({
+          title: notification.title,
+          message: notification.message
+        });
+        setNotifications(prev => [{
+          id: Date.now(), // temporary id
+          title: notification.title,
+          message: notification.message,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        }, ...prev]);
+      }
+    });
+
+    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+
+    return () => {
+      connection.stop();
+    };
+  }, [userProfileData]);
 
   useEffect(() => {
     localStorage.setItem('activeMenu', activeMenu);
@@ -537,7 +602,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           </div>
           </>
           ) : (
-             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                <h2>{activeMenu}</h2>
                <p style={{ marginTop: '10px' }}>This section is currently under development.</p>
              </div>
@@ -552,34 +617,31 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
         <div className="right-section">
           <h3 className="right-title">Notifications</h3>
           <ul className="list-items">
-            <li className="list-item">
-              <div className="icon-circle green">📋</div>
-              <div className="item-details">
-                <p className="item-title">New project 'Website Redesign' assigned.</p>
-                <p className="item-time">Just now</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">✉</div>
-              <div className="item-details">
-                <p className="item-title">Feedback received from Manager.</p>
-                <p className="item-time">59 Minutes ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">🎁</div>
-              <div className="item-details">
-                <p className="item-title">150 Reward points credited.</p>
-                <p className="item-time">12 Hours ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">💬</div>
-              <div className="item-details">
-                <p className="item-title">5 Unread team messages.</p>
-                <p className="item-time">Today, 11:59 PM</p>
-              </div>
-            </li>
+            {notifications.length === 0 ? (
+              <li className="list-item" style={{ justifyContent: 'center', opacity: 0.5, paddingTop: '10px' }}>
+                <p>No notifications</p>
+              </li>
+            ) : (
+              notifications.map((notif) => (
+                <li 
+                  key={notif.id} 
+                  className="list-item" 
+                  style={{ cursor: 'pointer', transition: 'background 0.2s', padding: '8px', borderRadius: '8px' }}
+                  onClick={() => setSelectedNotification(notif)}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div className="icon-circle outline">✉</div>
+                  <div className="item-details">
+                    <p className="item-title">{notif.title}</p>
+                    <p className="item-time">
+                      {new Date(notif.createdAt).toLocaleDateString()}{' '}
+                      {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </li>
+              ))
+            )}
           </ul>
         </div>
 
@@ -653,6 +715,45 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
       </aside>
       {activeMenu !== 'Chat' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
+      
+      {/* Notification Details Modal */}
+      {selectedNotification && createPortal(
+        <div className="dashboard-modal-overlay" onClick={() => setSelectedNotification(null)}>
+          <div className="dashboard-modal" onClick={e => e.stopPropagation()}>
+            <div className="dashboard-modal-header">
+              <h3>{selectedNotification.title}</h3>
+              <button className="dashboard-modal-close" onClick={() => setSelectedNotification(null)}>×</button>
+            </div>
+            <div className="dashboard-modal-body">
+              <p className="dashboard-modal-date">
+                {new Date(selectedNotification.createdAt).toLocaleDateString()}{' '}
+                {new Date(selectedNotification.createdAt).toLocaleTimeString()}
+              </p>
+              <div className="dashboard-modal-message">
+                {selectedNotification.message}
+              </div>
+            </div>
+            <div className="dashboard-modal-footer">
+              <button className="dashboard-modal-btn" onClick={() => setSelectedNotification(null)}>Close</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Toasts */}
+      {createPortal(
+        <div className="dashboard-toast-container">
+          {toasts.map(toast => (
+            <div key={toast.id} className="dashboard-toast">
+              <div className="dashboard-toast-title">{toast.title}</div>
+              <div className="dashboard-toast-message">{toast.message}</div>
+              <button className="dashboard-toast-close" onClick={() => dismissToast(toast.id)}>×</button>
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
