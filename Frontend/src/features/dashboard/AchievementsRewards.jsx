@@ -175,20 +175,7 @@ const AchievementsRewards = () => {
               <span className="ar-stat-lbl">Available Points</span>
             </div>
           </div>
-          <div className="ar-stat-card streak-card">
-            <span className="ar-stat-icon flame-icon">🔥</span>
-            <div className="ar-stat-details">
-              <span className="ar-stat-val">5 Days</span>
-              <span className="ar-stat-lbl">Active Streak</span>
-            </div>
-          </div>
-          <div className="ar-stat-card level-card">
-            <span className="ar-stat-icon">🌟</span>
-            <div className="ar-stat-details">
-              <span className="ar-stat-val">Level 4</span>
-              <span className="ar-stat-lbl">Gold Tier</span>
-            </div>
-          </div>
+
         </div>
       </div>
 
