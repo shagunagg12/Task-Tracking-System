@@ -26,6 +26,9 @@ namespace Backend.Data
         public DbSet<ProjectMessage> ProjectMessages { get; set; }
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
+        public DbSet<UserClaimedBonus> UserClaimedBonuses { get; set; }
+        public DbSet<RewardRedemption> RewardRedemptions { get; set; }
+        public DbSet<UserLoginLog> UserLoginLogs { get; set; }
 
         public DbSet<SuperAdmin> SuperAdmins { get; set; }
         public DbSet<Department> Departments { get; set; }

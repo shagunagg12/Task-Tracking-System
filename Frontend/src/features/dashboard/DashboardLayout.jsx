@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import * as signalR from '@microsoft/signalr';
 import Chatbot from '../../components/Chatbot';
+import PendingTasksModal from '../../components/PendingTasksModal';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
 import ChatLayout from '../chat/ChatLayout';
 import Calendar from './Calendar';
-import PendingTasksModal from '../../components/PendingTasksModal';
+import AchievementsRewards from './AchievementsRewards';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -235,10 +236,9 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
     { id: 'Projects', icon: '💼', text: 'Projects' },
     { id: 'Standings', icon: '🏆', text: 'Standings' },
     { id: 'Calendar', icon: '📅', text: 'Calendar' },
-    { id: 'Achievements', icon: '🌟', text: 'Achievements' },
-    { id: 'Rewards', icon: '🎁', text: 'Rewards' },
+    { id: 'Chats', icon: '💬', text: 'Chats' },
+    { id: 'AchievementsRewards', icon: '🏆', text: 'Achievements & Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
-    { id: 'Chat', icon: '💬', text: 'Chat' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
@@ -360,6 +360,10 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <Calendar />
           </div>
+        ) : (activeMenu === 'Chats' || activeMenu === 'Chat') ? (
+          <div className="chat-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <ChatLayout />
+          </div>
         ) : (
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
@@ -368,10 +372,8 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             <AssignedProjects />
           ) : activeMenu === 'Report' ? (
             <Report />
-          ) : activeMenu === 'Chat' ? (
-            <div style={{ height: 'calc(100vh - 120px)', padding: '0 20px 20px 20px' }}>
-              <ChatLayout />
-            </div>
+          ) : activeMenu === 'AchievementsRewards' ? (
+            <AchievementsRewards />
           ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
@@ -595,7 +597,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                </div>
                <p className="premium-desc">Claim your reward points to get gift cards, extra time off, or company merch! 🎁</p>
                 <div className="premium-actions">
-                  <button className="get-started-btn">Redeem Now</button>
+                  <button className="get-started-btn" onClick={() => setActiveMenu('AchievementsRewards')}>Redeem Now</button>
                   <button className="star-btn">★</button>
                 </div>
              </div>
