@@ -271,6 +271,10 @@ const DashboardLayout = () => {
           <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <Calendar />
           </div>
+        ) : (activeMenu === 'Chats' || activeMenu === 'Chat') ? (
+          <div className="chat-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <ChatLayout />
+          </div>
         ) : (
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
