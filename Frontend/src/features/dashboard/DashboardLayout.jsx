@@ -504,7 +504,7 @@ const DashboardLayout = () => {
                </div>
                <p className="premium-desc">Claim your reward points to get gift cards, extra time off, or company merch! 🎁</p>
                 <div className="premium-actions">
-                  <button className="get-started-btn">Redeem Now</button>
+                  <button className="get-started-btn" onClick={() => setActiveMenu('AchievementsRewards')}>Redeem Now</button>
                   <button className="star-btn">★</button>
                 </div>
              </div>
