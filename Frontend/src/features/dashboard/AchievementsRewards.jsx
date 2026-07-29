@@ -5,6 +5,7 @@ const AchievementsRewards = () => {
   const [points, setPoints] = useState(1250);
   const [redeemedItems, setRedeemedItems] = useState([]);
   const [redemptionSuccess, setRedemptionSuccess] = useState(null);
+  const [allAchievementsClaimed, setAllAchievementsClaimed] = useState(false);
 
   const [efficiencyMilestones, setEfficiencyMilestones] = useState([
     {
@@ -147,6 +148,17 @@ const AchievementsRewards = () => {
     }
   };
 
+  const allAchievementsUnlocked = achievements.every(a => a.status === 'unlocked');
+
+  const handleClaimAllAchievementsBonus = () => {
+    if (allAchievementsUnlocked && !allAchievementsClaimed) {
+      setPoints(prev => prev + 500);
+      setAllAchievementsClaimed(true);
+      setRedemptionSuccess(`Claimed +500 All-Star Completion Bonus points! 🏆`);
+      setTimeout(() => setRedemptionSuccess(null), 4000);
+    }
+  };
+
   return (
     <div className="achievements-rewards-container">
       {/* HEADER SUMMARY */}
@@ -271,6 +283,24 @@ const AchievementsRewards = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* EXTRA COMPLETION BONUS */}
+          <div className={`ar-completion-bonus-card ${allAchievementsUnlocked ? 'unlocked' : 'locked'} ${allAchievementsClaimed ? 'claimed' : ''}`}>
+            <div className="bonus-content">
+              <span className="bonus-trophy">🏆</span>
+              <div className="bonus-details">
+                <h3>All-Star Completion Bonus</h3>
+                <p>Unlock all 3 achievements to earn an extra 500 points!</p>
+              </div>
+            </div>
+            <button 
+              className={`claim-bonus-btn ${allAchievementsUnlocked && !allAchievementsClaimed ? 'active' : 'disabled'}`}
+              disabled={!allAchievementsUnlocked || allAchievementsClaimed}
+              onClick={handleClaimAllAchievementsBonus}
+            >
+              {allAchievementsClaimed ? 'Claimed ✓' : 'Claim +500 pts'}
+            </button>
           </div>
         </div>
 

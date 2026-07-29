@@ -643,5 +643,123 @@
   }
 }
 
+/* EXTRA COMPLETION BONUS CARD */
+.ar-completion-bonus-card {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.02);
+  border: 1px dashed rgba(251, 191, 36, 0.3);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.ar-completion-bonus-card.unlocked {
+  background: radial-gradient(circle at top left, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.02) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.1);
+  animation: pulseGoldBorder 2s infinite alternate;
+}
+
+@keyframes pulseGoldBorder {
+  0% { border-color: rgba(251, 191, 36, 0.4); }
+  100% { border-color: rgba(251, 191, 36, 0.7); }
+}
+
+.ar-completion-bonus-card.locked {
+  opacity: 0.7;
+}
+
+.ar-completion-bonus-card.claimed {
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.01);
+  opacity: 0.8;
+}
+
+.bonus-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.bonus-trophy {
+  font-size: 32px;
+  animation: floatAnim 3s infinite ease-in-out;
+}
+
+@keyframes floatAnim {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+.bonus-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.bonus-details h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fbbf24;
+  margin: 0;
+}
+
+.bonus-details p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.claim-bonus-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 180px;
+  text-align: center;
+}
+
+.claim-bonus-btn.active {
+  background: #fbbf24;
+  color: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.claim-bonus-btn.active:hover {
+  background: #f59e0b;
+}
+
+.claim-bonus-btn.disabled {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+@media (min-width: 600px) {
+  .ar-completion-bonus-card {
+    flex-direction: row;
+    padding: 24px;
+    gap: 24px;
+  }
+  .claim-bonus-btn {
+    width: auto;
+  }
+}
+
+
 
 
