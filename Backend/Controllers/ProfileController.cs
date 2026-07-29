@@ -43,14 +43,33 @@ namespace Backend.Controllers
                 var admin = await _context.Admins.FindAsync(userId);
                 if (admin == null) return NotFound("Admin not found.");
 
+                if (admin.FullName == "Admin")
+                {
+                    var signupUser = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Email == admin.Email);
+                    if (signupUser != null)
+                    {
+                        admin.FullName = signupUser.FullName;
+                        if (string.IsNullOrEmpty(admin.ProfilePictureUrl)) admin.ProfilePictureUrl = signupUser.ProfilePictureUrl;
+                        if (signupUser.Profile != null)
+                        {
+                            if (string.IsNullOrEmpty(admin.Designation)) admin.Designation = signupUser.Profile.Designation;
+                            if (string.IsNullOrEmpty(admin.Department)) admin.Department = signupUser.Profile.Department;
+                            if (string.IsNullOrEmpty(admin.Location)) admin.Location = signupUser.Profile.Location;
+                            if (string.IsNullOrEmpty(admin.Bio)) admin.Bio = signupUser.Profile.Bio;
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
                 return Ok(new
                 {
-                    FullName = "Admin",
+                    FullName = admin.FullName,
                     admin.Email,
-                    Designation = "Administrator",
-                    Department = "Management",
-                    Location = "HQ",
-                    Bio = "System Administrator"
+                    ProfilePictureUrl = admin.ProfilePictureUrl,
+                    Designation = admin.Designation,
+                    Department = admin.Department,
+                    Location = admin.Location,
+                    Bio = admin.Bio
                 });
             }
 
@@ -83,7 +102,13 @@ namespace Backend.Controllers
                 var admin = await _context.Admins.FindAsync(userId);
                 if (admin == null) return NotFound("Admin not found.");
 
+                admin.FullName = dto.FullName;
                 admin.Email = dto.Email;
+                admin.Designation = dto.Designation;
+                admin.Department = dto.Department;
+                admin.Location = dto.Location;
+                admin.Bio = dto.Bio;
+                
                 await _context.SaveChangesAsync();
                 return Ok(new { message = "Admin profile updated successfully!" });
             }
@@ -144,13 +169,26 @@ namespace Backend.Controllers
                 return StatusCode(500, $"Cloudinary upload failed: {uploadResult.Error.Message}");
             }
 
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null) return NotFound("User not found.");
+            if (User.IsInRole("Admin"))
+            {
+                var admin = await _context.Admins.FindAsync(userId);
+                if (admin == null) return NotFound("Admin not found.");
 
-            user.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
-            await _context.SaveChangesAsync();
+                admin.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
+                await _context.SaveChangesAsync();
 
-            return Ok(new { url = user.ProfilePictureUrl });
+                return Ok(new { url = admin.ProfilePictureUrl });
+            }
+            else
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null) return NotFound("User not found.");
+
+                user.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
+                await _context.SaveChangesAsync();
+
+                return Ok(new { url = user.ProfilePictureUrl });
+            }
         }
     }
 }
