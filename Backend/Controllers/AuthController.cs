@@ -94,9 +94,20 @@ namespace Backend.Controllers
                     await LogFailedLogin(dto.Email);
                     return Unauthorized(new { message = "Invalid email or password." });
                 }
+                
+                if (admin.FullName == "Admin")
+                {
+                    var signupUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == admin.Email);
+                    if (signupUser != null)
+                    {
+                        admin.FullName = signupUser.FullName;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                
                 isAdmin = true;
                 userId = admin.Id;
-                userFullName = "Admin";
+                userFullName = admin.FullName ?? "Admin";
             }
             else
             {
