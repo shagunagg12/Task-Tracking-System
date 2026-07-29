@@ -19,17 +19,21 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  background: var(--bg-card);
+  background: linear-gradient(135deg, rgba(32,32,35,0.75) 0%, rgba(20,20,22,0.85) 100%);
+  backdrop-filter: blur(10px);
   padding: 30px;
   border-radius: 16px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .ar-hero-info h1 {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 8px;
+  background: linear-gradient(90deg, #ffffff 0%, #ffd700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .ar-hero-info p {
@@ -47,18 +51,28 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(251, 191, 36, 0.04);
   padding: 16px 20px;
   border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(251, 191, 36, 0.2);
   min-width: 170px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .ar-stat-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(185, 246, 90, 0.3);
-  box-shadow: 0 4px 15px rgba(185, 246, 90, 0.05);
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+}
+
+.ar-gold-coin-svg {
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ar-stat-card:hover .ar-gold-coin-svg {
+  transform: rotateY(360deg) scale(1.1);
 }
 
 .ar-stat-icon {

@@ -1,5 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AchievementsRewards.css';
+
+const AnimatedCounter = ({ value }) => {
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    let start = displayValue;
+    const end = value;
+    if (start === end) return;
+
+    const duration = 800; // ms
+    const startTime = performance.now();
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3); // cubic ease out
+      const currentVal = Math.floor(start + (end - start) * ease);
+
+      setDisplayValue(currentVal);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value]);
+
+  return <span>{displayValue.toLocaleString()}</span>;
+};
 
 const AchievementsRewards = () => {
   const [points, setPoints] = useState(1250);
@@ -169,9 +199,22 @@ const AchievementsRewards = () => {
         </div>
         <div className="ar-stats-row">
           <div className="ar-stat-card points-card">
-            <span className="ar-stat-icon">🪙</span>
+            <span className="ar-stat-icon">
+              <svg className="ar-gold-coin-svg" viewBox="0 0 24 24" width="32" height="32">
+                <circle cx="12" cy="12" r="10" fill="url(#goldGradient)" stroke="#d4af37" strokeWidth="1"></circle>
+                <circle cx="12" cy="12" r="7" fill="none" stroke="#f0c23a" strokeWidth="1.5" strokeDasharray="3 3"></circle>
+                <text x="12" y="16.5" fontFamily="sans-serif" fontSize="12" fontWeight="bold" fill="#f0c23a" textAnchor="middle">P</text>
+                <defs>
+                  <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffd700"></stop>
+                    <stop offset="50%" stopColor="#cca01a"></stop>
+                    <stop offset="100%" stopColor="#ffd700"></stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
             <div className="ar-stat-details">
-              <span className="ar-stat-val">{points.toLocaleString()}</span>
+              <span className="ar-stat-val"><AnimatedCounter value={points} /></span>
               <span className="ar-stat-lbl">Available Points</span>
             </div>
           </div>
