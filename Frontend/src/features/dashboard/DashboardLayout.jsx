@@ -4,6 +4,7 @@ import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
 import Calendar from './Calendar';
+import PendingTasksModal from '../../components/PendingTasksModal';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -51,7 +52,57 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
 };
 
 const DashboardLayout = () => {
-  const [activeMenu, setActiveMenu] = useState('Overview');
+  const [activeMenu, setActiveMenu] = useState(() => {
+    return localStorage.getItem('activeMenu') || 'Overview';
+  });
+
+  const [showPendingTasks, setShowPendingTasks] = useState(false);
+  const [pendingTasks, setPendingTasks] = useState([]);
+  const [userProfileData, setUserProfileData] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('http://localhost:5024/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserProfileData(data);
+          
+          const tasks = [];
+          if (!data.designation || !data.department || !data.location || !data.bio) {
+            tasks.push({
+              id: 'complete-profile',
+              title: 'Complete Your Profile',
+              description: 'Missing details like Designation, Department, Location, or Bio.',
+              icon: '👤',
+              onClick: () => {
+                setShowPendingTasks(false);
+                setActiveMenu('Profile');
+              }
+            });
+          }
+          
+          if (tasks.length > 0) {
+            setPendingTasks(tasks);
+            setShowPendingTasks(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching profile", err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('activeMenu', activeMenu);
+  }, [activeMenu]);
   const [isBrightTheme, setIsBrightTheme] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -115,6 +166,12 @@ const DashboardLayout = () => {
 
   return (
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
+      {showPendingTasks && pendingTasks.length > 0 && (
+        <PendingTasksModal 
+          tasks={pendingTasks} 
+          onClose={() => setShowPendingTasks(false)}
+        />
+      )}
       {/* LEFT SIDEBAR */}
       <aside className={`left-sidebar ${isLeftSidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-start', borderBottom: '1px solid var(--border-color)' }}>
