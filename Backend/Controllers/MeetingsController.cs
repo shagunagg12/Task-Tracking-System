@@ -45,56 +45,70 @@ namespace Backend.Controllers
                 DateTime start = DateTime.Parse($"{request.StartDate}T{request.StartTime}");
                 DateTime end = DateTime.Parse($"{request.EndDate}T{request.EndTime}");
 
-                // Generate a simulated Google Meet link as fallback
-                string meetLink = $"https://meet.google.com/{Guid.NewGuid().ToString().Substring(0, 3)}-{Guid.NewGuid().ToString().Substring(0, 4)}-{Guid.NewGuid().ToString().Substring(0, 3)}".ToLower();
+                // We require a strictly real Google Meet link
+                string meetLink = "";
 
-                // Try to create real Google Meet link
                 var user = await _context.Users.FindAsync(organizerId);
-                if (user != null && !string.IsNullOrEmpty(user.GoogleAccessToken))
+                if (user == null || string.IsNullOrEmpty(user.GoogleAccessToken))
                 {
-                    try
+                    return BadRequest(new { message = "You must connect your Google Calendar account to schedule meetings." });
+                }
+
+                var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
+                {
+                    ClientSecrets = new Google.Apis.Auth.OAuth2.ClientSecrets
                     {
-                        var credential = GoogleCredential.FromAccessToken(user.GoogleAccessToken);
-                        var service = new CalendarService(new Google.Apis.Services.BaseClientService.Initializer
-                        {
-                            HttpClientInitializer = credential,
-                            ApplicationName = "Matts"
-                        });
+                        ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID"),
+                        ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")
+                    }
+                });
 
-                        var newEvent = new Google.Apis.Calendar.v3.Data.Event
-                        {
-                            Summary = request.Title,
-                            Description = request.Brief,
-                            Start = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = start },
-                            End = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = end },
-                            ConferenceData = new Google.Apis.Calendar.v3.Data.ConferenceData
-                            {
-                                CreateRequest = new Google.Apis.Calendar.v3.Data.CreateConferenceRequest
-                                {
-                                    RequestId = Guid.NewGuid().ToString(),
-                                    ConferenceSolutionKey = new Google.Apis.Calendar.v3.Data.ConferenceSolutionKey { Type = "hangoutsMeet" }
-                                }
-                            }
-                        };
+                var tokenResponse = new Google.Apis.Auth.OAuth2.Responses.TokenResponse
+                {
+                    AccessToken = user.GoogleAccessToken,
+                    RefreshToken = user.GoogleRefreshToken
+                };
 
-                        var eventRequest = service.Events.Insert(newEvent, "primary");
-                        eventRequest.ConferenceDataVersion = 1;
-                        var createdEvent = await eventRequest.ExecuteAsync();
+                var credential = new UserCredential(flow, user.Id.ToString(), tokenResponse);
+                
+                var service = new CalendarService(new Google.Apis.Services.BaseClientService.Initializer
+                {
+                    HttpClientInitializer = credential,
+                    ApplicationName = "Matts"
+                });
 
-                        if (createdEvent.ConferenceData != null && createdEvent.ConferenceData.EntryPoints != null)
+                var newEvent = new Google.Apis.Calendar.v3.Data.Event
+                {
+                    Summary = request.Title,
+                    Description = request.Brief,
+                    Start = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = start },
+                    End = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = end },
+                    ConferenceData = new Google.Apis.Calendar.v3.Data.ConferenceData
+                    {
+                        CreateRequest = new Google.Apis.Calendar.v3.Data.CreateConferenceRequest
                         {
-                            var entry = createdEvent.ConferenceData.EntryPoints.FirstOrDefault(e => e.EntryPointType == "video");
-                            if (entry != null)
-                            {
-                                meetLink = entry.Uri;
-                            }
+                            RequestId = Guid.NewGuid().ToString(),
+                            ConferenceSolutionKey = new Google.Apis.Calendar.v3.Data.ConferenceSolutionKey { Type = "hangoutsMeet" }
                         }
                     }
-                    catch (Exception ex)
+                };
+
+                var eventRequest = service.Events.Insert(newEvent, "primary");
+                eventRequest.ConferenceDataVersion = 1;
+                var createdEvent = await eventRequest.ExecuteAsync();
+
+                if (createdEvent.ConferenceData != null && createdEvent.ConferenceData.EntryPoints != null)
+                {
+                    var entry = createdEvent.ConferenceData.EntryPoints.FirstOrDefault(e => e.EntryPointType == "video");
+                    if (entry != null)
                     {
-                        Console.WriteLine("Error creating Google Calendar event: " + ex.Message);
-                        // Fallback to simulated link if token expired or error
+                        meetLink = entry.Uri;
                     }
+                }
+
+                if (string.IsNullOrEmpty(meetLink))
+                {
+                    return StatusCode(500, new { message = "Failed to generate Google Meet link. Please try again or re-connect your Google account." });
                 }
 
                 var meeting = new Meeting
