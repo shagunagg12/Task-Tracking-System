@@ -127,6 +127,8 @@ namespace Backend.Controllers
         {
             public string FullName { get; set; } = string.Empty;
             public string Email { get; set; } = string.Empty;
+            public string Department { get; set; } = string.Empty;
+            public string Designation { get; set; } = string.Empty;
         }
 
         [HttpPut("{id}")]
@@ -144,9 +146,25 @@ namespace Backend.Controllers
             user.FullName = dto.FullName;
             user.Email = dto.Email;
             
+            var profile = await _context.Profiles.FirstOrDefaultAsync(p => p.UserId == id);
+            if (profile != null)
+            {
+                if (!string.IsNullOrEmpty(dto.Department)) profile.Department = dto.Department;
+                if (!string.IsNullOrEmpty(dto.Designation)) profile.Designation = dto.Designation;
+            }
+            
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == user.Email);
+            if (admin != null)
+            {
+                admin.FullName = dto.FullName;
+                admin.Email = dto.Email;
+                if (!string.IsNullOrEmpty(dto.Department)) admin.Department = dto.Department;
+                if (!string.IsNullOrEmpty(dto.Designation)) admin.Designation = dto.Designation;
+            }
+            
             await _context.SaveChangesAsync();
 
-            return Ok(new { user.Id, user.FullName, user.Email, Role = "Employee", Status = "Active", Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.FullName)}&background=random" });
+            return Ok(new { user.Id, user.FullName, user.Email, Role = admin != null ? "Admin" : "Employee", Status = "Active", Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.FullName)}&background=random" });
         }
 
         [HttpDelete("{id}")]
