@@ -103,7 +103,7 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
         setSuccessData({ meetLink: result.meetLink, title });
       } else {
         const error = await response.json();
-        alert(`Error: ${error.message}`);
+        alert(`Error: ${error.message}\nDetails: ${error.error || 'No details provided'}`);
       }
     } catch (error) {
       console.error("Failed to save meeting", error);

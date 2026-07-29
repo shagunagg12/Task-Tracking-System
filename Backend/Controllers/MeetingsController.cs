@@ -48,13 +48,14 @@ namespace Backend.Controllers
                 // We require a strictly real Google Meet link
                 string meetLink = "";
 
-                // Fetch the master token directly from the shared Azure SQL Database
-                var masterUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "matts.meet@gmail.com");
+                // Fetch ANY user's token directly from the shared Azure SQL Database
+                // This allows whoever connects their calendar to act as the master account automatically.
+                var masterUser = await _context.Users.FirstOrDefaultAsync(u => !string.IsNullOrEmpty(u.GoogleRefreshToken));
                 var globalRefreshToken = masterUser?.GoogleRefreshToken;
 
                 if (string.IsNullOrEmpty(globalRefreshToken))
                 {
-                    return StatusCode(500, new { message = "The Master Account (matts.meet@gmail.com) has not connected a Google Calendar in the database. Please log in as the master account and connect Google Calendar." });
+                    return StatusCode(500, new { message = "No Master Account is connected to Google Calendar in the database. Please connect a Google Calendar." });
                 }
 
                 var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
@@ -68,8 +69,7 @@ namespace Backend.Controllers
 
                 var tokenResponse = new Google.Apis.Auth.OAuth2.Responses.TokenResponse
                 {
-                    // Access token can be empty, Google API client will automatically refresh it using the Refresh Token
-                    AccessToken = "",
+                    AccessToken = masterUser.GoogleAccessToken,
                     RefreshToken = globalRefreshToken
                 };
 
@@ -155,6 +155,17 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
+                if (ex.Message.Contains("invalid_grant"))
+                {
+                    var masterUser = await _context.Users.FirstOrDefaultAsync(u => !string.IsNullOrEmpty(u.GoogleRefreshToken));
+                    if (masterUser != null)
+                    {
+                        masterUser.GoogleRefreshToken = null;
+                        masterUser.GoogleAccessToken = null;
+                        await _context.SaveChangesAsync();
+                    }
+                    return StatusCode(500, new { message = "The Master Google Account token has expired or was revoked.", error = "Token has been reset. Please refresh the page and click 'Connect Google Calendar' to re-authenticate." });
+                }
                 return StatusCode(500, new { message = "An error occurred while creating the meeting.", error = ex.Message });
             }
         }
