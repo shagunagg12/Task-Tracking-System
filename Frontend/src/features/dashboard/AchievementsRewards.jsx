@@ -36,57 +36,44 @@ const AchievementsRewards = () => {
   const [redeemedItems, setRedeemedItems] = useState([]);
   const [redemptionSuccess, setRedemptionSuccess] = useState(null);
   const [allAchievementsClaimed, setAllAchievementsClaimed] = useState(false);
+  const [claimedBonuses, setClaimedBonuses] = useState([]);
 
-  const [efficiencyMilestones, setEfficiencyMilestones] = useState([
-    {
-      id: 'weekly-streak',
-      title: 'Weekly Consistency Streak',
-      requirement: 'Maintain >90% efficiency for 7 days in a row',
-      rewardPoints: 100,
-      status: 'claimable',
-      progress: { current: 7, total: 7 }
-    },
-    {
-      id: 'monthly-consistency',
-      title: 'Monthly Peak Performance',
-      requirement: 'Maintain continuous 90% efficiency for 1 month',
-      rewardPoints: 500,
-      status: 'in-progress',
-      progress: { current: 21, total: 30 }
-    },
-    {
-      id: 'excellence-bonus',
-      title: 'Overall Excellence Bonus',
-      requirement: 'Achieve an efficiency score of 95% or higher',
-      rewardPoints: 250,
-      status: 'claimed',
-      progress: { current: 96, total: 95 }
-    },
-    {
-      id: 'daily-checkin',
-      title: 'Daily Dashboard Check-in',
-      requirement: 'Open the MATTS dashboard to review daily priorities',
-      rewardPoints: 10,
-      status: 'claimable',
-      progress: { current: 1, total: 1 }
-    },
-    {
-      id: 'task-verify',
-      title: 'Task Verification',
-      requirement: 'Verify task status changes for today',
-      rewardPoints: 15,
-      status: 'claimable',
-      progress: { current: 1, total: 1 }
-    },
-    {
-      id: 'profile-pic-task',
-      title: 'Profile Customization',
-      requirement: 'Upload a custom profile picture',
-      rewardPoints: 20,
-      status: 'claimed',
-      progress: { current: 1, total: 1 }
+  // Real database metrics
+  const [dbStats, setDbStats] = useState({
+    completedTasks: 0,
+    completedProjects: 0,
+    efficiency: 75
+  });
+
+  const fetchStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5024/api/rewards/status', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPoints(data.points);
+        setClaimedBonuses(data.claimedBonuses || []);
+        setDbStats({
+          completedTasks: data.completedTasks,
+          completedProjects: data.completedProjects,
+          efficiency: data.efficiency
+        });
+        if (data.claimedBonuses && data.claimedBonuses.includes('all-star-completion')) {
+          setAllAchievementsClaimed(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching rewards status:', error);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchStatus();
+  }, []);
 
   const achievements = [
     {
@@ -99,9 +86,9 @@ const AchievementsRewards = () => {
           <polyline points="22 4 12 14.01 9 11.01"></polyline>
         </svg>
       ),
-      status: 'unlocked',
-      progress: { current: 10, total: 10 },
-      date: 'July 25, 2026'
+      status: dbStats.completedTasks >= 10 ? 'unlocked' : 'in-progress',
+      progress: { current: dbStats.completedTasks, total: 10 },
+      date: dbStats.completedTasks >= 10 ? 'Unlocked' : null
     },
     {
       id: 2,
@@ -113,8 +100,9 @@ const AchievementsRewards = () => {
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
         </svg>
       ),
-      status: 'in-progress',
-      progress: { current: 1, total: 2 }
+      status: dbStats.completedProjects >= 2 ? 'unlocked' : 'in-progress',
+      progress: { current: dbStats.completedProjects, total: 2 },
+      date: dbStats.completedProjects >= 2 ? 'Unlocked' : null
     },
     {
       id: 3,
@@ -127,9 +115,60 @@ const AchievementsRewards = () => {
           <circle cx="12" cy="12" r="2"></circle>
         </svg>
       ),
-      status: 'unlocked',
-      progress: { current: 92, total: 90 },
-      date: 'July 29, 2026'
+      status: dbStats.efficiency >= 90 ? 'unlocked' : 'in-progress',
+      progress: { current: dbStats.efficiency, total: 90 },
+      date: dbStats.efficiency >= 90 ? 'Unlocked' : null
+    }
+  ];
+
+  const efficiencyMilestones = [
+    {
+      id: 'weekly-streak',
+      title: 'Weekly Consistency Streak',
+      requirement: 'Maintain >90% efficiency for 7 days in a row',
+      rewardPoints: 100,
+      status: claimedBonuses.includes('weekly-streak') ? 'claimed' : 'claimable',
+      progress: { current: 7, total: 7 }
+    },
+    {
+      id: 'monthly-consistency',
+      title: 'Monthly Peak Performance',
+      requirement: 'Maintain continuous 90% efficiency for 1 month',
+      rewardPoints: 500,
+      status: claimedBonuses.includes('monthly-consistency') ? 'claimed' : 'in-progress',
+      progress: { current: claimedBonuses.includes('monthly-consistency') ? 30 : 21, total: 30 }
+    },
+    {
+      id: 'excellence-bonus',
+      title: 'Overall Excellence Bonus',
+      requirement: 'Achieve an efficiency score of 95% or higher',
+      rewardPoints: 250,
+      status: claimedBonuses.includes('excellence-bonus') ? 'claimed' : (dbStats.efficiency >= 95 ? 'claimable' : 'in-progress'),
+      progress: { current: dbStats.efficiency, total: 95 }
+    },
+    {
+      id: 'daily-checkin',
+      title: 'Daily Dashboard Check-in',
+      requirement: 'Open the MATTS dashboard to review daily priorities',
+      rewardPoints: 10,
+      status: claimedBonuses.includes('daily-checkin') ? 'claimed' : 'claimable',
+      progress: { current: 1, total: 1 }
+    },
+    {
+      id: 'task-verify',
+      title: 'Task Verification',
+      requirement: 'Verify task status changes for today',
+      rewardPoints: 15,
+      status: claimedBonuses.includes('task-verify') ? 'claimed' : 'claimable',
+      progress: { current: 1, total: 1 }
+    },
+    {
+      id: 'profile-pic-task',
+      title: 'Profile Customization',
+      requirement: 'Upload a custom profile picture',
+      rewardPoints: 20,
+      status: claimedBonuses.includes('profile-pic-task') ? 'claimed' : 'claimable',
+      progress: { current: 1, total: 1 }
     }
   ];
 
@@ -160,32 +199,91 @@ const AchievementsRewards = () => {
     }
   ];
 
-  const handleRedeem = (reward) => {
+  const handleRedeem = async (reward) => {
     if (points >= reward.points) {
-      setPoints(prev => prev - reward.points);
-      setRedeemedItems(prev => [...prev, reward.title]);
-      setRedemptionSuccess(`Successfully redeemed ${reward.title}! Check your email for details.`);
-      setTimeout(() => setRedemptionSuccess(null), 4000);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5024/api/rewards/redeem', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            rewardId: reward.id === 3 ? 'leave-voucher' : (reward.id === 1 ? 'starbucks' : 'amazon'),
+            title: reward.title,
+            points: reward.points
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setPoints(data.points);
+          setRedeemedItems(prev => [...prev, reward.title]);
+          setRedemptionSuccess(`Successfully redeemed ${reward.title}! Check your email for details.`);
+          setTimeout(() => setRedemptionSuccess(null), 4000);
+        }
+      } catch (error) {
+        console.error('Error redeeming reward:', error);
+      }
     }
   };
 
-  const handleClaimBonus = (milestone) => {
+  const handleClaimBonus = async (milestone) => {
     if (milestone.status === 'claimable') {
-      setPoints(prev => prev + milestone.rewardPoints);
-      setEfficiencyMilestones(prev => prev.map(m => m.id === milestone.id ? { ...m, status: 'claimed' } : m));
-      setRedemptionSuccess(`Claimed +${milestone.rewardPoints} points for completing "${milestone.title}"! 🎉`);
-      setTimeout(() => setRedemptionSuccess(null), 4000);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5024/api/rewards/claim', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            bonusId: milestone.id,
+            rewardPoints: milestone.rewardPoints
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setPoints(data.points);
+          setClaimedBonuses(prev => [...prev, milestone.id]);
+          setRedemptionSuccess(`Claimed +${milestone.rewardPoints} points for completing "${milestone.title}"! 🎉`);
+          setTimeout(() => setRedemptionSuccess(null), 4000);
+        }
+      } catch (error) {
+        console.error('Error claiming bonus:', error);
+      }
     }
   };
 
   const allAchievementsUnlocked = achievements.every(a => a.status === 'unlocked');
 
-  const handleClaimAllAchievementsBonus = () => {
+  const handleClaimAllAchievementsBonus = async () => {
     if (allAchievementsUnlocked && !allAchievementsClaimed) {
-      setPoints(prev => prev + 500);
-      setAllAchievementsClaimed(true);
-      setRedemptionSuccess(`Claimed +500 All-Star Completion Bonus points! 🏆`);
-      setTimeout(() => setRedemptionSuccess(null), 4000);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5024/api/rewards/claim', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            bonusId: 'all-star-completion',
+            rewardPoints: 500
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setPoints(data.points);
+          setAllAchievementsClaimed(true);
+          setClaimedBonuses(prev => [...prev, 'all-star-completion']);
+          setRedemptionSuccess(`Claimed +500 All-Star Completion Bonus points! 🏆`);
+          setTimeout(() => setRedemptionSuccess(null), 4000);
+        }
+      } catch (error) {
+        console.error('Error claiming completion bonus:', error);
+      }
     }
   };
 
@@ -218,7 +316,6 @@ const AchievementsRewards = () => {
               <span className="ar-stat-lbl">Available Points</span>
             </div>
           </div>
-
         </div>
       </div>
 
