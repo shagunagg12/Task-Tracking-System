@@ -40,6 +40,7 @@ export default function Login({ onLogin }) {
       } else {
         // Save the JWT token
         localStorage.setItem('token', data.token);
+        localStorage.removeItem('profilePic');
         if (onLogin) onLogin(data.user);
       }
     } catch (err) {

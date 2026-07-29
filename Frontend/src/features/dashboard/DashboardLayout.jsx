@@ -218,6 +218,7 @@ const DashboardLayout = () => {
             <button 
               onClick={() => {
                 localStorage.removeItem('token');
+                localStorage.removeItem('profilePic');
                 window.location.reload();
               }}
               style={{ 
