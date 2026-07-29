@@ -4,7 +4,7 @@ import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
 import StandingsLayout from './StandingsLayout';
-import ChatLayout from '../chat/ChatLayout';
+import ChatLayout from './ChatLayout';
 import Calendar from './Calendar';
 import PendingTasksModal from '../../components/PendingTasksModal';
 import './DashboardLayout.css';
@@ -163,7 +163,6 @@ const DashboardLayout = () => {
     { id: 'Achievements', icon: '🌟', text: 'Achievements' },
     { id: 'Rewards', icon: '🎁', text: 'Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
-    { id: 'Chat', icon: '💬', text: 'Chat' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
@@ -281,8 +280,10 @@ const DashboardLayout = () => {
             <AssignedProjects />
           ) : activeMenu === 'Report' ? (
             <Report />
-          ) : activeMenu === 'Chat' ? (
-            <div style={{ height: 'calc(100vh - 120px)', padding: '0 20px 20px 20px' }}>
+          ) : activeMenu === 'AchievementsRewards' ? (
+            <AchievementsRewards />
+          ) : activeMenu === 'Chats' || activeMenu === 'Chat' ? (
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <ChatLayout />
             </div>
           ) : activeMenu === 'Overview' ? (
