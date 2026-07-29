@@ -16,6 +16,7 @@ import SuperAdminUsers from './SuperAdminUsers';
 import SuperAdminReports from './SuperAdminReports';
 import SuperAdminSettings from './SuperAdminSettings';
 import SuperAdminNotifications from './SuperAdminNotifications';
+import SuperAdminDepartments from './SuperAdminDepartments';
 
 // ─── Toast Notification Component ────────────────────────────────────────────
 const ToastNotification = ({ toast, onDismiss }) => {
@@ -347,6 +348,8 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
              <SuperAdminProjects />
            ) : activeMenu === 'User Management' ? (
              <SuperAdminUsers />
+           ) : activeMenu === 'Departments' ? (
+             <SuperAdminDepartments addToast={addToast} />
            ) : activeMenu === 'Reports' ? (
              <SuperAdminReports />
            ) : activeMenu === 'Notifications' ? (

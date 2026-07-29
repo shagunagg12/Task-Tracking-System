@@ -18,11 +18,28 @@ const SuperAdminUsers = () => {
   const [showDrawer, setShowDrawer] = useState(false);
   const [insights, setInsights] = useState(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [departments, setDepartments] = useState([]);
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   useEffect(() => {
     fetchUsers();
+    fetchDepartments();
   }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/departments`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDepartments(data.map(d => d.name));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -60,10 +77,15 @@ const SuperAdminUsers = () => {
   const handleEditUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5024/api/AdminUsers/${selectedUser.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName: formData.fullName, email: formData.email })
+        body: JSON.stringify({ 
+          fullName: formData.fullName, 
+          email: formData.email,
+          department: formData.department,
+          designation: formData.designation
+        })
       });
       if (response.ok) {
         setShowEditModal(false);
@@ -99,7 +121,13 @@ const SuperAdminUsers = () => {
   const openEditModal = (user, e) => {
     e.stopPropagation();
     setSelectedUser(user);
-    setFormData({ fullName: user.fullName, email: user.email, password: '' });
+    setFormData({ 
+      fullName: user.fullName, 
+      email: user.email, 
+      password: '',
+      department: insights?.profile?.department || '',
+      designation: insights?.profile?.designation || ''
+    });
     setShowEditModal(true);
   };
 
@@ -388,6 +416,35 @@ const SuperAdminUsers = () => {
                 <div className="sap-form-group">
                   <label><Mail size={14} /> Email Address</label>
                   <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                </div>
+                <div className="sap-form-group">
+                  <label>Department</label>
+                  <select 
+                    value={formData.department || ''} 
+                    onChange={e => setFormData({...formData, department: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--sa-border)', color: 'white' }}
+                  >
+                    <option value="">Select Department...</option>
+                    {departments.map((dept, idx) => (
+                      <option key={idx} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sap-form-group">
+                  <label>Designation</label>
+                  <select 
+                    value={formData.designation || ''} 
+                    onChange={e => setFormData({...formData, designation: e.target.value})}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--sa-border)', color: 'white' }}
+                  >
+                    <option value="">Select Designation...</option>
+                    <option value="Software Engineer">Software Engineer</option>
+                    <option value="Senior Developer">Senior Developer</option>
+                    <option value="Product Manager">Product Manager</option>
+                    <option value="Quality Assurance">Quality Assurance</option>
+                    <option value="UI/UX Designer">UI/UX Designer</option>
+                    <option value="Team Lead">Team Lead</option>
+                  </select>
                 </div>
                 <div className="sap-modal-actions">
                   <button type="button" className="sap-btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
