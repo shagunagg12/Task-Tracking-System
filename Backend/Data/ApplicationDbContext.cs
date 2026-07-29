@@ -21,6 +21,7 @@ namespace Backend.Data
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<AppNotification> AppNotifications { get; set; }
+        public DbSet<ProjectMessage> ProjectMessages { get; set; }
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
 
@@ -68,6 +69,12 @@ namespace Backend.Data
                 .HasForeignKey(tm => tm.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<ProjectTeamMember>()
+                .HasOne(tm => tm.User)
+                .WithMany()
+                .HasForeignKey(tm => tm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.Sender)
                 .WithMany()
@@ -98,6 +105,36 @@ namespace Backend.Data
                 .WithMany()
                 .HasForeignKey(n => n.MeetingId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ProjectMessage>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectMessage>()
+                .HasOne(m => m.Project)
+                .WithMany()
+                .HasForeignKey(m => m.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Meeting>()
+                .HasOne(m => m.Organizer)
+                .WithMany() 
+                .HasForeignKey(m => m.OrganizerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Meeting>()
+                .HasMany(m => m.Participants)
+                .WithOne(mp => mp.Meeting)
+                .HasForeignKey(mp => mp.MeetingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MeetingParticipant>()
+                .HasOne(mp => mp.User)
+                .WithMany()
+                .HasForeignKey(mp => mp.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

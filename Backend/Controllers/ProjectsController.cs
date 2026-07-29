@@ -52,7 +52,7 @@ namespace Backend.Controllers
                 .Include(p => p.Deadlines)
                 .Include(p => p.Feedbacks)
                 .Include(p => p.TeamMembers)
-                .Where(p => p.UserId == actualUserId)
+                .Where(p => p.UserId == actualUserId || p.TeamMembers.Any(tm => tm.UserId == actualUserId))
                 .ToListAsync();
 
             return Ok(projects);

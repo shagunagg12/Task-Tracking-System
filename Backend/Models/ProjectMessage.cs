@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend.Models
 {
-    public class Message
+    public class ProjectMessage
     {
         [Key]
         public int Id { get; set; }
@@ -12,14 +12,12 @@ namespace Backend.Models
         public int SenderId { get; set; }
 
         [Required]
-        public int ReceiverId { get; set; }
+        public int ProjectId { get; set; }
 
         [Required]
         public string Content { get; set; } = string.Empty;
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-
-        public bool IsRead { get; set; } = false;
 
         public string? FileUrl { get; set; }
 
@@ -30,7 +28,7 @@ namespace Backend.Models
         [ForeignKey("SenderId")]
         public User? Sender { get; set; }
 
-        [ForeignKey("ReceiverId")]
-        public User? Receiver { get; set; }
+        [ForeignKey("ProjectId")]
+        public Project? Project { get; set; }
     }
 }

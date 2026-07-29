@@ -4,6 +4,8 @@ import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
 import ChatLayout from '../chat/ChatLayout';
+import Calendar from './Calendar';
+import PendingTasksModal from '../../components/PendingTasksModal';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -52,13 +54,57 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
 
 const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [activeMenu, setActiveMenu] = useState(() => {
-    return localStorage.getItem('lastActiveMenu') || 'Overview';
+    return localStorage.getItem('activeMenu') || localStorage.getItem('lastActiveMenu') || 'Overview';
   });
-  
+
+  const [showPendingTasks, setShowPendingTasks] = useState(false);
+  const [pendingTasks, setPendingTasks] = useState([]);
+  const [userProfileData, setUserProfileData] = useState(null);
+
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('http://localhost:5024/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserProfileData(data);
+          
+          const tasks = [];
+          if (!data.designation || !data.department || !data.location || !data.bio) {
+            tasks.push({
+              id: 'complete-profile',
+              title: 'Complete Your Profile',
+              description: 'Missing details like Designation, Department, Location, or Bio.',
+              icon: '👤',
+              onClick: () => {
+                setShowPendingTasks(false);
+                setActiveMenu('Profile');
+              }
+            });
+          }
+          
+          if (tasks.length > 0) {
+            setPendingTasks(tasks);
+            setShowPendingTasks(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching profile", err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('activeMenu', activeMenu);
     localStorage.setItem('lastActiveMenu', activeMenu);
   }, [activeMenu]);
-
   const [isBrightTheme, setIsBrightTheme] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -75,21 +121,38 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
     setIsLeftSidebarOpen(!isLeftSidebarOpen);
   };
 
-  const getUserName = () => {
+  const getUserData = () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return 'User';
+      if (!token) return { name: 'User', pic: '' };
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+      const name = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
              payload.unique_name || 
              payload.name || 
              'User';
+             
+      let pic = localStorage.getItem('profilePic');
+      if (!pic) {
+        pic = payload['ProfilePictureUrl'] || '';
+        if (pic) localStorage.setItem('profilePic', pic);
+      }
+      return { name, pic };
     } catch(e) {
-      return 'User';
+      return { name: 'User', pic: '' };
     }
   };
 
-  const userName = getUserName();
+  const initialData = getUserData();
+  const [userPic, setUserPic] = useState(initialData.pic);
+  const userName = initialData.name;
+
+  useEffect(() => {
+    const handlePicUpdate = () => {
+      setUserPic(localStorage.getItem('profilePic') || '');
+    };
+    window.addEventListener('profilePicUpdated', handlePicUpdate);
+    return () => window.removeEventListener('profilePicUpdated', handlePicUpdate);
+  }, []);
 
   const menuItems = [
     { id: 'Overview', icon: '📊', text: 'Overview' },
@@ -109,6 +172,12 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
   return (
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
+      {showPendingTasks && pendingTasks.length > 0 && (
+        <PendingTasksModal 
+          tasks={pendingTasks} 
+          onClose={() => setShowPendingTasks(false)}
+        />
+      )}
       {/* LEFT SIDEBAR */}
       <aside className={`left-sidebar ${isLeftSidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-start', borderBottom: '1px solid var(--border-color)' }}>
@@ -149,7 +218,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img 
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`} 
+                src={userPic ? userPic : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`} 
                 alt="User" 
                 style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
               />
@@ -209,6 +278,11 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           </div>
         </header>
 
+        {activeMenu === 'Calendar' ? (
+          <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <Calendar />
+          </div>
+        ) : (
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
@@ -456,6 +530,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
              </div>
           )}
         </div>
+        )}
       </main>
 
       {/* RIGHT SIDEBAR */}
@@ -564,7 +639,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
         </div>
 
       </aside>
-      <Chatbot isSidebarOpen={isRightSidebarOpen} />
+      {activeMenu !== 'Chat' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
     </div>
   );
 };

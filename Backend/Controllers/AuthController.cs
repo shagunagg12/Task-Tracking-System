@@ -83,6 +83,8 @@ namespace Backend.Controllers
             string userFullName = string.Empty;
             string userEmail = dto.Email;
             
+            string userProfilePictureUrl = string.Empty;
+            
             // 1. Check Admins Table First
             var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == dto.Email);
             if (admin != null)
@@ -107,6 +109,7 @@ namespace Backend.Controllers
                 }
                 userId = user.Id;
                 userFullName = user.FullName;
+                userProfilePictureUrl = user.ProfilePictureUrl ?? "";
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -125,6 +128,8 @@ namespace Backend.Controllers
                 claims.Add(new Claim(ClaimTypes.Role, "Admin"));
             }
 
+            claims.Add(new Claim("ProfilePictureUrl", userProfilePictureUrl));
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
@@ -137,7 +142,7 @@ namespace Backend.Controllers
             return Ok(new
             {
                 token = tokenHandler.WriteToken(token),
-                user = new { Id = userId, FullName = userFullName, Email = userEmail, isAdmin = isAdmin }
+                user = new { Id = userId, FullName = userFullName, Email = userEmail, isAdmin = isAdmin, ProfilePictureUrl = userProfilePictureUrl }
             });
         }
 
