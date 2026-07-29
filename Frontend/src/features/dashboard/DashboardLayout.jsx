@@ -163,7 +163,6 @@ const DashboardLayout = () => {
     { id: 'Chats', icon: '💬', text: 'Chats' },
     { id: 'AchievementsRewards', icon: '🏆', text: 'Achievements & Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
-    { id: 'Chat', icon: '💬', text: 'Chat' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
