@@ -61,14 +61,10 @@ namespace Backend.Controllers
         [HttpGet("status")]
         public async Task<IActionResult> GetStatus()
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            {
-                return Unauthorized();
-            }
-
-            var user = await _context.Users.FindAsync(userId);
-            bool isConnected = user != null && !string.IsNullOrEmpty(user.GoogleRefreshToken);
+            // Since we are using a global master account for Google Meet,
+            // we just need to check if the master account is connected.
+            var masterUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "matts.meet@gmail.com");
+            bool isConnected = masterUser != null && !string.IsNullOrEmpty(masterUser.GoogleRefreshToken);
             return Ok(new { isConnected });
         }
 
