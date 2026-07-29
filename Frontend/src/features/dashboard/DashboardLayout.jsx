@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Chatbot from '../../components/Chatbot';
+import PendingTasksModal from '../../components/PendingTasksModal';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
