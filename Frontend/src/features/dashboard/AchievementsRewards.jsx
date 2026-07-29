@@ -262,6 +262,32 @@ const AchievementsRewards = () => {
           <div className="rewards-grid">
             {rewards.map((reward) => {
               const canAfford = points >= reward.points;
+              const isRare = reward.id === 3;
+              if (isRare) {
+                return (
+                  <div key={reward.id} className={`reward-item-card rare-reward-landscape ${!canAfford ? 'locked-reward' : ''}`}>
+                    <div className="rare-reward-shine-overlay"></div>
+                    <div className="rare-left">
+                      <span className="reward-large-icon">{reward.icon}</span>
+                      <span className="reward-cat-tag rare-tag">{reward.category}</span>
+                    </div>
+                    <div className="rare-middle">
+                      <h3>{reward.title}</h3>
+                      <p>{reward.description}</p>
+                    </div>
+                    <div className="rare-right">
+                      <span className="reward-cost gold-glow">🪙 {reward.points} pts</span>
+                      <button 
+                        className={`redeem-btn ${canAfford ? 'active' : 'disabled'}`}
+                        disabled={!canAfford}
+                        onClick={() => handleRedeem(reward)}
+                      >
+                        {canAfford ? 'Redeem Now' : 'Need More Points'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
               return (
                 <div key={reward.id} className={`reward-item-card ${!canAfford ? 'locked-reward' : ''}`}>
                   <div className="reward-card-header">
