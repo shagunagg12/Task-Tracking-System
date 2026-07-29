@@ -4,6 +4,7 @@ import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
 import Calendar from './Calendar';
+import AchievementsRewards from './AchievementsRewards';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -107,8 +108,7 @@ const DashboardLayout = () => {
     { id: 'Standings', icon: '🏆', text: 'Standings' },
     { id: 'Calendar', icon: '📅', text: 'Calendar' },
     { id: 'Chats', icon: '💬', text: 'Chats' },
-    { id: 'Achievements', icon: '🌟', text: 'Achievements' },
-    { id: 'Rewards', icon: '🎁', text: 'Rewards' },
+    { id: 'AchievementsRewards', icon: '🏆', text: 'Achievements & Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
@@ -219,6 +219,8 @@ const DashboardLayout = () => {
             <AssignedProjects />
           ) : activeMenu === 'Report' ? (
             <Report />
+          ) : activeMenu === 'AchievementsRewards' ? (
+            <AchievementsRewards />
           ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
