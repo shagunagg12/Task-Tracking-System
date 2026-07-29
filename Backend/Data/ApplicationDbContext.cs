@@ -24,6 +24,7 @@ namespace Backend.Data
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
         public DbSet<UserClaimedBonus> UserClaimedBonuses { get; set; }
         public DbSet<RewardRedemption> RewardRedemptions { get; set; }
+        public DbSet<UserLoginLog> UserLoginLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

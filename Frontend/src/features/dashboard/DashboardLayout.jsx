@@ -271,6 +271,10 @@ const DashboardLayout = () => {
           <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <Calendar />
           </div>
+        ) : (activeMenu === 'Chats' || activeMenu === 'Chat') ? (
+          <div className="chat-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <ChatLayout />
+          </div>
         ) : (
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
@@ -504,7 +508,7 @@ const DashboardLayout = () => {
                </div>
                <p className="premium-desc">Claim your reward points to get gift cards, extra time off, or company merch! 🎁</p>
                 <div className="premium-actions">
-                  <button className="get-started-btn">Redeem Now</button>
+                  <button className="get-started-btn" onClick={() => setActiveMenu('AchievementsRewards')}>Redeem Now</button>
                   <button className="star-btn">★</button>
                 </div>
              </div>
