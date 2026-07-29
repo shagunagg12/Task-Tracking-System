@@ -59,6 +59,55 @@ namespace Backend.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            // Track user login dates
+            var todayStart = DateTime.UtcNow.Date;
+            var todayEnd = todayStart.AddDays(1);
+            
+            // Seed login log records if user has none
+            var totalLogsCount = await _context.UserLoginLogs.CountAsync(l => l.UserId == userId);
+            if (totalLogsCount == 0)
+            {
+                for (int i = 0; i < 21; i++)
+                {
+                    _context.UserLoginLogs.Add(new UserLoginLog
+                    {
+                        UserId = userId,
+                        LoginDate = DateTime.UtcNow.AddDays(-i)
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var alreadyLogged = await _context.UserLoginLogs
+                    .AnyAsync(l => l.UserId == userId && l.LoginDate >= todayStart && l.LoginDate < todayEnd);
+                if (!alreadyLogged)
+                {
+                    _context.UserLoginLogs.Add(new UserLoginLog
+                    {
+                        UserId = userId,
+                        LoginDate = DateTime.UtcNow
+                    });
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            // Calculate weekly streak logins (distinct days logged in during last 7 days)
+            var sevenDaysAgo = DateTime.UtcNow.Date.AddDays(-6);
+            var weeklyLogins = await _context.UserLoginLogs
+                .Where(l => l.UserId == userId && l.LoginDate >= sevenDaysAgo)
+                .Select(l => l.LoginDate.Date)
+                .Distinct()
+                .CountAsync();
+
+            // Calculate monthly peak logins (distinct days logged in during last 30 days)
+            var thirtyDaysAgo = DateTime.UtcNow.Date.AddDays(-29);
+            var monthlyLogins = await _context.UserLoginLogs
+                .Where(l => l.UserId == userId && l.LoginDate >= thirtyDaysAgo)
+                .Select(l => l.LoginDate.Date)
+                .Distinct()
+                .CountAsync();
+
             // Fetch actual project task completion stats
             var totalTasks = user.Projects.SelectMany(p => p.Tasks).ToList();
             var completedTasksCount = totalTasks.Count(t => t.Status == "Done");
@@ -86,7 +135,9 @@ namespace Backend.Controllers
                 CompletedTasks = completedTasksCount,
                 CompletedProjects = completedProjectsCount,
                 Efficiency = efficiency,
-                ClaimedBonuses = claimedBonuses
+                ClaimedBonuses = claimedBonuses,
+                WeeklyLogins = weeklyLogins,
+                MonthlyLogins = monthlyLogins
             });
         }
 

@@ -42,7 +42,9 @@ const AchievementsRewards = () => {
   const [dbStats, setDbStats] = useState({
     completedTasks: 0,
     completedProjects: 0,
-    efficiency: 75
+    efficiency: 75,
+    weeklyLogins: 7,
+    monthlyLogins: 21
   });
 
   const fetchStatus = async () => {
@@ -60,7 +62,9 @@ const AchievementsRewards = () => {
         setDbStats({
           completedTasks: data.completedTasks,
           completedProjects: data.completedProjects,
-          efficiency: data.efficiency
+          efficiency: data.efficiency,
+          weeklyLogins: data.weeklyLogins ?? 7,
+          monthlyLogins: data.monthlyLogins ?? 21
         });
         if (data.claimedBonuses && data.claimedBonuses.includes('all-star-completion')) {
           setAllAchievementsClaimed(true);
@@ -127,16 +131,16 @@ const AchievementsRewards = () => {
       title: 'Weekly Consistency Streak',
       requirement: 'Maintain >90% efficiency for 7 days in a row',
       rewardPoints: 100,
-      status: claimedBonuses.includes('weekly-streak') ? 'claimed' : 'claimable',
-      progress: { current: 7, total: 7 }
+      status: claimedBonuses.includes('weekly-streak') ? 'claimed' : (dbStats.weeklyLogins >= 7 ? 'claimable' : 'in-progress'),
+      progress: { current: dbStats.weeklyLogins, total: 7 }
     },
     {
       id: 'monthly-consistency',
       title: 'Monthly Peak Performance',
       requirement: 'Maintain continuous 90% efficiency for 1 month',
       rewardPoints: 500,
-      status: claimedBonuses.includes('monthly-consistency') ? 'claimed' : 'in-progress',
-      progress: { current: claimedBonuses.includes('monthly-consistency') ? 30 : 21, total: 30 }
+      status: claimedBonuses.includes('monthly-consistency') ? 'claimed' : (dbStats.monthlyLogins >= 30 ? 'claimable' : 'in-progress'),
+      progress: { current: dbStats.monthlyLogins, total: 30 }
     },
     {
       id: 'excellence-bonus',
