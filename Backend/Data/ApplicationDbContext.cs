@@ -21,11 +21,14 @@ namespace Backend.Data
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<AppNotification> AppNotifications { get; set; }
+        public DbSet<UserNotification> UserNotifications { get; set; }
+        public DbSet<DepartmentAnnouncement> DepartmentAnnouncements { get; set; }
         public DbSet<ProjectMessage> ProjectMessages { get; set; }
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
 
         public DbSet<SuperAdmin> SuperAdmins { get; set; }
+        public DbSet<Department> Departments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +42,14 @@ namespace Backend.Data
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rachit@12"),
                     FullName = "Rachit"
                 }
+            );
+
+            modelBuilder.Entity<Department>().HasData(
+                new Department { Id = 1, Name = "Engineering" },
+                new Department { Id = 2, Name = "Marketing" },
+                new Department { Id = 3, Name = "Sales" },
+                new Department { Id = 4, Name = "Human Resources" },
+                new Department { Id = 5, Name = "Product" }
             );
 
             modelBuilder.Entity<User>()
