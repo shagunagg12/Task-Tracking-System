@@ -14,6 +14,9 @@ namespace Backend.Models
         public string Location { get; set; } = string.Empty;
         public string Bio { get; set; } = string.Empty;
 
+        public int SocialPoints { get; set; } = 0;
+        public double EfficiencyScore { get; set; } = 0.0;
+
         // Foreign Key to User table
         public int UserId { get; set; }
         

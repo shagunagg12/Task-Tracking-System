@@ -3,6 +3,7 @@ import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
+import StandingsLayout from './StandingsLayout';
 import ChatLayout from '../chat/ChatLayout';
 import Calendar from './Calendar';
 import PendingTasksModal from '../../components/PendingTasksModal';
@@ -274,6 +275,8 @@ const DashboardLayout = () => {
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
+          ) : activeMenu === 'Standings' ? (
+            <StandingsLayout />
           ) : activeMenu === 'Projects' ? (
             <AssignedProjects />
           ) : activeMenu === 'Report' ? (

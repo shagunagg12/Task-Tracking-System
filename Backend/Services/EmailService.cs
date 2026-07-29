@@ -11,6 +11,7 @@ namespace Backend.Services
     {
         Task SendEmailAsync(string toEmail, string subject, string message);
         Task SendMeetingInviteAsync(List<string> toEmails, string title, DateTime start, DateTime end, string meetLink, string brief);
+        Task SendEventInviteAsync(string toEmail, string title, DateTime eventDate, string location, string description, string organizerName);
     }
 
     public class SmtpEmailService : IEmailService
@@ -87,6 +88,33 @@ namespace Backend.Services
             {
                 await SendEmailAsync(email, subject, htmlMessage);
             }
+        }
+
+        public async Task SendEventInviteAsync(string toEmail, string title, DateTime eventDate, string location, string description, string organizerName)
+        {
+            string subject = $"Event Invitation: {title}";
+            
+            string htmlMessage = $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
+    <div style='background-color: #6366f1; padding: 20px; color: white; text-align: center;'>
+        <h2 style='margin: 0;'>{title}</h2>
+    </div>
+    <div style='padding: 30px; background-color: #f9f9f9;'>
+        <p style='font-size: 16px; color: #333;'>You have been invited to an event by <strong>{organizerName}</strong>!</p>
+        
+        <div style='background-color: white; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #6366f1;'>
+            <p style='margin: 0 0 10px 0;'><strong>Date & Time:</strong> {eventDate:MMM dd, yyyy h:mm tt}</p>
+            <p style='margin: 0 0 10px 0;'><strong>Location:</strong> {location}</p>
+            <p style='margin: 0;'><strong>Details:</strong> {description}</p>
+        </div>
+
+        <div style='text-align: center; margin-top: 30px;'>
+            <a href='http://localhost:5173/dashboard' style='background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;'>View Invitation</a>
+        </div>
+    </div>
+</div>
+";
+            await SendEmailAsync(toEmail, subject, htmlMessage);
         }
     }
 }
