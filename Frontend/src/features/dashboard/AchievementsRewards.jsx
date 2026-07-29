@@ -106,27 +106,11 @@ const AchievementsRewards = () => {
     },
     {
       id: 3,
-      title: 'MATTS Custom Hoodie',
-      points: 800,
-      icon: '👕',
-      category: 'Merch',
-      description: 'Premium quality ultra-soft MATTS branded hoodie.'
-    },
-    {
-      id: 4,
-      title: 'Extra Day Off',
-      points: 1500,
-      icon: '🏖️',
+      title: 'Leave Voucher (Approved by HR)',
+      points: 1000,
+      icon: '🎫',
       category: 'Perk',
-      description: 'Request a paid leave day with manager approval.'
-    },
-    {
-      id: 5,
-      title: 'Noise Cancelling Headphones',
-      points: 5000,
-      icon: '🎧',
-      category: 'Tech',
-      description: 'Premium wireless active noise cancelling headphones.'
+      description: 'Redeem 1000 points for a paid leave voucher approved by HR.'
     }
   ];
 
