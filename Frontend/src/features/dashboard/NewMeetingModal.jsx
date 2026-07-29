@@ -8,8 +8,13 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
   const [title, setTitle] = useState('');
   const [brief, setBrief] = useState('');
 
-  const dayStr = selectedSlot ? selectedSlot.day.date.toString().padStart(2, '0') : '';
-  const initialDate = selectedSlot ? `${currentYear}-07-${dayStr}` : '';
+  const getFormattedDate = (slot) => {
+    if (!slot) return '';
+    const d = new Date(slot.day.fullDate);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const initialDate = getFormattedDate(selectedSlot);
   const initialStartHour = selectedSlot ? selectedSlot.hour.toString().padStart(2, '0') + ':00' : '';
   const endHour = selectedSlot ? (selectedSlot.hour + 1 > 23 ? 0 : selectedSlot.hour + 1) : 0;
   const initialEndHour = selectedSlot ? endHour.toString().padStart(2, '0') + ':00' : '';
@@ -21,8 +26,9 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
 
   useEffect(() => {
     if (selectedSlot) {
-      setStartDate(`${currentYear}-07-${selectedSlot.day.date.toString().padStart(2, '0')}`);
-      setEndDate(`${currentYear}-07-${selectedSlot.day.date.toString().padStart(2, '0')}`);
+      const formatted = getFormattedDate(selectedSlot);
+      setStartDate(formatted);
+      setEndDate(formatted);
       setStartTime(selectedSlot.hour.toString().padStart(2, '0') + ':00');
       const nextHour = selectedSlot.hour + 1 > 23 ? 0 : selectedSlot.hour + 1;
       setEndTime(nextHour.toString().padStart(2, '0') + ':00');

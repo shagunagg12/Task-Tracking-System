@@ -121,6 +121,13 @@ namespace Backend.Controllers
                     return StatusCode(500, new { message = "Failed to generate Google Meet link. Please try again or re-connect your Google account." });
                 }
 
+                int? validOrganizerId = organizerId;
+                bool isAdmin = User.Claims.Any(c => (c.Type == ClaimTypes.Role || c.Type == "role") && (c.Value == "Admin" || c.Value == "SuperAdmin"));
+                if (isAdmin)
+                {
+                    validOrganizerId = null;
+                }
+
                 var meeting = new Meeting
                 {
                     Title = request.Title,
@@ -128,7 +135,7 @@ namespace Backend.Controllers
                     StartTime = start,
                     EndTime = end,
                     MeetLink = meetLink,
-                    OrganizerId = organizerId
+                    OrganizerId = validOrganizerId
                 };
 
                 _context.Meetings.Add(meeting);
@@ -202,8 +209,16 @@ namespace Backend.Controllers
                     return Unauthorized("Invalid user token.");
                 }
 
-                var meetings = await _context.Meetings
-                    .Where(m => m.OrganizerId == userId || _context.MeetingParticipants.Any(mp => mp.MeetingId == m.Id && mp.UserId == userId))
+                bool isAdmin = User.Claims.Any(c => (c.Type == ClaimTypes.Role || c.Type == "role") && (c.Value == "Admin" || c.Value == "SuperAdmin"));
+
+                var query = _context.Meetings.AsQueryable();
+
+                if (!isAdmin)
+                {
+                    query = query.Where(m => m.OrganizerId == userId || _context.MeetingParticipants.Any(mp => mp.MeetingId == m.Id && mp.UserId == userId));
+                }
+
+                var meetings = await query
                     .Select(m => new
                     {
                         m.Id,

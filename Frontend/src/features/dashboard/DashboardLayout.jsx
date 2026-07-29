@@ -143,7 +143,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
     // Connect to SignalR
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5024/adminHub")
+      .withUrl("http://localhost:5024/adminDashboardHub")
       .withAutomaticReconnect()
       .build();
 
