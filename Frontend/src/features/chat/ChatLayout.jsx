@@ -54,6 +54,7 @@ const ChatLayout = () => {
   // Media and Upload
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const fileInputRef = useRef(null);
@@ -475,8 +476,14 @@ const ChatLayout = () => {
     }
   };
 
-  const deleteMessage = async (msgId, isProject) => {
-    if (!window.confirm("Are you sure you want to delete this message?")) return;
+  const deleteMessage = (msgId, isProject) => {
+    setMessageToDelete({ id: msgId, isProject });
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
+    const { id: msgId, isProject } = messageToDelete;
+    setMessageToDelete(null);
     try {
       const endpoint = isProject ? `${API_URL}/Messages/project/${msgId}` : `${API_URL}/Messages/${msgId}`;
       await axios.delete(endpoint, {
@@ -792,6 +799,19 @@ const ChatLayout = () => {
           </div>
         )}
       </div>
+
+      {messageToDelete && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <h3>Delete Message</h3>
+            <p>Are you sure you want to delete this message? This action cannot be undone.</p>
+            <div className="delete-modal-actions">
+              <button className="cancel-delete-btn" onClick={() => setMessageToDelete(null)}>Cancel</button>
+              <button className="confirm-delete-btn" onClick={confirmDeleteMessage}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showProfile && (selectedUser || selectedProject) && (
         <div className="profile-sidebar">
