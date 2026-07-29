@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Linq;
 
 namespace Backend.Controllers
 {
@@ -18,6 +19,7 @@ namespace Backend.Controllers
             _context = context;
         }
 
+        [HttpGet]
         [HttpGet]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -113,6 +115,15 @@ namespace Backend.Controllers
                 avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(u.name) ? u.email : u.name)}&background=random"
             });
 
+            return Ok(users);
+        }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetUsers()
+        {
+            var users = await _context.Users
+                .Select(u => new { u.Id, u.FullName, u.Email })
+                .ToListAsync();
             return Ok(users);
         }
     }
