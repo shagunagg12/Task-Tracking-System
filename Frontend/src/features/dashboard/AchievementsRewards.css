@@ -269,28 +269,34 @@
   transition: width 1s ease-out;
 }
 
-/* REWARDS GRID */
 .rewards-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-}
-
-@media (max-width: 1400px) {
-  .rewards-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .reward-item-card {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   padding: 20px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
   background: rgba(255, 255, 255, 0.01);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media (min-width: 650px) {
+  .reward-item-card {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 24px;
+  }
 }
 
 .reward-item-card:hover {
@@ -576,10 +582,16 @@
 }
 
 .rare-middle h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.rare-reward-landscape .rare-middle h3 {
   font-size: 18px;
   font-weight: 700;
   color: #ffd700;
-  margin: 0;
 }
 
 .rare-middle p {
@@ -604,6 +616,7 @@
 }
 
 .gold-glow {
+  color: #fbbf24;
   text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
   font-weight: 700;
   font-size: 14px;
@@ -611,7 +624,7 @@
 
 /* Media query for wider views where landscape side-by-side fits perfectly */
 @media (min-width: 650px) {
-  .reward-item-card.rare-reward-landscape {
+  .reward-item-card {
     flex-direction: row;
     justify-content: space-between;
     gap: 24px;

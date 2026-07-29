@@ -30,6 +30,30 @@ const AchievementsRewards = () => {
       rewardPoints: 250,
       status: 'claimed',
       progress: { current: 96, total: 95 }
+    },
+    {
+      id: 'daily-checkin',
+      title: 'Daily Dashboard Check-in',
+      requirement: 'Open the MATTS dashboard to review daily priorities',
+      rewardPoints: 10,
+      status: 'claimable',
+      progress: { current: 1, total: 1 }
+    },
+    {
+      id: 'task-verify',
+      title: 'Task Verification',
+      requirement: 'Verify task status changes for today',
+      rewardPoints: 15,
+      status: 'claimable',
+      progress: { current: 1, total: 1 }
+    },
+    {
+      id: 'profile-pic-task',
+      title: 'Profile Customization',
+      requirement: 'Upload a custom profile picture',
+      rewardPoints: 20,
+      status: 'claimed',
+      progress: { current: 1, total: 1 }
     }
   ]);
 
@@ -266,49 +290,27 @@ const AchievementsRewards = () => {
             {rewards.map((reward) => {
               const canAfford = points >= reward.points;
               const isRare = reward.id === 3;
-              if (isRare) {
-                return (
-                  <div key={reward.id} className={`reward-item-card rare-reward-landscape ${!canAfford ? 'locked-reward' : ''}`}>
-                    <div className="rare-reward-shine-overlay"></div>
-                    <div className="rare-left">
-                      <span className="reward-large-icon">{reward.icon}</span>
-                      <span className="reward-cat-tag rare-tag">{reward.category}</span>
-                    </div>
-                    <div className="rare-middle">
-                      <h3>{reward.title}</h3>
-                      <p>{reward.description}</p>
-                    </div>
-                    <div className="rare-right">
-                      <span className="reward-cost gold-glow">🪙 {reward.points} pts</span>
-                      <button 
-                        className={`redeem-btn ${canAfford ? 'active' : 'disabled'}`}
-                        disabled={!canAfford}
-                        onClick={() => handleRedeem(reward)}
-                      >
-                        {canAfford ? 'Redeem Now' : 'Need More Points'}
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
               return (
-                <div key={reward.id} className={`reward-item-card ${!canAfford ? 'locked-reward' : ''}`}>
-                  <div className="reward-card-header">
-                    <span className="reward-cat-tag">{reward.category}</span>
-                    <span className="reward-cost">🪙 {reward.points} pts</span>
-                  </div>
-                  <div className="reward-main-info">
+                <div key={reward.id} className={`reward-item-card ${isRare ? 'rare-reward-landscape' : 'standard-reward-landscape'} ${!canAfford ? 'locked-reward' : ''}`}>
+                  {isRare && <div className="rare-reward-shine-overlay"></div>}
+                  <div className="rare-left">
                     <span className="reward-large-icon">{reward.icon}</span>
+                    <span className={`reward-cat-tag ${isRare ? 'rare-tag' : ''}`}>{reward.category}</span>
+                  </div>
+                  <div className="rare-middle">
                     <h3>{reward.title}</h3>
                     <p>{reward.description}</p>
                   </div>
-                  <button 
-                    className={`redeem-btn ${canAfford ? 'active' : 'disabled'}`}
-                    disabled={!canAfford}
-                    onClick={() => handleRedeem(reward)}
-                  >
-                    {canAfford ? 'Redeem Now' : 'Need More Points'}
-                  </button>
+                  <div className="rare-right">
+                    <span className={`reward-cost ${isRare ? 'gold-glow' : ''}`}>🪙 {reward.points} pts</span>
+                    <button 
+                      className={`redeem-btn ${canAfford ? 'active' : 'disabled'}`}
+                      disabled={!canAfford}
+                      onClick={() => handleRedeem(reward)}
+                    >
+                      {canAfford ? 'Redeem Now' : 'Need More Points'}
+                    </button>
+                  </div>
                 </div>
               );
             })}
