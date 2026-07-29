@@ -38,6 +38,22 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
+            if (User.IsInRole("Admin"))
+            {
+                var admin = await _context.Admins.FindAsync(userId);
+                if (admin == null) return NotFound("Admin not found.");
+
+                return Ok(new
+                {
+                    FullName = "Admin",
+                    admin.Email,
+                    Designation = "Administrator",
+                    Department = "Management",
+                    Location = "HQ",
+                    Bio = "System Administrator"
+                });
+            }
+
             var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return NotFound("User not found.");
 
@@ -59,6 +75,16 @@ namespace Backend.Controllers
             if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
             {
                 return Unauthorized();
+            }
+
+            if (User.IsInRole("Admin"))
+            {
+                var admin = await _context.Admins.FindAsync(userId);
+                if (admin == null) return NotFound("Admin not found.");
+
+                admin.Email = dto.Email;
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Admin profile updated successfully!" });
             }
 
             var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);

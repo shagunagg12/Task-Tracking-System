@@ -14,6 +14,8 @@ import SuperAdminDashboard from './SuperAdminDashboard';
 import SuperAdminProjects from './SuperAdminProjects';
 import SuperAdminUsers from './SuperAdminUsers';
 import SuperAdminReports from './SuperAdminReports';
+import SuperAdminSettings from './SuperAdminSettings';
+import SuperAdminNotifications from './SuperAdminNotifications';
 
 // ─── Toast Notification Component ────────────────────────────────────────────
 const ToastNotification = ({ toast, onDismiss }) => {
@@ -141,7 +143,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     fetchNotifications();
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${backendUrl}/hubs/admindashboard`)
+      .withUrl(`${backendUrl}/adminDashboardHub`)
       .withAutomaticReconnect()
       .build();
 
@@ -346,6 +348,15 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
              <SuperAdminUsers />
            ) : activeMenu === 'Reports' ? (
              <SuperAdminReports />
+           ) : activeMenu === 'Notifications' ? (
+             <SuperAdminNotifications 
+               notifications={notifications} 
+               setNotifications={setNotifications} 
+               unreadCount={unreadCount} 
+               setUnreadCount={setUnreadCount} 
+             />
+           ) : activeMenu === 'Settings' ? (
+             <SuperAdminSettings />
            ) : (
              <div className="sa-placeholder">
                 <div className="sa-placeholder-icon">{menuItems.find(m => m.id === activeMenu)?.icon}</div>

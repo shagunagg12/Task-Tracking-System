@@ -7,6 +7,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
+
 namespace Backend.Controllers
 {
     [ApiController]
@@ -15,11 +18,13 @@ namespace Backend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IHubContext<AdminDashboardHub> _hubContext;
 
-        public AuthController(ApplicationDbContext context, IConfiguration configuration)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration, IHubContext<AdminDashboardHub> hubContext)
         {
             _context = context;
             _configuration = configuration;
+            _hubContext = hubContext;
         }
 
         public class RegisterDto
@@ -54,6 +59,19 @@ namespace Backend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            var notification = new AppNotification
+            {
+                Title = "New User Registered",
+                Message = $"{user.FullName} has registered as a new user.",
+                Type = "user",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            _context.AppNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate");
+
             return Ok(new { message = "User registered successfully." });
         }
 
@@ -71,6 +89,7 @@ namespace Backend.Controllers
             {
                 if (!BCrypt.Net.BCrypt.Verify(dto.Password, admin.PasswordHash))
                 {
+                    await LogFailedLogin(dto.Email);
                     return Unauthorized(new { message = "Invalid email or password." });
                 }
                 isAdmin = true;
@@ -83,6 +102,7 @@ namespace Backend.Controllers
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
                 if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 {
+                    await LogFailedLogin(dto.Email);
                     return Unauthorized(new { message = "Invalid email or password." });
                 }
                 userId = user.Id;
@@ -119,6 +139,21 @@ namespace Backend.Controllers
                 token = tokenHandler.WriteToken(token),
                 user = new { Id = userId, FullName = userFullName, Email = userEmail, isAdmin = isAdmin }
             });
+        }
+
+        private async Task LogFailedLogin(string email)
+        {
+            var notification = new AppNotification
+            {
+                Title = "Failed Login Attempt",
+                Message = $"Failed login attempt detected for email {email}.",
+                Type = "warning",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            _context.AppNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
         }
     }
 }

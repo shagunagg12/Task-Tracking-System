@@ -570,3 +570,22 @@
 .sap-btn-secondary:hover {
   background: rgba(255,255,255,0.05);
 }
+
+.sap-btn-icon-danger {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sap-btn-icon-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.4);
+}

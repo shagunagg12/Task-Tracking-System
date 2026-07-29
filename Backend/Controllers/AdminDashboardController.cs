@@ -78,5 +78,39 @@ namespace Backend.Controllers
 
             return Ok(notifications);
         }
+
+        [HttpPatch("notifications/{id}/read")]
+        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        {
+            var notification = await _context.AppNotifications.FindAsync(id);
+            if (notification == null) return NotFound();
+
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPatch("notifications/read-all")]
+        public async Task<IActionResult> MarkAllNotificationsAsRead()
+        {
+            var unreadNotifications = await _context.AppNotifications.Where(n => !n.IsRead).ToListAsync();
+            foreach (var n in unreadNotifications)
+            {
+                n.IsRead = true;
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpDelete("notifications/{id}")]
+        public async Task<IActionResult> DeleteNotification(int id)
+        {
+            var notification = await _context.AppNotifications.FindAsync(id);
+            if (notification == null) return NotFound();
+
+            _context.AppNotifications.Remove(notification);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
     }
 }

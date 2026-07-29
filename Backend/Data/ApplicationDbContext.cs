@@ -21,6 +21,8 @@ namespace Backend.Data
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<AppNotification> AppNotifications { get; set; }
+        public DbSet<Meeting> Meetings { get; set; }
+        public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -77,6 +79,25 @@ namespace Backend.Data
                 .WithMany()
                 .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure AppNotification Foreign Keys
+            modelBuilder.Entity<AppNotification>()
+                .HasOne(n => n.Project)
+                .WithMany()
+                .HasForeignKey(n => n.ProjectId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<AppNotification>()
+                .HasOne(n => n.Task)
+                .WithMany()
+                .HasForeignKey(n => n.TaskId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<AppNotification>()
+                .HasOne(n => n.Meeting)
+                .WithMany()
+                .HasForeignKey(n => n.MeetingId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

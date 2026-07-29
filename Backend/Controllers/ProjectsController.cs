@@ -71,9 +71,9 @@ namespace Backend.Controllers
 
             var task = await _context.ProjectTasks
                 .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == taskId && t.Project != null && (isAdmin || t.Project.UserId == userId));
+                .FirstOrDefaultAsync(t => t.Id == taskId);
 
-            if (task == null) return NotFound(new { message = "Task not found or access denied." });
+            if (task == null) return NotFound(new { message = "Task not found." });
 
             task.Status = request.Status;
             if (request.Status == "Completed") task.StatusClass = "status-completed";
@@ -116,9 +116,9 @@ namespace Backend.Controllers
             var isAdmin = User.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
 
             var project = await _context.Projects
-                .FirstOrDefaultAsync(p => p.Id == projectId && (isAdmin || p.UserId == userId));
+                .FirstOrDefaultAsync(p => p.Id == projectId);
 
-            if (project == null) return NotFound(new { message = "Project not found or access denied." });
+            if (project == null) return NotFound(new { message = "Project not found." });
 
             project.Status = request.Status;
             await _context.SaveChangesAsync();

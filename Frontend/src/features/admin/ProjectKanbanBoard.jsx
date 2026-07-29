@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Plus, CheckSquare, GripVertical } from 'lucide-react';
+import { X, Plus, CheckSquare, GripVertical, Edit2, Trash2, Check } from 'lucide-react';
 import './ProjectKanbanBoard.css';
 
 const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
@@ -11,6 +11,10 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
   // New task state
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [taskToDelete, setTaskToDelete] = useState(null);
   
   const [activeTab, setActiveTab] = useState('tasks'); // tasks, details, team, deadlines, feedback
   
@@ -123,6 +127,42 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
       }
     } catch (error) {
       console.error('Failed to add task:', error);
+    }
+  };
+
+  const handleEditSubmit = async (e, taskId) => {
+    e.preventDefault();
+    if (!editTaskTitle.trim()) return;
+    try {
+      const response = await fetch(`http://localhost:5024/api/AdminProjects/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editTaskTitle })
+      });
+      if (response.ok) {
+        setTasks(tasks.map(t => t.id === taskId ? { ...t, title: editTaskTitle } : t));
+        setEditingTaskId(null);
+        onTasksChanged();
+      }
+    } catch (error) {
+      console.error('Failed to edit task:', error);
+    }
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+    try {
+      const response = await fetch(`http://localhost:5024/api/AdminProjects/tasks/${taskToDelete}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        setTasks(tasks.filter(t => t.id !== taskToDelete));
+        onTasksChanged();
+      }
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+    } finally {
+      setTaskToDelete(null);
     }
   };
 
@@ -251,9 +291,31 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
                         <div className="task-drag-handle">
                           <GripVertical size={16} />
                         </div>
-                        <div className="task-content">
-                          <h4 className="task-title">{task.title}</h4>
-                          {task.description && <p className="task-desc">{task.description}</p>}
+                        <div className="task-content" style={{ flex: 1, minWidth: 0 }}>
+                          {editingTaskId === task.id ? (
+                             <form onSubmit={(e) => handleEditSubmit(e, task.id)} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                               <input 
+                                 type="text" 
+                                 value={editTaskTitle} 
+                                 onChange={(e) => setEditTaskTitle(e.target.value)} 
+                                 style={{ width: '100%', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '4px 8px', borderRadius: '4px' }}
+                                 autoFocus
+                               />
+                               <button type="submit" style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', padding: 0 }}><Check size={16} /></button>
+                               <button type="button" onClick={() => setEditingTaskId(null)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}><X size={16} /></button>
+                             </form>
+                          ) : (
+                             <>
+                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                 <h4 className="task-title" style={{ margin: 0 }}>{task.title}</h4>
+                                 <div className="task-actions" style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                                    <button onClick={() => { setEditingTaskId(task.id); setEditTaskTitle(task.title); }} style={{ background: 'none', border: 'none', color: 'var(--sa-muted)', cursor: 'pointer', padding: 0, opacity: 0.7 }}><Edit2 size={14} /></button>
+                                    <button onClick={() => setTaskToDelete(task.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, opacity: 0.7 }}><Trash2 size={14} /></button>
+                                 </div>
+                               </div>
+                               {task.description && <p className="task-desc">{task.description}</p>}
+                             </>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -444,6 +506,30 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
 
         </div>
       </motion.div>
+
+      {taskToDelete && (
+        <div className="kanban-overlay" style={{ zIndex: 1100 }}>
+          <motion.div 
+            className="kanban-modal"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            style={{ maxWidth: '400px', textAlign: 'center', padding: '32px 24px', height: 'auto', minHeight: 'auto' }}
+          >
+            <div style={{ color: '#ef4444', marginBottom: '16px' }}>
+              <Trash2 size={48} style={{ margin: '0 auto' }} />
+            </div>
+            <h2 style={{ marginBottom: '16px', color: '#fff' }}>Delete Task?</h2>
+            <p style={{ color: 'var(--sa-muted)', marginBottom: '24px' }}>
+              Are you sure you want to delete this task? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button className="sap-btn-secondary" onClick={() => setTaskToDelete(null)}>Cancel</button>
+              <button className="sap-btn-primary" style={{ background: '#ef4444', color: '#fff', border: 'none' }} onClick={confirmDeleteTask}>Delete Task</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

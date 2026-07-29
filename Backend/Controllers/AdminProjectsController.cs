@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Controllers
 {
@@ -10,10 +12,12 @@ namespace Backend.Controllers
     public class AdminProjectsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<AdminDashboardHub> _hubContext;
 
-        public AdminProjectsController(ApplicationDbContext context)
+        public AdminProjectsController(ApplicationDbContext context, IHubContext<AdminDashboardHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: api/AdminProjects/users
@@ -145,6 +149,19 @@ namespace Backend.Controllers
 
             await _context.SaveChangesAsync();
 
+            var notification = new AppNotification
+            {
+                Title = "New Project Assigned",
+                Message = $"Admin assigned project '{project.Name}' to user ID {dto.UserId}.",
+                Type = "project_update",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            _context.AppNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate");
+
             return Ok(project);
         }
 
@@ -194,6 +211,46 @@ namespace Backend.Controllers
             await _context.SaveChangesAsync();
             return Ok(task);
         }
+
+        public class EditTaskDto
+        {
+            public string Title { get; set; } = string.Empty;
+        }
+
+        [HttpPut("tasks/{taskId}")]
+        public async Task<IActionResult> EditTask(int taskId, [FromBody] EditTaskDto dto)
+        {
+            var task = await _context.ProjectTasks.FindAsync(taskId);
+            if (task == null) return NotFound("Task not found");
+
+            task.Title = dto.Title;
+
+            await _context.SaveChangesAsync();
+            return Ok(task);
+        }
+
+        [HttpDelete("tasks/{taskId}")]
+        public async Task<IActionResult> DeleteTask(int taskId)
+        {
+            var task = await _context.ProjectTasks.FindAsync(taskId);
+            if (task == null) return NotFound("Task not found");
+
+            _context.ProjectTasks.Remove(task);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpDelete("{projectId}")]
+        public async Task<IActionResult> DeleteProject(int projectId)
+        {
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null) return NotFound("Project not found");
+
+            _context.Projects.Remove(project);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         public class UpdateProjectDetailsDto
         {
             public string PriorityTaskTitle { get; set; } = string.Empty;

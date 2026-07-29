@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, Folder, CheckSquare, Plus, Search, ChevronRight, Briefcase 
+  Users, Folder, CheckSquare, Plus, Search, ChevronRight, Briefcase, Trash2
 } from 'lucide-react';
 import ProjectKanbanBoard from './ProjectKanbanBoard';
 import './SuperAdminProjects.css';
@@ -14,6 +14,8 @@ const SuperAdminProjects = () => {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [kanbanProject, setKanbanProject] = useState(null);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
   
   // Unified Project Creation State
   const [newProject, setNewProject] = useState({
@@ -60,6 +62,34 @@ const SuperAdminProjects = () => {
       console.error('Failed to fetch users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteProjectClick = (projectId, e) => {
+    e.stopPropagation();
+    setProjectToDelete(projectId);
+    setDeleteError('');
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+    
+    try {
+      const response = await fetch(`http://localhost:5024/api/AdminProjects/${projectToDelete}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        fetchUsers();
+        if (kanbanProject && kanbanProject.id === projectToDelete) {
+          setKanbanProject(null);
+        }
+        setProjectToDelete(null);
+      } else {
+        setDeleteError('Failed to delete project. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      setDeleteError('An unexpected error occurred.');
     }
   };
 
@@ -195,9 +225,14 @@ const SuperAdminProjects = () => {
                                <span className="sap-project-meta">Created recently</span>
                             </div>
                          </div>
-                         <span className={`sap-status-badge ${project.status === 'Completed' ? 'completed' : 'in-progress'}`}>
-                           {project.status || 'In Progress'}
-                         </span>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                           <span className={`sap-status-badge ${project.status === 'Completed' ? 'completed' : 'in-progress'}`}>
+                             {project.status || 'In Progress'}
+                           </span>
+                           <button onClick={(e) => handleDeleteProjectClick(project.id, e)} className="sap-btn-icon-danger" title="Delete Project">
+                             <Trash2 size={16} />
+                           </button>
+                         </div>
                       </div>
                       
                       <div className="sap-project-stats">
@@ -337,6 +372,29 @@ const SuperAdminProjects = () => {
                   <button type="submit" className="sap-btn-primary">Add Task</button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {projectToDelete && (
+          <motion.div className="sap-modal-backdrop" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
+            <motion.div className="sap-modal" initial={{scale: 0.9, y: 20}} animate={{scale: 1, y: 0}} exit={{scale: 0.9, y: 20}} style={{ maxWidth: '400px', textAlign: 'center' }}>
+              <div style={{ color: '#ef4444', marginBottom: '16px' }}>
+                <Trash2 size={48} style={{ margin: '0 auto' }} />
+              </div>
+              <h2 style={{ marginBottom: '16px' }}>Delete Project?</h2>
+              <p style={{ color: 'var(--sa-muted)', marginBottom: '24px' }}>
+                Are you sure you want to delete this entire project? This action cannot be undone and will permanently delete all tasks, members, and data associated with it.
+              </p>
+              {deleteError && (
+                <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem' }}>
+                  {deleteError}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button className="sap-btn-secondary" onClick={() => setProjectToDelete(null)}>Cancel</button>
+                <button className="sap-btn-primary" style={{ background: '#ef4444', color: '#fff', border: 'none' }} onClick={confirmDeleteProject}>Delete Project</button>
+              </div>
             </motion.div>
           </motion.div>
         )}
