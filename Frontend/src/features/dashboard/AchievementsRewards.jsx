@@ -36,54 +36,45 @@ const AchievementsRewards = () => {
   const achievements = [
     {
       id: 1,
-      title: 'Fast Starter',
-      description: 'Finish a task within 1 hour of assignment.',
-      icon: '⚡',
+      title: 'Task Champion',
+      description: 'Complete 10 assigned project tasks successfully.',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      ),
       status: 'unlocked',
-      progress: { current: 1, total: 1 },
+      progress: { current: 10, total: 10 },
       date: 'July 25, 2026'
     },
     {
       id: 2,
-      title: 'Team Player',
-      description: 'Receive 5 high-fives or peer appreciations.',
-      icon: '🤝',
-      status: 'unlocked',
-      progress: { current: 5, total: 5 },
-      date: 'July 28, 2026'
+      title: 'Project Deliverer',
+      description: 'Complete 2 full development projects.',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      ),
+      status: 'in-progress',
+      progress: { current: 1, total: 2 }
     },
     {
       id: 3,
-      title: 'Consistency King',
-      description: 'Maintain a 5-day active task completion streak.',
-      icon: '🔥',
+      title: 'Efficiency Elite',
+      description: 'Maintain an overall task efficiency rating of 90% or above.',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="6"></circle>
+          <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+      ),
       status: 'unlocked',
-      progress: { current: 5, total: 5 },
+      progress: { current: 92, total: 90 },
       date: 'July 29, 2026'
-    },
-    {
-      id: 4,
-      title: 'Bug Squasher',
-      description: 'Resolve 3 critical project bugs.',
-      icon: '🐛',
-      status: 'in-progress',
-      progress: { current: 2, total: 3 }
-    },
-    {
-      id: 5,
-      title: 'Overachiever',
-      description: 'Complete 20 tasks in a single month.',
-      icon: '🏆',
-      status: 'in-progress',
-      progress: { current: 12, total: 20 }
-    },
-    {
-      id: 6,
-      title: 'Mentor Mindset',
-      description: 'Help a teammate resolve their blocker.',
-      icon: '🎓',
-      status: 'locked',
-      progress: { current: 0, total: 1 }
     }
   ];
 
@@ -217,7 +208,12 @@ const AchievementsRewards = () => {
         {/* LEFT COLUMN: ACHIEVEMENTS */}
         <div className="ar-section achievements-section">
           <div className="section-title-row">
-            <h2>🌟 Unlocked & Active Achievements</h2>
+            <h2>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px', verticalAlign: 'middle' }}>
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              Unlocked & Active Achievements
+            </h2>
             <span className="badge-count">
               {achievements.filter(a => a.status === 'unlocked').length} / {achievements.length} Completed
             </span>
@@ -244,7 +240,7 @@ const AchievementsRewards = () => {
                     <div className="ach-progress-track">
                       <div 
                         className="ach-progress-fill" 
-                        style={{ width: `${(item.progress.current / item.progress.total) * 100}%` }}
+                        style={{ width: `${Math.min((item.progress.current / item.progress.total) * 100, 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -256,7 +252,14 @@ const AchievementsRewards = () => {
 
         {/* RIGHT COLUMN: REWARDS STORE */}
         <div className="ar-section rewards-section">
-          <h2>🎁 Rewards Store</h2>
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px', verticalAlign: 'middle' }}>
+              <polyline points="21 8 21 21 3 21 3 8"></polyline>
+              <rect x="1" y="3" width="22" height="5"></rect>
+              <line x1="10" y1="12" x2="14" y2="12"></line>
+            </svg>
+            Rewards Store
+          </h2>
           <p className="section-desc">Spend your hard-earned points to redeem vouchers, merchandise, or corporate benefits.</p>
 
           <div className="rewards-grid">
