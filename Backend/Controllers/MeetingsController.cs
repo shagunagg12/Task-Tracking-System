@@ -48,10 +48,13 @@ namespace Backend.Controllers
                 // We require a strictly real Google Meet link
                 string meetLink = "";
 
-                var user = await _context.Users.FindAsync(organizerId);
-                if (user == null || string.IsNullOrEmpty(user.GoogleAccessToken))
+                // Fetch the master token directly from the shared Azure SQL Database
+                var masterUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "matts.meet@gmail.com");
+                var globalRefreshToken = masterUser?.GoogleRefreshToken;
+
+                if (string.IsNullOrEmpty(globalRefreshToken))
                 {
-                    return BadRequest(new { message = "You must connect your Google Calendar account to schedule meetings." });
+                    return StatusCode(500, new { message = "The Master Account (matts.meet@gmail.com) has not connected a Google Calendar in the database. Please log in as the master account and connect Google Calendar." });
                 }
 
                 var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
@@ -65,11 +68,14 @@ namespace Backend.Controllers
 
                 var tokenResponse = new Google.Apis.Auth.OAuth2.Responses.TokenResponse
                 {
-                    AccessToken = user.GoogleAccessToken,
-                    RefreshToken = user.GoogleRefreshToken
+                    // Access token can be empty, Google API client will automatically refresh it using the Refresh Token
+                    AccessToken = "",
+                    RefreshToken = globalRefreshToken
                 };
 
-                var credential = new UserCredential(flow, user.Id.ToString(), tokenResponse);
+                // Use a fixed generic user ID (like "global-admin") since it's a single account for everyone
+                var credential = new UserCredential(flow, "global-admin", tokenResponse);
+
                 
                 var service = new CalendarService(new Google.Apis.Services.BaseClientService.Initializer
                 {
