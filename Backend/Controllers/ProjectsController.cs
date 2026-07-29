@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
+using Backend.Hubs;
 
 namespace Backend.Controllers
 {
@@ -13,19 +15,36 @@ namespace Backend.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<AdminDashboardHub> _hubContext;
 
-        public ProjectsController(ApplicationDbContext context)
+        public ProjectsController(ApplicationDbContext context, IHubContext<AdminDashboardHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetProjects()
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(email))
             {
                 return Unauthorized();
+            }
+
+            int actualUserId;
+
+            // Find the actual User ID for this email from the Users table
+            var userAccount = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (userAccount != null)
+            {
+                actualUserId = userAccount.Id;
+            }
+            else
+            {
+                // Fallback to the ID from the token (in case they manually assigned projects matching the Admin's ID)
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                int.TryParse(userIdStr, out actualUserId);
             }
 
             var projects = await _context.Projects
@@ -33,7 +52,7 @@ namespace Backend.Controllers
                 .Include(p => p.Deadlines)
                 .Include(p => p.Feedbacks)
                 .Include(p => p.TeamMembers)
-                .Where(p => p.UserId == userId || p.TeamMembers.Any(tm => tm.UserId == userId))
+                .Where(p => p.UserId == actualUserId || p.TeamMembers.Any(tm => tm.UserId == actualUserId))
                 .ToListAsync();
 
             return Ok(projects);
@@ -48,9 +67,11 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
+            var isAdmin = User.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+
             var task = await _context.ProjectTasks
                 .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == taskId && t.Project != null && t.Project.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == taskId);
 
             if (task == null) return NotFound(new { message = "Task not found." });
 
@@ -62,6 +83,24 @@ namespace Backend.Controllers
             else task.StatusClass = ""; // fallback
             
             await _context.SaveChangesAsync();
+            
+            // Emit real-time notification to Super Admin Dashboard
+            var userName = User.FindFirstValue(ClaimTypes.Name) ?? "A user";
+            var notification = new AppNotification
+            {
+                Title = "Task Updated",
+                Message = $"{userName} updated task '{task.Title}' to {request.Status}",
+                Type = "task_update",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            
+            _context.AppNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate"); // Update admin dashboard stats
+
             return Ok(new { message = "Status updated successfully", task });
         }
 
@@ -74,13 +113,33 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
+            var isAdmin = User.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+
             var project = await _context.Projects
-                .FirstOrDefaultAsync(p => p.Id == projectId && p.UserId == userId);
+                .FirstOrDefaultAsync(p => p.Id == projectId);
 
             if (project == null) return NotFound(new { message = "Project not found." });
 
             project.Status = request.Status;
             await _context.SaveChangesAsync();
+            
+            // Emit real-time notification to Super Admin Dashboard
+            var userName = User.FindFirstValue(ClaimTypes.Name) ?? "A user";
+            var notification = new AppNotification
+            {
+                Title = "Project Status Updated",
+                Message = $"{userName} updated project '{project.Name}' to {request.Status}",
+                Type = "project_update",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            _context.AppNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate");
+
             return Ok(new { message = "Project status updated successfully", project });
         }
 

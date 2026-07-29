@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import * as signalR from '@microsoft/signalr';
 import Chatbot from '../../components/Chatbot';
 import PendingTasksModal from '../../components/PendingTasksModal';
 import ProfileSettings from '../../components/ProfileSettings';
@@ -53,7 +55,7 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
   return <span>{prefix}{formatNumber(count)}{suffix}</span>;
 };
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [activeMenu, setActiveMenu] = useState(() => {
     return localStorage.getItem('activeMenu') || localStorage.getItem('lastActiveMenu') || 'Overview';
   });
@@ -61,6 +63,23 @@ const DashboardLayout = () => {
   const [showPendingTasks, setShowPendingTasks] = useState(false);
   const [pendingTasks, setPendingTasks] = useState([]);
   const [userProfileData, setUserProfileData] = useState(null);
+  
+  // Toasts and Modals
+  const [toasts, setToasts] = useState([]);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  
+  const addToast = (toast) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, ...toast }]);
+    setTimeout(() => dismissToast(id), 5000);
+  };
+
+  const dismissToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -75,6 +94,10 @@ const DashboardLayout = () => {
         if (res.ok) {
           const data = await res.json();
           setUserProfileData(data);
+          if (data.fullName) {
+            setUserName(data.fullName);
+            localStorage.setItem('userName', data.fullName);
+          }
           
           const tasks = [];
           if (!data.designation || !data.department || !data.location || !data.bio) {
@@ -94,6 +117,19 @@ const DashboardLayout = () => {
             setPendingTasks(tasks);
             setShowPendingTasks(true);
           }
+
+          // Fetch notifications
+          try {
+            const notifRes = await fetch(`http://localhost:5024/api/DepartmentNotifications/${encodeURIComponent(data.department)}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (notifRes.ok) {
+              const notifData = await notifRes.json();
+              setNotifications(notifData);
+            }
+          } catch(err) {
+            console.error(err);
+          }
         }
       } catch (err) {
         console.error("Error fetching profile", err);
@@ -101,6 +137,39 @@ const DashboardLayout = () => {
     };
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!userProfileData) return;
+
+    // Connect to SignalR
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5024/adminDashboardHub")
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveUserNotification", (notification) => {
+      // Check if notification belongs to this user's department
+      if (notification.department === userProfileData.department) {
+        addToast({
+          title: notification.title,
+          message: notification.message
+        });
+        setNotifications(prev => [{
+          id: Date.now(), // temporary id
+          title: notification.title,
+          message: notification.message,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        }, ...prev]);
+      }
+    });
+
+    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+
+    return () => {
+      connection.stop();
+    };
+  }, [userProfileData]);
 
   useEffect(() => {
     localStorage.setItem('activeMenu', activeMenu);
@@ -145,14 +214,21 @@ const DashboardLayout = () => {
 
   const initialData = getUserData();
   const [userPic, setUserPic] = useState(initialData.pic);
-  const userName = initialData.name;
+  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || initialData.name);
 
   useEffect(() => {
     const handlePicUpdate = () => {
       setUserPic(localStorage.getItem('profilePic') || '');
     };
+    const handleProfileUpdate = () => {
+      setUserName(localStorage.getItem('userName') || initialData.name);
+    };
     window.addEventListener('profilePicUpdated', handlePicUpdate);
-    return () => window.removeEventListener('profilePicUpdated', handlePicUpdate);
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profilePicUpdated', handlePicUpdate);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   const menuItems = [
@@ -165,6 +241,10 @@ const DashboardLayout = () => {
     { id: 'Report', icon: '📈', text: 'Report' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
+
+  if (isAdmin) {
+    menuItems.push({ id: 'AdminPanel', icon: '🛡️', text: 'Admin Panel' });
+  }
 
   return (
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
@@ -186,7 +266,13 @@ const DashboardLayout = () => {
               <li 
                 key={item.id}
                 className={`menu-item ${activeMenu === item.id ? 'active' : ''}`}
-                onClick={() => setActiveMenu(item.id)}
+                onClick={() => {
+                  if (item.id === 'AdminPanel') {
+                    onSwitchToAdmin();
+                  } else {
+                    setActiveMenu(item.id);
+                  }
+                }}
               >
                 <span className="menu-icon">{item.icon}</span>
                 <span className="menu-text">{item.text}</span>
@@ -215,6 +301,37 @@ const DashboardLayout = () => {
               <span style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-main)' }}>{userName}</span>
             </div>
             
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('isAdmin');
+                  localStorage.removeItem('isSuperAdmin');
+                  window.location.reload();
+                }}
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: 'var(--text-muted)', 
+                  cursor: 'pointer', 
+                  padding: '8px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)'; e.currentTarget.style.color = '#ff6b6b'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                title="Logout"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </button>
+            </div>
             <button 
               onClick={() => {
                 localStorage.removeItem('token');
@@ -515,7 +632,7 @@ const DashboardLayout = () => {
           </div>
           </>
           ) : (
-             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                <h2>{activeMenu}</h2>
                <p style={{ marginTop: '10px' }}>This section is currently under development.</p>
              </div>
@@ -530,34 +647,31 @@ const DashboardLayout = () => {
         <div className="right-section">
           <h3 className="right-title">Notifications</h3>
           <ul className="list-items">
-            <li className="list-item">
-              <div className="icon-circle green">📋</div>
-              <div className="item-details">
-                <p className="item-title">New project 'Website Redesign' assigned.</p>
-                <p className="item-time">Just now</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">✉</div>
-              <div className="item-details">
-                <p className="item-title">Feedback received from Manager.</p>
-                <p className="item-time">59 Minutes ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">🎁</div>
-              <div className="item-details">
-                <p className="item-title">150 Reward points credited.</p>
-                <p className="item-time">12 Hours ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">💬</div>
-              <div className="item-details">
-                <p className="item-title">5 Unread team messages.</p>
-                <p className="item-time">Today, 11:59 PM</p>
-              </div>
-            </li>
+            {notifications.length === 0 ? (
+              <li className="list-item" style={{ justifyContent: 'center', opacity: 0.5, paddingTop: '10px' }}>
+                <p>No notifications</p>
+              </li>
+            ) : (
+              notifications.map((notif) => (
+                <li 
+                  key={notif.id} 
+                  className="list-item" 
+                  style={{ cursor: 'pointer', transition: 'background 0.2s', padding: '8px', borderRadius: '8px' }}
+                  onClick={() => setSelectedNotification(notif)}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div className="icon-circle outline">✉</div>
+                  <div className="item-details">
+                    <p className="item-title">{notif.title}</p>
+                    <p className="item-time">
+                      {new Date(notif.createdAt).toLocaleDateString()}{' '}
+                      {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </li>
+              ))
+            )}
           </ul>
         </div>
 
@@ -631,6 +745,45 @@ const DashboardLayout = () => {
 
       </aside>
       {activeMenu !== 'Chat' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
+      
+      {/* Notification Details Modal */}
+      {selectedNotification && createPortal(
+        <div className="dashboard-modal-overlay" onClick={() => setSelectedNotification(null)}>
+          <div className="dashboard-modal" onClick={e => e.stopPropagation()}>
+            <div className="dashboard-modal-header">
+              <h3>{selectedNotification.title}</h3>
+              <button className="dashboard-modal-close" onClick={() => setSelectedNotification(null)}>×</button>
+            </div>
+            <div className="dashboard-modal-body">
+              <p className="dashboard-modal-date">
+                {new Date(selectedNotification.createdAt).toLocaleDateString()}{' '}
+                {new Date(selectedNotification.createdAt).toLocaleTimeString()}
+              </p>
+              <div className="dashboard-modal-message">
+                {selectedNotification.message}
+              </div>
+            </div>
+            <div className="dashboard-modal-footer">
+              <button className="dashboard-modal-btn" onClick={() => setSelectedNotification(null)}>Close</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Toasts */}
+      {createPortal(
+        <div className="dashboard-toast-container">
+          {toasts.map(toast => (
+            <div key={toast.id} className="dashboard-toast">
+              <div className="dashboard-toast-title">{toast.title}</div>
+              <div className="dashboard-toast-message">{toast.message}</div>
+              <button className="dashboard-toast-close" onClick={() => dismissToast(toast.id)}>×</button>
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
