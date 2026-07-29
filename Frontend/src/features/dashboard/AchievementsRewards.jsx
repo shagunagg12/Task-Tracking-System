@@ -292,6 +292,14 @@ const AchievementsRewards = () => {
               <div className="bonus-details">
                 <h3>All-Star Completion Bonus</h3>
                 <p>Unlock all 3 achievements to earn an extra 500 points!</p>
+                <div className="bonus-badges-row">
+                  {achievements.map(a => (
+                    <div key={a.id} className={`bonus-badge-slot ${a.status}`} title={`${a.title}: ${a.status}`}>
+                      <span className="slot-icon-wrapper">{a.icon}</span>
+                      {a.status === 'unlocked' && <span className="slot-check">✓</span>}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             <button 
