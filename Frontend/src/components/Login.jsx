@@ -50,6 +50,7 @@ export default function Login({ onLogin }) {
         } else {
           localStorage.removeItem('isSuperAdmin');
         }
+        localStorage.removeItem('profilePic');
         if (onLogin) onLogin(data.user);
       }
     } catch (err) {
