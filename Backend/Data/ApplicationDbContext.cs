@@ -18,6 +18,8 @@ namespace Backend.Data
         public DbSet<ProjectDeadline> ProjectDeadlines { get; set; }
         public DbSet<ProjectFeedback> ProjectFeedbacks { get; set; }
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<ProjectMessage> ProjectMessages { get; set; }
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
         public DbSet<UserClaimedBonus> UserClaimedBonuses { get; set; }
@@ -67,9 +69,39 @@ namespace Backend.Data
                 .HasForeignKey(tm => tm.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<ProjectTeamMember>()
+                .HasOne(tm => tm.User)
+                .WithMany()
+                .HasForeignKey(tm => tm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany()
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectMessage>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectMessage>()
+                .HasOne(m => m.Project)
+                .WithMany()
+                .HasForeignKey(m => m.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Meeting>()
                 .HasOne(m => m.Organizer)
-                .WithMany() // No need to add Meetings to User model unless required
+                .WithMany() 
                 .HasForeignKey(m => m.OrganizerId)
                 .OnDelete(DeleteBehavior.Restrict);
 

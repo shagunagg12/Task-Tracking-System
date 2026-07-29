@@ -3,6 +3,7 @@ import Chatbot from '../../components/Chatbot';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
+import ChatLayout from '../chat/ChatLayout';
 import Calendar from './Calendar';
 import AchievementsRewards from './AchievementsRewards';
 import './DashboardLayout.css';
@@ -52,7 +53,58 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
 };
 
 const DashboardLayout = () => {
-  const [activeMenu, setActiveMenu] = useState('Overview');
+  const [activeMenu, setActiveMenu] = useState(() => {
+    return localStorage.getItem('activeMenu') || localStorage.getItem('lastActiveMenu') || 'Overview';
+  });
+
+  const [showPendingTasks, setShowPendingTasks] = useState(false);
+  const [pendingTasks, setPendingTasks] = useState([]);
+  const [userProfileData, setUserProfileData] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('http://localhost:5024/api/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserProfileData(data);
+          
+          const tasks = [];
+          if (!data.designation || !data.department || !data.location || !data.bio) {
+            tasks.push({
+              id: 'complete-profile',
+              title: 'Complete Your Profile',
+              description: 'Missing details like Designation, Department, Location, or Bio.',
+              icon: '👤',
+              onClick: () => {
+                setShowPendingTasks(false);
+                setActiveMenu('Profile');
+              }
+            });
+          }
+          
+          if (tasks.length > 0) {
+            setPendingTasks(tasks);
+            setShowPendingTasks(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching profile", err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('activeMenu', activeMenu);
+    localStorage.setItem('lastActiveMenu', activeMenu);
+  }, [activeMenu]);
   const [isBrightTheme, setIsBrightTheme] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -110,11 +162,18 @@ const DashboardLayout = () => {
     { id: 'Chats', icon: '💬', text: 'Chats' },
     { id: 'AchievementsRewards', icon: '🏆', text: 'Achievements & Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
+    { id: 'Chat', icon: '💬', text: 'Chat' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
 
   return (
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
+      {showPendingTasks && pendingTasks.length > 0 && (
+        <PendingTasksModal 
+          tasks={pendingTasks} 
+          onClose={() => setShowPendingTasks(false)}
+        />
+      )}
       {/* LEFT SIDEBAR */}
       <aside className={`left-sidebar ${isLeftSidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-start', borderBottom: '1px solid var(--border-color)' }}>
@@ -566,7 +625,7 @@ const DashboardLayout = () => {
         </div>
 
       </aside>
-      <Chatbot isSidebarOpen={isRightSidebarOpen} />
+      {activeMenu !== 'Chat' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
     </div>
   );
 };

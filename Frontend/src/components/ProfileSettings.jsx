@@ -26,7 +26,7 @@ export default function ProfileSettings() {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5024/api/profile', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -108,7 +108,7 @@ export default function ProfileSettings() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5024/api/profile', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
