@@ -63,6 +63,7 @@ namespace Backend.Controllers
 
                 return Ok(new
                 {
+                    Id = admin.Id,
                     FullName = admin.FullName,
                     admin.Email,
                     ProfilePictureUrl = admin.ProfilePictureUrl,
@@ -78,6 +79,7 @@ namespace Backend.Controllers
 
             return Ok(new
             {
+                Id = user.Id,
                 user.FullName,
                 user.Email,
                 ProfilePictureUrl = user.ProfilePictureUrl ?? "",

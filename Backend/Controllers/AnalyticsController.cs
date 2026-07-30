@@ -179,6 +179,19 @@ namespace Backend.Controllers
 
             if (profile == null)
             {
+                // Try checking if this is an admin ID
+                var admin = await _context.Admins.FindAsync(userId);
+                if (admin != null)
+                {
+                    profile = await _context.Profiles
+                        .Include(p => p.User)
+                        .ThenInclude(u => u.Projects)
+                        .FirstOrDefaultAsync(p => p.User.Email == admin.Email);
+                }
+            }
+
+            if (profile == null)
+            {
                 return NotFound("User not found.");
             }
 
@@ -188,7 +201,7 @@ namespace Backend.Controllers
                 .ToListAsync();
 
             var totalTasks = tasks.Count;
-            var completedTasks = tasks.Count(t => t.Status == "Completed");
+            var completedTasks = tasks.Count(t => t.Status == "Completed" || t.Status == "Done");
             var completionRate = totalTasks > 0 ? (double)completedTasks / totalTasks * 100 : 0;
 
             var meetingsOrganized = await _context.Meetings.CountAsync(m => m.OrganizerId == userId);
@@ -215,6 +228,7 @@ namespace Backend.Controllers
                 Department = profile.Department,
                 TotalPoints = profile.User.Points,
                 TotalProjects = profile.User.Projects.Count,
+                CompletedProjects = profile.User.Projects.Count(p => p.Status == "Completed" || p.Status == "Done"),
                 TotalTasksAssigned = totalTasks,
                 TasksCompleted = completedTasks,
                 CompletionRate = Math.Round(completionRate, 2),

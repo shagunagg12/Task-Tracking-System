@@ -63,6 +63,7 @@ namespace Backend.Models
         public string Department { get; set; } = string.Empty;
         public int TotalPoints { get; set; }
         public int TotalProjects { get; set; }
+        public int CompletedProjects { get; set; }
         public int TotalTasksAssigned { get; set; }
         public int TasksCompleted { get; set; }
         public double CompletionRate { get; set; }

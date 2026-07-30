@@ -69,6 +69,31 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [toasts, setToasts] = useState([]);
   const [selectedNotification, setSelectedNotification] = useState(null);
   
+  // Analytics state
+  const [userAnalytics, setUserAnalytics] = useState(null);
+  const [orgAnalytics, setOrgAnalytics] = useState(null);
+  const [deptAnalytics, setDeptAnalytics] = useState(null);
+
+  const fetchAnalytics = async (userId, department) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const userRes = await fetch(`http://localhost:5024/api/analytics/user/${userId}`, { headers });
+      if (userRes.ok) setUserAnalytics(await userRes.json());
+
+      const orgRes = await fetch(`http://localhost:5024/api/analytics/organization`, { headers });
+      if (orgRes.ok) setOrgAnalytics(await orgRes.json());
+
+      if (department) {
+        const deptRes = await fetch(`http://localhost:5024/api/analytics/department/${encodeURIComponent(department)}`, { headers });
+        if (deptRes.ok) setDeptAnalytics(await deptRes.json());
+      }
+    } catch (err) {
+      console.error("Error fetching analytics", err);
+    }
+  };
+  
   const addToast = (toast) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, ...toast }]);
@@ -102,6 +127,10 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           if (data.profilePictureUrl) {
             setUserPic(data.profilePictureUrl);
             localStorage.setItem('profilePic', data.profilePictureUrl);
+          }
+          
+          if (data.id) {
+            fetchAnalytics(data.id, data.department);
           }
           
           const tasks = [];
@@ -405,19 +434,19 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             <div className="stats-grid">
               <div className="stat-card">
                 <p className="stat-title">Active Tasks</p>
-                <h3 className="stat-value"><AnimatedCounter end="124" duration={2000} /></h3>
+                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? (userAnalytics.totalTasksAssigned - userAnalytics.tasksCompleted).toString() : "0"} duration={2000} /></h3>
                 <p className="stat-trend positive">↗ 12% <span className="trend-text">vs last month</span></p>
               </div>
               <div className="stat-card">
                 <p className="stat-title">Completed Projects</p>
-                <h3 className="stat-value"><AnimatedCounter end="45" duration={2000} /></h3>
+                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.completedProjects.toString() : "0"} duration={2000} /></h3>
                 <p className="stat-trend positive">↗ 5% <span className="trend-text">vs last quarter</span></p>
               </div>
               <div className="stat-card">
                 <p className="stat-title">Efficiency Score</p>
                 <div className="gauge-container">
                   <div className="gauge-text">
-                     <h3 className="stat-value"><AnimatedCounter end="92" duration={2500} suffix="%" /></h3>
+                     <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.completionRate.toString() : "0"} duration={2500} suffix="%" /></h3>
                      <p className="stat-subtitle">Goal: 100%</p>
                   </div>
                   <div className="gauge-visual">
@@ -427,7 +456,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
               </div>
               <div className="stat-card">
                 <p className="stat-title">Reward Points</p>
-                <h3 className="stat-value"><AnimatedCounter end="1,250" duration={2000} /></h3>
+                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.totalPoints.toLocaleString() : "0"} duration={2000} /></h3>
                 <p className="stat-trend positive">↗ 150 <span className="trend-text">vs last month</span></p>
               </div>
             </div>
@@ -444,8 +473,8 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                 <div className="doughnut-chart-wrapper">
                   <div className="doughnut-chart-circle">
                      <div className="doughnut-inner">
-                        <span className="chart-number">124</span>
-                        <span className="chart-label">Active Tasks</span>
+                        <span className="chart-number">{orgAnalytics ? orgAnalytics.totalProjects : "0"}</span>
+                        <span className="chart-label">Total Projects</span>
                      </div>
                   </div>
                 </div>
@@ -458,26 +487,17 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                      </div>
                   </div>
                   <div className="legend-grid">
-                    <div className="legend-item">
-                      <span className="dot dot-white"></span>
-                      <span className="legend-name">Development</span>
-                      <span className="legend-val">45%</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="dot dot-green"></span>
-                      <span className="legend-name">Marketing</span>
-                      <span className="legend-val">30%</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="dot dot-light-green"></span>
-                      <span className="legend-name">Design</span>
-                      <span className="legend-val">15%</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="dot dot-dark-green"></span>
-                      <span className="legend-name">Operations</span>
-                      <span className="legend-val">10%</span>
-                    </div>
+                    {orgAnalytics && orgAnalytics.departmentDistribution ? orgAnalytics.departmentDistribution.map((d, i) => (
+                      <div className="legend-item" key={i}>
+                        <span className={`dot dot-${['white', 'green', 'light-green', 'dark-green'][i % 4]}`}></span>
+                        <span className="legend-name">{d.departmentName}</span>
+                        <span className="legend-val">{Math.round((d.userCount / orgAnalytics.totalUsers) * 100)}%</span>
+                      </div>
+                    )) : (
+                      <div className="legend-item">
+                        <span className="legend-name">Loading...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -490,7 +510,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                  </div>
                  <p className="small-card-title">Recent Appreciations:</p>
                  <div className="small-card-val-row">
-                    <span className="sc-val">15</span>
+                    <span className="sc-val">{userAnalytics ? userAnalytics.rewardsClaimed : "0"}</span>
                     <span className="sc-trend positive">+3%</span>
                  </div>
                  <p className="sc-subtitle">Last Week</p>
@@ -502,7 +522,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                  </div>
                  <p className="small-card-title">Social Score:</p>
                  <div className="small-card-val-row">
-                    <span className="sc-val">850</span>
+                    <span className="sc-val">{userAnalytics ? userAnalytics.totalPoints : "0"}</span>
                     <span className="sc-trend positive">+42</span>
                  </div>
                  <p className="sc-subtitle">Total Points</p>
@@ -510,7 +530,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                
                <div className="total-profit-chart-card todays-progress-card">
                   <div className="todays-progress-content">
-                    <p className="tp-title">Today's Tasks</p>
+                    <p className="tp-title">Your Tasks</p>
                     
                     <div className="progress-dots-container">
                       <span className="dot empty"></span>
@@ -523,11 +543,11 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                       <span className="dot filled"></span>
                     </div>
                     
-                    <h3 className="tp-val">68%</h3>
+                    <h3 className="tp-val">{userAnalytics ? userAnalytics.completionRate : "0"}%</h3>
                     
                     <div className="progress-details">
-                      <p className="pd-row"><span>17</span> Completed</p>
-                      <p className="pd-row"><span>8</span> Remaining</p>
+                      <p className="pd-row"><span>{userAnalytics ? userAnalytics.tasksCompleted : "0"}</span> Completed</p>
+                      <p className="pd-row"><span>{userAnalytics ? (userAnalytics.totalTasksAssigned - userAnalytics.tasksCompleted) : "0"}</span> Remaining</p>
                     </div>
                   </div>
                   
@@ -536,7 +556,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                        <path d="M0,30 L0,25 L10,20 L20,28 L30,15 L40,18 L50,10 L60,15 L70,12 L80,20 L90,15 L100,9.6 L100,30 Z" fill="rgba(190, 242, 100, 0.2)"></path>
                        <path d="M0,25 L10,20 L20,28 L30,15 L40,18 L50,10 L60,15 L70,12 L80,20 L90,15 L100,9.6" fill="none" stroke="#BEF264" strokeWidth="1.5"></path>
                        <circle cx="100" cy="9.6" r="2" fill="#202226" stroke="#BEF264" strokeWidth="1.5" />
-                       <text x="96" y="8" fill="#BEF264" fontSize="5" fontWeight="600" textAnchor="end">68%</text>
+                       <text x="96" y="8" fill="#BEF264" fontSize="5" fontWeight="600" textAnchor="end">{userAnalytics ? userAnalytics.completionRate : "0"}%</text>
                      </svg>
                   </div>
                </div>
@@ -559,45 +579,23 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>
-                      <div className="user-cell">
-                        <img src="https://ui-avatars.com/api/?name=Danny+Liu&background=random" alt="Danny" />
-                        <div className="user-info">
-                          <p className="name">Danny Liu</p>
-                          <p className="email">Development</p>
+                  {deptAnalytics && deptAnalytics.topPerformers ? deptAnalytics.topPerformers.map((performer, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="user-cell">
+                          <img src={performer.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.fullName)}&background=random`} alt={performer.fullName} />
+                          <div className="user-info">
+                            <p className="name">{performer.fullName}</p>
+                            <p className="email">{deptAnalytics.departmentName}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>142</td>
-                    <td>12,431</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="user-cell">
-                        <img src="https://ui-avatars.com/api/?name=Bella+Deviant&background=random" alt="Bella" />
-                        <div className="user-info">
-                          <p className="name">Bella Deviant</p>
-                          <p className="email">Marketing</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>96</td>
-                    <td>10,423</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="user-cell">
-                        <img src="https://ui-avatars.com/api/?name=Darrell+Steward&background=random" alt="Darrell" />
-                        <div className="user-info">
-                          <p className="name">Darrell Steward</p>
-                          <p className="email">Design</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>84</td>
-                    <td>8,549</td>
-                  </tr>
+                      </td>
+                      <td>-</td>
+                      <td>{performer.points.toLocaleString()}</td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="3">Loading...</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -608,7 +606,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                  <span className="more-options">⋮</span>
                </div>
                <div className="premium-price">
-                 <h2>1,250</h2>
+                 <h2>{userAnalytics ? userAnalytics.totalPoints.toLocaleString() : "0"}</h2>
                  <div className="price-details">
                    <p>Points</p>
                    <p>Available</p>
