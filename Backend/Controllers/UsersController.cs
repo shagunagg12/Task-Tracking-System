@@ -36,6 +36,7 @@ namespace Backend.Controllers
                     id = u.Id,
                     name = u.FullName,
                     email = u.Email,
+                    profilePic = !string.IsNullOrEmpty(u.ProfilePictureUrl) ? u.ProfilePictureUrl : _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault(),
                     unreadCount = _context.Messages.Count(m => m.SenderId == u.Id && m.ReceiverId == currentUserId && !m.IsRead),
                     lastMessage = _context.Messages
                         .Where(m => (m.SenderId == u.Id && m.ReceiverId == currentUserId) || (m.SenderId == currentUserId && m.ReceiverId == u.Id))
@@ -50,7 +51,7 @@ namespace Backend.Controllers
                 id = u.id,
                 name = string.IsNullOrEmpty(u.name) ? u.email : u.name,
                 email = u.email,
-                avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(u.name) ? u.email : u.name)}&background=random",
+                avatar = !string.IsNullOrEmpty(u.profilePic) ? u.profilePic : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(u.name) ? u.email : u.name)}&background=random",
                 unreadCount = u.unreadCount,
                 lastMessageTime = u.lastMessage?.Timestamp,
                 lastMessageContent = !string.IsNullOrEmpty(u.lastMessage?.Content) ? u.lastMessage.Content : (u.lastMessage?.FileType != null ? "Media message" : "")

@@ -25,6 +25,9 @@ namespace Backend.Models
         [Column("Points")]
         public int Points { get; set; } = 1250;
 
+        [Column("IsActive")]
+        public bool IsActive { get; set; } = true;
+
         // Navigation property
         public UserProfile? Profile { get; set; }
         public ICollection<Project> Projects { get; set; } = new List<Project>();

@@ -17,6 +17,7 @@ import SuperAdminReports from './SuperAdminReports';
 import SuperAdminSettings from './SuperAdminSettings';
 import SuperAdminNotifications from './SuperAdminNotifications';
 import SuperAdminDepartments from './SuperAdminDepartments';
+import SuperAdminAnalytics from './SuperAdminAnalytics';
 
 // ─── Toast Notification Component ────────────────────────────────────────────
 const ToastNotification = ({ toast, onDismiss }) => {
@@ -98,6 +99,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [adminProfile, setAdminProfile] = useState(null);
   const notifRef = useRef(null);
   const toastIdRef = useRef(0);
   const addToastRef = useRef(null);
@@ -131,7 +133,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
         if (res.ok) {
           const data = await res.json();
           setNotifications(data);
-          setUnreadCount(data.length);
+          setUnreadCount(data.filter(n => !n.isRead).length);
           // Record the max ID already known — SignalR events with this ID or below are NOT new
           if (data.length > 0) {
             highestLoadedId = Math.max(...data.map(n => n.id || 0));
@@ -142,6 +144,22 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
       }
     };
     fetchNotifications();
+
+    const fetchAdminProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${backendUrl}/api/AdminSettings/my-profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAdminProfile(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin profile", err);
+      }
+    };
+    fetchAdminProfile();
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${backendUrl}/adminDashboardHub`)
@@ -179,9 +197,21 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
 
   const toggleTheme = () => setIsDarkTheme(!isDarkTheme);
 
-  const handleOpenNotifications = () => {
+  const handleOpenNotifications = async () => {
     setShowNotifications(!showNotifications);
-    setUnreadCount(0); // mark as read
+    if (!showNotifications && unreadCount > 0) {
+      setUnreadCount(0); // mark as read locally
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`${backendUrl}/api/AdminDashboard/notifications/read-all`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error("Failed to mark notifications as read", err);
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -195,18 +225,10 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     { id: 'Dashboard', icon: <LayoutDashboard size={20} />, text: 'Dashboard' },
     { id: 'User Management', icon: <Users size={20} />, text: 'User Management' },
     { id: 'Departments', icon: <Building2 size={20} />, text: 'Departments' },
-    { id: 'Roles & Permissions', icon: <Shield size={20} />, text: 'Roles & Permissions' },
-    { id: 'Task Management', icon: <CheckSquare size={20} />, text: 'Task Management' },
     { id: 'Projects', icon: <Briefcase size={20} />, text: 'Projects' },
-    { id: 'Attendance', icon: <Clock size={20} />, text: 'Attendance' },
-    { id: 'Leave Management', icon: <Calendar size={20} />, text: 'Leave Management' },
-    { id: 'Payroll', icon: <DollarSign size={20} />, text: 'Payroll' },
-    { id: 'Performance Reviews', icon: <Star size={20} />, text: 'Performance Reviews' },
     { id: 'Reports', icon: <FileText size={20} />, text: 'Reports' },
     { id: 'Analytics', icon: <LineChart size={20} />, text: 'Analytics' },
     { id: 'Notifications', icon: <Bell size={20} />, text: 'Notifications' },
-    { id: 'Audit Logs', icon: <FileText size={20} />, text: 'Audit Logs' },
-    { id: 'Activity Logs', icon: <Activity size={20} />, text: 'Activity Logs' },
     { id: 'Settings', icon: <Settings size={20} />, text: 'Settings' },
   ];
 
@@ -330,10 +352,14 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
             </div>
             
             <div className="sa-profile-dropdown" onClick={handleLogout}>
-              <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="Profile" className="sa-avatar" />
+              <img 
+                src={adminProfile?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(adminProfile?.fullName || 'Admin')}&background=random`} 
+                alt="Profile" 
+                className="sa-avatar" 
+              />
               <div className="sa-profile-info">
-                <span className="sa-profile-name">Super Admin</span>
-                <span className="sa-profile-role">System Admin</span>
+                <span className="sa-profile-name">{adminProfile?.fullName || 'Super Admin'}</span>
+                <span className="sa-profile-role">{adminProfile?.designation || 'System Admin'}</span>
               </div>
               <ChevronDown size={16} className="sa-profile-chevron" />
             </div>
@@ -359,6 +385,8 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
                unreadCount={unreadCount} 
                setUnreadCount={setUnreadCount} 
              />
+           ) : activeMenu === 'Analytics' ? (
+             <SuperAdminAnalytics />
            ) : activeMenu === 'Settings' ? (
              <SuperAdminSettings />
            ) : (

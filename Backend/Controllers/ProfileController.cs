@@ -88,6 +88,51 @@ namespace Backend.Controllers
             });
         }
 
+        [HttpGet("department-members")]
+        public async Task<IActionResult> GetDepartmentMembers()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            string userDepartment = "";
+
+            if (User.IsInRole("Admin"))
+            {
+                var admin = await _context.Admins.FindAsync(userId);
+                if (admin == null) return NotFound();
+                userDepartment = admin.Department;
+            }
+            else
+            {
+                var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
+                if (user == null) return NotFound();
+                userDepartment = user.Profile?.Department ?? "";
+            }
+
+            if (string.IsNullOrEmpty(userDepartment))
+            {
+                return Ok(new List<object>());
+            }
+
+            var members = await _context.Users
+                .Include(u => u.Profile)
+                .Where(u => u.Profile != null && u.Profile.Department == userDepartment && u.Id != userId)
+                .Select(u => new
+                {
+                    u.Id,
+                    Name = u.FullName,
+                    Email = u.Email,
+                    Designation = u.Profile != null ? u.Profile.Designation : "",
+                    Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) ? u.ProfilePictureUrl : (!string.IsNullOrEmpty(_context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault()) ? _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault() : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random")
+                })
+                .ToListAsync();
+
+            return Ok(members);
+        }
+
         [HttpPut]
         public async Task<IActionResult> UpdateProfile(UpdateProfileDto dto)
         {
@@ -109,6 +154,18 @@ namespace Backend.Controllers
                 admin.Location = dto.Location;
                 admin.Bio = dto.Bio;
                 
+                var adminUser = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Email == admin.Email);
+                if (adminUser != null)
+                {
+                    adminUser.FullName = dto.FullName;
+                    adminUser.Email = dto.Email;
+                    if (adminUser.Profile == null) adminUser.Profile = new UserProfile();
+                    adminUser.Profile.Designation = dto.Designation;
+                    adminUser.Profile.Department = dto.Department;
+                    adminUser.Profile.Location = dto.Location;
+                    adminUser.Profile.Bio = dto.Bio;
+                }
+
                 await _context.SaveChangesAsync();
                 return Ok(new { message = "Admin profile updated successfully!" });
             }

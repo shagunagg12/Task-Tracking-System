@@ -307,7 +307,7 @@ const SuperAdminReports = () => {
   };
 
   const exportAllToCSV = () => {
-    const headers = ['ID', 'Name', 'Email', 'Department', 'Total Projects', 'Total Tasks', 'Completed', 'In Progress', 'Efficiency (%)'];
+    const headers = ['User ID', 'Name', 'Email', 'Department', 'Total Projects', 'Total Tasks', 'Completed', 'In Progress', 'Efficiency (%)'];
     const csvContent = [
       headers.join(','),
       ...filteredUsers.map(u => {

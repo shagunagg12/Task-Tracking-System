@@ -63,6 +63,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [showPendingTasks, setShowPendingTasks] = useState(false);
   const [pendingTasks, setPendingTasks] = useState([]);
   const [userProfileData, setUserProfileData] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
   
   // Toasts and Modals
   const [toasts, setToasts] = useState([]);
@@ -126,6 +127,19 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             if (notifRes.ok) {
               const notifData = await notifRes.json();
               setNotifications(notifData);
+            }
+          } catch(err) {
+            console.error(err);
+          }
+          
+          // Fetch team members
+          try {
+            const membersRes = await fetch(`http://localhost:5024/api/profile/department-members`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (membersRes.ok) {
+              const membersData = await membersRes.json();
+              setTeamMembers(membersData);
             }
           } catch(err) {
             console.error(err);
@@ -684,34 +698,26 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
         <div className="right-section">
           <h3 className="right-title">Team Members</h3>
           <ul className="list-items contacts-list">
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Daniel+Craig&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Daniel Craig</p>
-              <span className="more-options">⋯</span>
-            </li>
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Kate+Morrison&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Kate Morrison</p>
-              <span className="more-options">⋯</span>
-            </li>
-            <li className="list-item contact-item active-contact">
-              <img src="https://ui-avatars.com/api/?name=Nataniel+Donowan&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Nataniel Donowan</p>
-              <div className="contact-actions">
-                 <span className="c-action">✉</span>
-                 <span className="c-action">📞</span>
-              </div>
-            </li>
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Elisabeth+Wayne&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Elisabeth Wayne</p>
-              <span className="more-options">⋯</span>
-            </li>
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Felicia+Raspet&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Felicia Raspet</p>
-              <span className="more-options">⋯</span>
-            </li>
+            {teamMembers.length > 0 ? (
+              teamMembers.map(member => (
+                <li key={member.id} className="list-item contact-item">
+                  <img src={member.avatar} alt="user" className="tiny-avatar" />
+                  <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <p className="item-title" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{member.name}</p>
+                    {member.designation && <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginTop: '2px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{member.designation}</p>}
+                  </div>
+                  <div className="contact-actions" style={{ display: 'flex', gap: '8px' }}>
+                     <a href={`mailto:${member.email}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                       <span className="c-action" style={{ cursor: 'pointer' }} title="Email">✉</span>
+                     </a>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="list-item contact-item" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
+                No other team members found.
+              </li>
+            )}
           </ul>
         </div>
 

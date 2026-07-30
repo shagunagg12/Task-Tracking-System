@@ -81,7 +81,15 @@ namespace Backend.Controllers
             else if (request.Status == "Pending") task.StatusClass = "status-pending";
             else if (request.Status == "Blocked") task.StatusClass = "status-blocked";
             else task.StatusClass = ""; // fallback
-            
+            if (request.Status == "Completed" || request.Status == "Done") 
+            {
+                task.CompletedAt = DateTime.UtcNow;
+            }
+            else 
+            {
+                task.CompletedAt = null;
+            }
+
             await _context.SaveChangesAsync();
             
             // Emit real-time notification to Super Admin Dashboard
