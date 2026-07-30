@@ -20,20 +20,49 @@ namespace Backend.Controllers
         }
 
         [HttpGet("social")]
-        public async Task<IActionResult> GetSocialStandings()
+        public async Task<IActionResult> GetSocialStandings([FromQuery] string timeframe = "all")
         {
-            var standings = await _context.Profiles
+            var users = await _context.Profiles
                 .Include(p => p.User)
-                .OrderByDescending(p => p.SocialPoints)
-                .Select(p => new
+                .ToListAsync();
+
+            var currentMonth = DateTime.UtcNow.Month;
+            var currentYear = DateTime.UtcNow.Year;
+
+            var allAttendances = await _context.EventAttendances
+                .Include(a => a.Event)
+                .Where(a => a.Status == "Going" || a.IsAttended)
+                .ToListAsync();
+            
+            var allEvents = await _context.CompanyEvents.ToListAsync();
+
+            var standings = users.Select(p => {
+                int score = p.SocialPoints; 
+
+                if (timeframe.ToLower() == "this month")
+                {
+                    int attendedPoints = allAttendances
+                        .Where(a => a.UserId == p.UserId && a.Event.EventDate.Month == currentMonth && a.Event.EventDate.Year == currentYear)
+                        .Sum(a => a.Event.Points);
+
+                    int organizedPoints = allEvents
+                        .Where(e => e.OrganizerId == p.UserId && e.EventDate.Month == currentMonth && e.EventDate.Year == currentYear)
+                        .Count() * 50;
+
+                    score = attendedPoints + organizedPoints;
+                }
+
+                return new
                 {
                     UserId = p.UserId,
                     Name = string.IsNullOrEmpty(p.User.FullName) ? p.User.Email : p.User.FullName,
                     Avatar = string.IsNullOrEmpty(p.User.ProfilePictureUrl) ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(p.User.FullName) ? p.User.Email : p.User.FullName)}&background=random" : p.User.ProfilePictureUrl,
                     Department = p.Department,
-                    Score = p.SocialPoints
-                })
-                .ToListAsync();
+                    Score = score
+                };
+            })
+            .OrderByDescending(p => p.Score)
+            .ToList();
 
             return Ok(standings);
         }
@@ -116,7 +145,10 @@ namespace Backend.Controllers
 
             var myAttendances = await _context.EventAttendances
                 .Include(a => a.Event)
-                .ThenInclude(e => e.Organizer)
+                    .ThenInclude(e => e.Organizer)
+                .Include(a => a.Event)
+                    .ThenInclude(e => e.Attendees)
+                        .ThenInclude(att => att.User)
                 .Where(a => a.UserId == currentUserId)
                 .ToListAsync();
 
@@ -149,16 +181,51 @@ namespace Backend.Controllers
                     a.Event.Location,
                     a.Event.Points,
                     Organizer = string.IsNullOrEmpty(a.Event.Organizer.FullName) ? a.Event.Organizer.Email : a.Event.Organizer.FullName,
-                    Status = a.Status
+                    Status = a.Status,
+                    TotalAttendees = a.Event.Attendees.Count(att => att.Status == "Going"),
+                    AttendeesList = a.Event.Attendees
+                        .Where(att => att.Status == "Going")
+                        .Take(5)
+                        .Select(att => new {
+                            att.UserId,
+                            Name = string.IsNullOrEmpty(att.User.FullName) ? att.User.Email : att.User.FullName,
+                            Avatar = string.IsNullOrEmpty(att.User.ProfilePictureUrl) ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(att.User.FullName) ? att.User.Email : att.User.FullName)}&background=random" : att.User.ProfilePictureUrl
+                        })
+                        .ToList()
                 })
                 .OrderBy(e => e.EventDate)
                 .ToList();
 
+            int eventsOrganized = await _context.CompanyEvents.CountAsync(e => e.OrganizerId == currentUserId);
+            int attendanceRate = myAttendances.Count > 0 ? (int)Math.Round((double)attendedEvents.Count / myAttendances.Count * 100) : 0;
+
+            var currentMonth = DateTime.UtcNow.Month;
+            var currentYear = DateTime.UtcNow.Year;
+
+            int pointsThisMonth = myAttendances
+                .Where(a => (a.Status == "Going" || a.IsAttended) && a.Event.EventDate.Month == currentMonth && a.Event.EventDate.Year == currentYear)
+                .Sum(a => a.Event.Points);
+                
+            int organizedPointsThisMonth = await _context.CompanyEvents
+                .Where(e => e.OrganizerId == currentUserId && e.EventDate.Month == currentMonth && e.EventDate.Year == currentYear)
+                .CountAsync() * 50;
+                
+            pointsThisMonth += organizedPointsThisMonth;
+            
+            int badgesEarned = (attendedEvents.Count / 3) + (eventsOrganized / 2);
+            if (badgesEarned == 0 && (attendedEvents.Count > 0 || eventsOrganized > 0)) badgesEarned = 1;
+
             return Ok(new
             {
+                UserId = currentUserId,
                 Score = myProfile.SocialPoints,
                 Rank = rank,
                 TotalUsers = allProfiles.Count,
+                Level = (myProfile.SocialPoints / 100) + 1,
+                PointsThisMonth = pointsThisMonth,
+                EventsOrganized = eventsOrganized,
+                BadgesEarned = badgesEarned,
+                AttendanceRate = attendanceRate,
                 AttendedEvents = attendedEvents,
                 PendingInvitations = pendingInvitations
             });

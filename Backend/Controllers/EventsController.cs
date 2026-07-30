@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Backend.Controllers
 {
@@ -39,6 +41,7 @@ namespace Backend.Controllers
             var events = await _context.CompanyEvents
                 .Include(e => e.Organizer)
                 .Include(e => e.Attendees)
+                    .ThenInclude(a => a.User)
                 .OrderBy(e => e.EventDate)
                 .Select(e => new
                 {
@@ -50,7 +53,17 @@ namespace Backend.Controllers
                     e.Location,
                     e.Points,
                     Organizer = string.IsNullOrEmpty(e.Organizer.FullName) ? e.Organizer.Email : e.Organizer.FullName,
-                    TotalAttendees = e.Attendees.Count(a => a.Status == "Going"),
+                    OrganizerAvatar = string.IsNullOrEmpty(e.Organizer.ProfilePictureUrl) ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(e.Organizer.FullName) ? e.Organizer.Email : e.Organizer.FullName)}&background=random" : e.Organizer.ProfilePictureUrl,
+                    IsOrganizer = e.OrganizerId == currentUserId,
+                    TotalAttendees = e.Attendees.Count(a => a.Status == "Going" && a.UserId != e.OrganizerId),
+                    AttendeesList = e.Attendees
+                        .Where(a => a.Status == "Going" && a.UserId != e.OrganizerId)
+                        .Select(a => new {
+                            a.UserId,
+                            Name = string.IsNullOrEmpty(a.User.FullName) ? a.User.Email : a.User.FullName,
+                            Avatar = string.IsNullOrEmpty(a.User.ProfilePictureUrl) ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(string.IsNullOrEmpty(a.User.FullName) ? a.User.Email : a.User.FullName)}&background=random" : a.User.ProfilePictureUrl
+                        })
+                        .ToList(),
                     UserRsvpStatus = e.Attendees.FirstOrDefault(a => a.UserId == currentUserId) != null ? e.Attendees.FirstOrDefault(a => a.UserId == currentUserId)!.Status : null
                 })
                 .ToListAsync();
@@ -109,6 +122,19 @@ namespace Backend.Controllers
                     var invitedUser = await _context.Users.FindAsync(invitedUserId);
                     if (invitedUser != null && !string.IsNullOrEmpty(invitedUser.Email))
                     {
+                        // Generate RSVP Links
+                        string secret = "MySuperSecretKeyForRsvp_12345";
+                        
+                        string acceptPayload = $"{newEvent.Id}:{invitedUserId}:Going";
+                        using var acceptHmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+                        string acceptHash = Convert.ToBase64String(acceptHmac.ComputeHash(Encoding.UTF8.GetBytes(acceptPayload)));
+                        string acceptLink = $"http://localhost:5024/api/events/{newEvent.Id}/rsvp-email?userId={invitedUserId}&status=Going&signature={Uri.EscapeDataString(acceptHash)}";
+
+                        string declinePayload = $"{newEvent.Id}:{invitedUserId}:Declined";
+                        using var declineHmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+                        string declineHash = Convert.ToBase64String(declineHmac.ComputeHash(Encoding.UTF8.GetBytes(declinePayload)));
+                        string declineLink = $"http://localhost:5024/api/events/{newEvent.Id}/rsvp-email?userId={invitedUserId}&status=Declined&signature={Uri.EscapeDataString(declineHash)}";
+
                         // Send email
                         await _emailService.SendEventInviteAsync(
                             invitedUser.Email, 
@@ -116,7 +142,9 @@ namespace Backend.Controllers
                             newEvent.EventDate, 
                             newEvent.Location, 
                             newEvent.Description, 
-                            organizerName);
+                            organizerName,
+                            acceptLink,
+                            declineLink);
 
                         // Send chat message
                         var message = new Message
@@ -193,6 +221,46 @@ namespace Backend.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "RSVP updated successfully", newScore = profile.SocialPoints });
+        }
+
+        [AllowAnonymous]
+        [HttpGet("{id}/rsvp-email")]
+        public async Task<IActionResult> RsvpViaEmail(int id, [FromQuery] int userId, [FromQuery] string status, [FromQuery] string signature)
+        {
+            string secret = "MySuperSecretKeyForRsvp_12345";
+            string payload = $"{id}:{userId}:{status}";
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+            var expectedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload)));
+            
+            if (signature != expectedHash)
+            {
+                return BadRequest("Invalid or expired RSVP link.");
+            }
+            
+            var attendance = await _context.EventAttendances.FirstOrDefaultAsync(a => a.EventId == id && a.UserId == userId);
+            if (attendance != null)
+            {
+                attendance.Status = status;
+
+                // Award points if RSVPing "Going" for the first time
+                if (status == "Going" && !attendance.IsAttended)
+                {
+                    var profile = await _context.Profiles.FirstOrDefaultAsync(p => p.UserId == userId);
+                    if (profile != null)
+                    {
+                        var companyEvent = await _context.CompanyEvents.FindAsync(id);
+                        if (companyEvent != null)
+                        {
+                            profile.SocialPoints += companyEvent.Points;
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            
+            // Redirect to frontend dashboard
+            return Redirect("http://localhost:5173/dashboard");
         }
     }
 

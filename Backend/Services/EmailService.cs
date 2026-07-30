@@ -11,7 +11,7 @@ namespace Backend.Services
     {
         Task SendEmailAsync(string toEmail, string subject, string message);
         Task SendMeetingInviteAsync(List<string> toEmails, string title, DateTime start, DateTime end, string meetLink, string brief);
-        Task SendEventInviteAsync(string toEmail, string title, DateTime eventDate, string location, string description, string organizerName);
+        Task SendEventInviteAsync(string toEmail, string title, DateTime eventDate, string location, string description, string organizerName, string acceptLink, string declineLink);
     }
 
     public class SmtpEmailService : IEmailService
@@ -90,7 +90,7 @@ namespace Backend.Services
             }
         }
 
-        public async Task SendEventInviteAsync(string toEmail, string title, DateTime eventDate, string location, string description, string organizerName)
+        public async Task SendEventInviteAsync(string toEmail, string title, DateTime eventDate, string location, string description, string organizerName, string acceptLink, string declineLink)
         {
             string subject = $"Event Invitation: {title}";
             
@@ -108,8 +108,12 @@ namespace Backend.Services
             <p style='margin: 0;'><strong>Details:</strong> {description}</p>
         </div>
 
-        <div style='text-align: center; margin-top: 30px;'>
-            <a href='http://localhost:5173/dashboard' style='background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;'>View Invitation</a>
+        <div style='text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 15px;'>
+            <a href='{acceptLink}' style='background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;'>RSVP Going</a>
+            <a href='{declineLink}' style='background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;'>Decline</a>
+        </div>
+        <div style='text-align: center; margin-top: 20px;'>
+            <a href='http://localhost:5173/dashboard' style='color: #6366f1; text-decoration: none; font-size: 14px;'>View in Dashboard</a>
         </div>
     </div>
 </div>

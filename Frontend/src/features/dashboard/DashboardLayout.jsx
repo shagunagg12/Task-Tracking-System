@@ -160,6 +160,7 @@ const DashboardLayout = () => {
     { id: 'Projects', icon: '💼', text: 'Projects' },
     { id: 'Standings', icon: '🏆', text: 'Standings' },
     { id: 'Calendar', icon: '📅', text: 'Calendar' },
+    { id: 'Chats', icon: '💬', text: 'Chats' },
     { id: 'Achievements', icon: '🌟', text: 'Achievements' },
     { id: 'Rewards', icon: '🎁', text: 'Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
