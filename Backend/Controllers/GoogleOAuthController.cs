@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using System.Security.Claims;
 using System;
@@ -9,6 +10,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Auth.OAuth2.Responses;
+using System.Linq;
 
 namespace Backend.Controllers
 {
@@ -61,14 +63,10 @@ namespace Backend.Controllers
         [HttpGet("status")]
         public async Task<IActionResult> GetStatus()
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            {
-                return Unauthorized();
-            }
-
-            var user = await _context.Users.FindAsync(userId);
-            bool isConnected = user != null && !string.IsNullOrEmpty(user.GoogleRefreshToken);
+            // Find ANY user in the database who has connected a Google account
+            // Their token will be used as the global master token for everyone.
+            var masterUser = await _context.Users.FirstOrDefaultAsync(u => !string.IsNullOrEmpty(u.GoogleRefreshToken));
+            bool isConnected = masterUser != null;
             return Ok(new { isConnected });
         }
 

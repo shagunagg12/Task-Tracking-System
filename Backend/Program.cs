@@ -93,6 +93,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
+app.MapHub<AdminDashboardHub>("/adminDashboardHub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -122,6 +123,40 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (!context.Admins.Any(a => a.Email == "connect2rachit882@gmail.com"))
+    {
+        var admin = new Backend.Models.Admin
+        {
+            Email = "connect2rachit882@gmail.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rachit@12")
+        };
+        context.Admins.Add(admin);
+        context.SaveChanges();
+    }
+
+    if (!context.Users.Any(u => u.Email == "alice.engineer@example.com"))
+    {
+        var dummyUser = new Backend.Models.User
+        {
+            FullName = "Alice Engineer",
+            Email = "alice.engineer@example.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            Profile = new Backend.Models.UserProfile
+            {
+                Department = "Engineering",
+                Designation = "Senior Developer",
+                Location = "Remote",
+                Bio = "I write code."
+            }
+        };
+        context.Users.Add(dummyUser);
+        context.SaveChanges();
+    }
+}
 
 app.Run();
 

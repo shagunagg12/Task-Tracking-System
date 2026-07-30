@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Backend.Data;
 using Backend.Models;
 using Backend.Services;
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using System;
 using System.Linq;
@@ -23,11 +25,13 @@ namespace Backend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly IHubContext<AdminDashboardHub> _hubContext;
 
-        public MeetingsController(ApplicationDbContext context, IEmailService emailService)
+        public MeetingsController(ApplicationDbContext context, IEmailService emailService, IHubContext<AdminDashboardHub> hubContext)
         {
             _context = context;
             _emailService = emailService;
+            _hubContext = hubContext;
         }
 
         [HttpPost]
@@ -48,10 +52,14 @@ namespace Backend.Controllers
                 // We require a strictly real Google Meet link
                 string meetLink = "";
 
-                var user = await _context.Users.FindAsync(organizerId);
-                if (user == null || string.IsNullOrEmpty(user.GoogleAccessToken))
+                // Fetch ANY user's token directly from the shared Azure SQL Database
+                // This allows whoever connects their calendar to act as the master account automatically.
+                var masterUser = await _context.Users.FirstOrDefaultAsync(u => !string.IsNullOrEmpty(u.GoogleRefreshToken));
+                var globalRefreshToken = masterUser?.GoogleRefreshToken;
+
+                if (string.IsNullOrEmpty(globalRefreshToken))
                 {
-                    return BadRequest(new { message = "You must connect your Google Calendar account to schedule meetings." });
+                    return StatusCode(500, new { message = "No Master Account is connected to Google Calendar in the database. Please connect a Google Calendar." });
                 }
 
                 var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
@@ -65,11 +73,13 @@ namespace Backend.Controllers
 
                 var tokenResponse = new Google.Apis.Auth.OAuth2.Responses.TokenResponse
                 {
-                    AccessToken = user.GoogleAccessToken,
-                    RefreshToken = user.GoogleRefreshToken
+                    AccessToken = masterUser.GoogleAccessToken,
+                    RefreshToken = globalRefreshToken
                 };
 
-                var credential = new UserCredential(flow, user.Id.ToString(), tokenResponse);
+                // Use a fixed generic user ID (like "global-admin") since it's a single account for everyone
+                var credential = new UserCredential(flow, "global-admin", tokenResponse);
+
                 
                 var service = new CalendarService(new Google.Apis.Services.BaseClientService.Initializer
                 {
@@ -111,6 +121,13 @@ namespace Backend.Controllers
                     return StatusCode(500, new { message = "Failed to generate Google Meet link. Please try again or re-connect your Google account." });
                 }
 
+                int? validOrganizerId = organizerId;
+                bool isAdmin = User.Claims.Any(c => (c.Type == ClaimTypes.Role || c.Type == "role") && (c.Value == "Admin" || c.Value == "SuperAdmin"));
+                if (isAdmin)
+                {
+                    validOrganizerId = null;
+                }
+
                 var meeting = new Meeting
                 {
                     Title = request.Title,
@@ -118,7 +135,7 @@ namespace Backend.Controllers
                     StartTime = start,
                     EndTime = end,
                     MeetLink = meetLink,
-                    OrganizerId = organizerId
+                    OrganizerId = validOrganizerId
                 };
 
                 _context.Meetings.Add(meeting);
@@ -145,10 +162,38 @@ namespace Backend.Controllers
                     await _emailService.SendMeetingInviteAsync(emails, request.Title, start, end, meetLink, request.Brief);
                 }
 
+                // Emit real-time notification to Super Admin Dashboard
+                var userName = User.FindFirstValue(ClaimTypes.Name) ?? "A user";
+                var notification = new AppNotification
+                {
+                    Title = "Meeting Scheduled",
+                    Message = $"{userName} scheduled a new meeting: '{meeting.Title}'",
+                    Type = "meeting_scheduled",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    MeetingId = meeting.Id // Here is the new Foreign Key link!
+                };
+
+                _context.AppNotifications.Add(notification);
+                await _context.SaveChangesAsync();
+                
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+
                 return Ok(new { message = "Meeting scheduled successfully", meetLink = meetLink });
             }
             catch (Exception ex)
             {
+                if (ex.Message.Contains("invalid_grant"))
+                {
+                    var masterUser = await _context.Users.FirstOrDefaultAsync(u => !string.IsNullOrEmpty(u.GoogleRefreshToken));
+                    if (masterUser != null)
+                    {
+                        masterUser.GoogleRefreshToken = null;
+                        masterUser.GoogleAccessToken = null;
+                        await _context.SaveChangesAsync();
+                    }
+                    return StatusCode(500, new { message = "The Master Google Account token has expired or was revoked.", error = "Token has been reset. Please refresh the page and click 'Connect Google Calendar' to re-authenticate." });
+                }
                 return StatusCode(500, new { message = "An error occurred while creating the meeting.", error = ex.Message });
             }
         }
@@ -164,8 +209,16 @@ namespace Backend.Controllers
                     return Unauthorized("Invalid user token.");
                 }
 
-                var meetings = await _context.Meetings
-                    .Where(m => m.OrganizerId == userId || _context.MeetingParticipants.Any(mp => mp.MeetingId == m.Id && mp.UserId == userId))
+                bool isAdmin = User.Claims.Any(c => (c.Type == ClaimTypes.Role || c.Type == "role") && (c.Value == "Admin" || c.Value == "SuperAdmin"));
+
+                var query = _context.Meetings.AsQueryable();
+
+                if (!isAdmin)
+                {
+                    query = query.Where(m => m.OrganizerId == userId || _context.MeetingParticipants.Any(mp => mp.MeetingId == m.Id && mp.UserId == userId));
+                }
+
+                var meetings = await query
                     .Select(m => new
                     {
                         m.Id,

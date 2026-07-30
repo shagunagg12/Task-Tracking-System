@@ -8,8 +8,13 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
   const [title, setTitle] = useState('');
   const [brief, setBrief] = useState('');
 
-  const dayStr = selectedSlot ? selectedSlot.day.date.toString().padStart(2, '0') : '';
-  const initialDate = selectedSlot ? `${currentYear}-07-${dayStr}` : '';
+  const getFormattedDate = (slot) => {
+    if (!slot) return '';
+    const d = new Date(slot.day.fullDate);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const initialDate = getFormattedDate(selectedSlot);
   const initialStartHour = selectedSlot ? selectedSlot.hour.toString().padStart(2, '0') + ':00' : '';
   const endHour = selectedSlot ? (selectedSlot.hour + 1 > 23 ? 0 : selectedSlot.hour + 1) : 0;
   const initialEndHour = selectedSlot ? endHour.toString().padStart(2, '0') + ':00' : '';
@@ -21,8 +26,9 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
 
   useEffect(() => {
     if (selectedSlot) {
-      setStartDate(`${currentYear}-07-${selectedSlot.day.date.toString().padStart(2, '0')}`);
-      setEndDate(`${currentYear}-07-${selectedSlot.day.date.toString().padStart(2, '0')}`);
+      const formatted = getFormattedDate(selectedSlot);
+      setStartDate(formatted);
+      setEndDate(formatted);
       setStartTime(selectedSlot.hour.toString().padStart(2, '0') + ':00');
       const nextHour = selectedSlot.hour + 1 > 23 ? 0 : selectedSlot.hour + 1;
       setEndTime(nextHour.toString().padStart(2, '0') + ':00');
@@ -103,7 +109,7 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
         setSuccessData({ meetLink: result.meetLink, title });
       } else {
         const error = await response.json();
-        alert(`Error: ${error.message}`);
+        alert(`Error: ${error.message}\nDetails: ${error.error || 'No details provided'}`);
       }
     } catch (error) {
       console.error("Failed to save meeting", error);
@@ -205,10 +211,12 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
                 {participantInput.length > 0 && users.length > 0 && (
                   <div className="autocomplete-dropdown">
                     {users
-                      .filter(u => 
-                        u.fullName.toLowerCase().includes(participantInput.toLowerCase()) || 
-                        u.email.toLowerCase().includes(participantInput.toLowerCase())
-                      )
+                      .filter(u => {
+                        const searchStr = participantInput.toLowerCase();
+                        const nameMatch = u.fullName ? u.fullName.toLowerCase().includes(searchStr) : false;
+                        const emailMatch = u.email ? u.email.toLowerCase().includes(searchStr) : false;
+                        return nameMatch || emailMatch;
+                      })
                       .map(u => (
                         <div 
                           key={u.id} 
@@ -220,9 +228,9 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
                             setParticipantInput('');
                           }}
                         >
-                          <div className="avatar">{u.fullName.charAt(0).toUpperCase()}</div>
+                          <div className="avatar">{(u.fullName || u.email.split('@')[0]).charAt(0).toUpperCase()}</div>
                           <div className="user-info">
-                            <span className="user-name">{u.fullName}</span>
+                            <span className="user-name">{u.fullName || u.email.split('@')[0]}</span>
                             <span className="user-email">{u.email}</span>
                           </div>
                         </div>
@@ -234,8 +242,8 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
                   <div className="participant-pills">
                     {selectedParticipants.map(p => (
                       <div key={p.id} className="participant-pill">
-                        <div className="pill-avatar">{p.fullName.charAt(0).toUpperCase()}</div>
-                        <span className="pill-name">{p.fullName}</span>
+                        <div className="pill-avatar">{(p.fullName || p.email.split('@')[0]).charAt(0).toUpperCase()}</div>
+                        <span className="pill-name">{p.fullName || p.email.split('@')[0]}</span>
                         <button 
                           type="button"
                           className="pill-remove" 

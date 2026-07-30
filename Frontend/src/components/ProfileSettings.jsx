@@ -19,38 +19,51 @@ export default function ProfileSettings() {
   
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  const [isHovering, setIsHovering] = useState(false);
+  const [departments, setDepartments] = useState([
+    "Engineering", "Marketing", "Sales", "Human Resources", "Product"
+  ]);
 
-  const fetchProfile = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setProfile({
-          fullName: data.fullName || '',
-          email: data.email || '',
-          designation: data.designation || '',
-          department: data.department || '',
-          location: data.location || '',
-          bio: data.bio || '',
-          profilePictureUrl: data.profilePictureUrl || ''
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        // Fetch user profile
+        const profileResponse = await fetch(`${import.meta.env.VITE_API_URL}/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-      } else {
-        setError("Could not load profile data.");
+        if (profileResponse.ok) {
+          const data = await profileResponse.json();
+          setProfile({
+            fullName: data.fullName || '',
+            email: data.email || '',
+            designation: data.designation || '',
+            department: data.department || '',
+            location: data.location || '',
+            bio: data.bio || '',
+            profilePictureUrl: data.profilePictureUrl || ''
+          });
+        }
+
+        // Fetch departments
+        const deptResponse = await fetch(`${import.meta.env.VITE_API_URL}/departments`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (deptResponse.ok) {
+          const deptData = await deptResponse.json();
+          setDepartments(deptData.map(d => d.name));
+        }
+      } catch (err) {
+        setError("Failed to connect to the server.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError("Failed to connect to the server.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchInitialData();
+  }, []);
 
   const handleChange = (e) => {
     setProfile({
@@ -118,6 +131,8 @@ export default function ProfileSettings() {
       });
       
       if (res.ok) {
+        if (profile.fullName) localStorage.setItem('userName', profile.fullName);
+        window.dispatchEvent(new Event('profileUpdated'));
         setMessage("Profile updated successfully!");
       } else {
         setError("Failed to update profile.");
@@ -199,26 +214,35 @@ export default function ProfileSettings() {
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <label style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--text-muted)' }}>Designation</label>
-          <input 
-            type="text" 
+          <select 
             name="designation"
-            placeholder="e.g. Senior Developer"
             value={profile.designation}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white' }}
-          />
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white', outline: 'none' }}
+          >
+            <option value="">Select Designation...</option>
+            <option value="Software Engineer">Software Engineer</option>
+            <option value="Senior Developer">Senior Developer</option>
+            <option value="Product Manager">Product Manager</option>
+            <option value="Quality Assurance">Quality Assurance</option>
+            <option value="UI/UX Designer">UI/UX Designer</option>
+            <option value="Team Lead">Team Lead</option>
+          </select>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <label style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--text-muted)' }}>Department</label>
-          <input 
-            type="text" 
+          <select 
             name="department"
-            placeholder="e.g. Engineering"
             value={profile.department}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white' }}
-          />
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white', outline: 'none' }}
+          >
+            <option value="">Select Department...</option>
+            {departments.map((dept, idx) => (
+              <option key={idx} value={dept}>{dept}</option>
+            ))}
+          </select>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gridColumn: '1 / -1' }}>

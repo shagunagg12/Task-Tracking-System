@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import * as signalR from '@microsoft/signalr';
 import Chatbot from '../../components/Chatbot';
+import PendingTasksModal from '../../components/PendingTasksModal';
 import ProfileSettings from '../../components/ProfileSettings';
 import AssignedProjects from './AssignedProjects';
 import Report from './Report';
 import StandingsLayout from './StandingsLayout';
 import ChatLayout from './ChatLayout';
 import Calendar from './Calendar';
-import PendingTasksModal from '../../components/PendingTasksModal';
+import AchievementsRewards from './AchievementsRewards';
 import './DashboardLayout.css';
 
 const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
@@ -53,7 +56,7 @@ const AnimatedCounter = ({ end, duration, prefix = '', suffix = '' }) => {
   return <span>{prefix}{formatNumber(count)}{suffix}</span>;
 };
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [activeMenu, setActiveMenu] = useState(() => {
     return localStorage.getItem('activeMenu') || localStorage.getItem('lastActiveMenu') || 'Overview';
   });
@@ -61,6 +64,49 @@ const DashboardLayout = () => {
   const [showPendingTasks, setShowPendingTasks] = useState(false);
   const [pendingTasks, setPendingTasks] = useState([]);
   const [userProfileData, setUserProfileData] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
+  
+  // Toasts and Modals
+  const [toasts, setToasts] = useState([]);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  
+  // Analytics state
+  const [userAnalytics, setUserAnalytics] = useState(null);
+  const [orgAnalytics, setOrgAnalytics] = useState(null);
+  const [deptAnalytics, setDeptAnalytics] = useState(null);
+
+  const fetchAnalytics = async (userId, department) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const userRes = await fetch(`http://localhost:5024/api/analytics/user/${userId}`, { headers });
+      if (userRes.ok) setUserAnalytics(await userRes.json());
+
+      const orgRes = await fetch(`http://localhost:5024/api/analytics/organization`, { headers });
+      if (orgRes.ok) setOrgAnalytics(await orgRes.json());
+
+      if (department) {
+        const deptRes = await fetch(`http://localhost:5024/api/analytics/department/${encodeURIComponent(department)}`, { headers });
+        if (deptRes.ok) setDeptAnalytics(await deptRes.json());
+      }
+    } catch (err) {
+      console.error("Error fetching analytics", err);
+    }
+  };
+  
+  const addToast = (toast) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, ...toast }]);
+    setTimeout(() => dismissToast(id), 5000);
+  };
+
+  const dismissToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -75,6 +121,18 @@ const DashboardLayout = () => {
         if (res.ok) {
           const data = await res.json();
           setUserProfileData(data);
+          if (data.fullName) {
+            setUserName(data.fullName);
+            localStorage.setItem('userName', data.fullName);
+          }
+          if (data.profilePictureUrl) {
+            setUserPic(data.profilePictureUrl);
+            localStorage.setItem('profilePic', data.profilePictureUrl);
+          }
+          
+          if (data.id) {
+            fetchAnalytics(data.id, data.department);
+          }
           
           const tasks = [];
           if (!data.designation || !data.department || !data.location || !data.bio) {
@@ -94,6 +152,32 @@ const DashboardLayout = () => {
             setPendingTasks(tasks);
             setShowPendingTasks(true);
           }
+
+          // Fetch notifications
+          try {
+            const notifRes = await fetch(`http://localhost:5024/api/DepartmentNotifications/${encodeURIComponent(data.department)}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (notifRes.ok) {
+              const notifData = await notifRes.json();
+              setNotifications(notifData);
+            }
+          } catch(err) {
+            console.error(err);
+          }
+          
+          // Fetch team members
+          try {
+            const membersRes = await fetch(`http://localhost:5024/api/profile/department-members`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (membersRes.ok) {
+              const membersData = await membersRes.json();
+              setTeamMembers(membersData);
+            }
+          } catch(err) {
+            console.error(err);
+          }
         }
       } catch (err) {
         console.error("Error fetching profile", err);
@@ -101,6 +185,39 @@ const DashboardLayout = () => {
     };
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!userProfileData) return;
+
+    // Connect to SignalR
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5024/adminDashboardHub")
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveUserNotification", (notification) => {
+      // Check if notification belongs to this user's department
+      if (notification.department === userProfileData.department) {
+        addToast({
+          title: notification.title,
+          message: notification.message
+        });
+        setNotifications(prev => [{
+          id: Date.now(), // temporary id
+          title: notification.title,
+          message: notification.message,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        }, ...prev]);
+      }
+    });
+
+    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+
+    return () => {
+      connection.stop();
+    };
+  }, [userProfileData]);
 
   useEffect(() => {
     localStorage.setItem('activeMenu', activeMenu);
@@ -145,14 +262,21 @@ const DashboardLayout = () => {
 
   const initialData = getUserData();
   const [userPic, setUserPic] = useState(initialData.pic);
-  const userName = initialData.name;
+  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || initialData.name);
 
   useEffect(() => {
     const handlePicUpdate = () => {
       setUserPic(localStorage.getItem('profilePic') || '');
     };
+    const handleProfileUpdate = () => {
+      setUserName(localStorage.getItem('userName') || initialData.name);
+    };
     window.addEventListener('profilePicUpdated', handlePicUpdate);
-    return () => window.removeEventListener('profilePicUpdated', handlePicUpdate);
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profilePicUpdated', handlePicUpdate);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   const menuItems = [
@@ -161,11 +285,14 @@ const DashboardLayout = () => {
     { id: 'Standings', icon: '🏆', text: 'Standings' },
     { id: 'Calendar', icon: '📅', text: 'Calendar' },
     { id: 'Chats', icon: '💬', text: 'Chats' },
-    { id: 'Achievements', icon: '🌟', text: 'Achievements' },
-    { id: 'Rewards', icon: '🎁', text: 'Rewards' },
+    { id: 'AchievementsRewards', icon: '🏆', text: 'Achievements & Rewards' },
     { id: 'Report', icon: '📈', text: 'Report' },
     { id: 'Profile', icon: '👤', text: 'Profile' },
   ];
+
+  if (isAdmin) {
+    menuItems.push({ id: 'AdminPanel', icon: '🛡️', text: 'Admin Panel' });
+  }
 
   return (
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
@@ -187,7 +314,13 @@ const DashboardLayout = () => {
               <li 
                 key={item.id}
                 className={`menu-item ${activeMenu === item.id ? 'active' : ''}`}
-                onClick={() => setActiveMenu(item.id)}
+                onClick={() => {
+                  if (item.id === 'AdminPanel') {
+                    onSwitchToAdmin();
+                  } else {
+                    setActiveMenu(item.id);
+                  }
+                }}
               >
                 <span className="menu-icon">{item.icon}</span>
                 <span className="menu-text">{item.text}</span>
@@ -216,33 +349,38 @@ const DashboardLayout = () => {
               <span style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-main)' }}>{userName}</span>
             </div>
             
-            <button 
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.reload();
-              }}
-              style={{ 
-                background: 'transparent', 
-                border: 'none', 
-                color: 'var(--text-muted)', 
-                cursor: 'pointer', 
-                padding: '8px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)'; e.currentTarget.style.color = '#ff6b6b'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-              title="Logout"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('isAdmin');
+                  localStorage.removeItem('isSuperAdmin');
+                  localStorage.removeItem('profilePic');
+                  window.location.reload();
+                }}
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: 'var(--text-muted)', 
+                  cursor: 'pointer', 
+                  padding: '8px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)'; e.currentTarget.style.color = '#ff6b6b'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                title="Logout"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -271,6 +409,10 @@ const DashboardLayout = () => {
           <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <Calendar />
           </div>
+        ) : (activeMenu === 'Chats' || activeMenu === 'Chat') ? (
+          <div className="chat-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <ChatLayout />
+          </div>
         ) : (
         <div className="content-scroll">
           {activeMenu === 'Profile' ? (
@@ -283,10 +425,7 @@ const DashboardLayout = () => {
             <Report />
           ) : activeMenu === 'AchievementsRewards' ? (
             <AchievementsRewards />
-          ) : activeMenu === 'Chats' || activeMenu === 'Chat' ? (
-            <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <ChatLayout />
-            </div>
+
           ) : activeMenu === 'Overview' ? (
             <>
               {/* Overview Top Stats */}
@@ -299,19 +438,19 @@ const DashboardLayout = () => {
             <div className="stats-grid">
               <div className="stat-card">
                 <p className="stat-title">Active Tasks</p>
-                <h3 className="stat-value"><AnimatedCounter end="124" duration={2000} /></h3>
+                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? (userAnalytics.totalTasksAssigned - userAnalytics.tasksCompleted).toString() : "0"} duration={2000} /></h3>
                 <p className="stat-trend positive">↗ 12% <span className="trend-text">vs last month</span></p>
               </div>
               <div className="stat-card">
                 <p className="stat-title">Completed Projects</p>
-                <h3 className="stat-value"><AnimatedCounter end="45" duration={2000} /></h3>
+                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.completedProjects.toString() : "0"} duration={2000} /></h3>
                 <p className="stat-trend positive">↗ 5% <span className="trend-text">vs last quarter</span></p>
               </div>
               <div className="stat-card">
                 <p className="stat-title">Efficiency Score</p>
                 <div className="gauge-container">
                   <div className="gauge-text">
-                     <h3 className="stat-value"><AnimatedCounter end="92" duration={2500} suffix="%" /></h3>
+                     <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.completionRate.toString() : "0"} duration={2500} suffix="%" /></h3>
                      <p className="stat-subtitle">Goal: 100%</p>
                   </div>
                   <div className="gauge-visual">
@@ -321,7 +460,7 @@ const DashboardLayout = () => {
               </div>
               <div className="stat-card">
                 <p className="stat-title">Reward Points</p>
-                <h3 className="stat-value"><AnimatedCounter end="1,250" duration={2000} /></h3>
+                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.totalPoints.toLocaleString() : "0"} duration={2000} /></h3>
                 <p className="stat-trend positive">↗ 150 <span className="trend-text">vs last month</span></p>
               </div>
             </div>
@@ -338,8 +477,8 @@ const DashboardLayout = () => {
                 <div className="doughnut-chart-wrapper">
                   <div className="doughnut-chart-circle">
                      <div className="doughnut-inner">
-                        <span className="chart-number">124</span>
-                        <span className="chart-label">Active Tasks</span>
+                        <span className="chart-number">{orgAnalytics ? orgAnalytics.totalProjects : "0"}</span>
+                        <span className="chart-label">Total Projects</span>
                      </div>
                   </div>
                 </div>
@@ -352,26 +491,17 @@ const DashboardLayout = () => {
                      </div>
                   </div>
                   <div className="legend-grid">
-                    <div className="legend-item">
-                      <span className="dot dot-white"></span>
-                      <span className="legend-name">Development</span>
-                      <span className="legend-val">45%</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="dot dot-green"></span>
-                      <span className="legend-name">Marketing</span>
-                      <span className="legend-val">30%</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="dot dot-light-green"></span>
-                      <span className="legend-name">Design</span>
-                      <span className="legend-val">15%</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="dot dot-dark-green"></span>
-                      <span className="legend-name">Operations</span>
-                      <span className="legend-val">10%</span>
-                    </div>
+                    {orgAnalytics && orgAnalytics.departmentDistribution ? orgAnalytics.departmentDistribution.map((d, i) => (
+                      <div className="legend-item" key={i}>
+                        <span className={`dot dot-${['white', 'green', 'light-green', 'dark-green'][i % 4]}`}></span>
+                        <span className="legend-name">{d.departmentName}</span>
+                        <span className="legend-val">{Math.round((d.userCount / orgAnalytics.totalUsers) * 100)}%</span>
+                      </div>
+                    )) : (
+                      <div className="legend-item">
+                        <span className="legend-name">Loading...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -384,7 +514,7 @@ const DashboardLayout = () => {
                  </div>
                  <p className="small-card-title">Recent Appreciations:</p>
                  <div className="small-card-val-row">
-                    <span className="sc-val">15</span>
+                    <span className="sc-val">{userAnalytics ? userAnalytics.rewardsClaimed : "0"}</span>
                     <span className="sc-trend positive">+3%</span>
                  </div>
                  <p className="sc-subtitle">Last Week</p>
@@ -396,7 +526,7 @@ const DashboardLayout = () => {
                  </div>
                  <p className="small-card-title">Social Score:</p>
                  <div className="small-card-val-row">
-                    <span className="sc-val">850</span>
+                    <span className="sc-val">{userAnalytics ? userAnalytics.totalPoints : "0"}</span>
                     <span className="sc-trend positive">+42</span>
                  </div>
                  <p className="sc-subtitle">Total Points</p>
@@ -404,7 +534,7 @@ const DashboardLayout = () => {
                
                <div className="total-profit-chart-card todays-progress-card">
                   <div className="todays-progress-content">
-                    <p className="tp-title">Today's Tasks</p>
+                    <p className="tp-title">Your Tasks</p>
                     
                     <div className="progress-dots-container">
                       <span className="dot empty"></span>
@@ -417,11 +547,11 @@ const DashboardLayout = () => {
                       <span className="dot filled"></span>
                     </div>
                     
-                    <h3 className="tp-val">68%</h3>
+                    <h3 className="tp-val">{userAnalytics ? userAnalytics.completionRate : "0"}%</h3>
                     
                     <div className="progress-details">
-                      <p className="pd-row"><span>17</span> Completed</p>
-                      <p className="pd-row"><span>8</span> Remaining</p>
+                      <p className="pd-row"><span>{userAnalytics ? userAnalytics.tasksCompleted : "0"}</span> Completed</p>
+                      <p className="pd-row"><span>{userAnalytics ? (userAnalytics.totalTasksAssigned - userAnalytics.tasksCompleted) : "0"}</span> Remaining</p>
                     </div>
                   </div>
                   
@@ -430,7 +560,7 @@ const DashboardLayout = () => {
                        <path d="M0,30 L0,25 L10,20 L20,28 L30,15 L40,18 L50,10 L60,15 L70,12 L80,20 L90,15 L100,9.6 L100,30 Z" fill="rgba(190, 242, 100, 0.2)"></path>
                        <path d="M0,25 L10,20 L20,28 L30,15 L40,18 L50,10 L60,15 L70,12 L80,20 L90,15 L100,9.6" fill="none" stroke="#BEF264" strokeWidth="1.5"></path>
                        <circle cx="100" cy="9.6" r="2" fill="#202226" stroke="#BEF264" strokeWidth="1.5" />
-                       <text x="96" y="8" fill="#BEF264" fontSize="5" fontWeight="600" textAnchor="end">68%</text>
+                       <text x="96" y="8" fill="#BEF264" fontSize="5" fontWeight="600" textAnchor="end">{userAnalytics ? userAnalytics.completionRate : "0"}%</text>
                      </svg>
                   </div>
                </div>
@@ -453,45 +583,23 @@ const DashboardLayout = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>
-                      <div className="user-cell">
-                        <img src="https://ui-avatars.com/api/?name=Danny+Liu&background=random" alt="Danny" />
-                        <div className="user-info">
-                          <p className="name">Danny Liu</p>
-                          <p className="email">Development</p>
+                  {deptAnalytics && deptAnalytics.topPerformers ? deptAnalytics.topPerformers.map((performer, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="user-cell">
+                          <img src={performer.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.fullName)}&background=random`} alt={performer.fullName} />
+                          <div className="user-info">
+                            <p className="name">{performer.fullName}</p>
+                            <p className="email">{deptAnalytics.departmentName}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>142</td>
-                    <td>12,431</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="user-cell">
-                        <img src="https://ui-avatars.com/api/?name=Bella+Deviant&background=random" alt="Bella" />
-                        <div className="user-info">
-                          <p className="name">Bella Deviant</p>
-                          <p className="email">Marketing</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>96</td>
-                    <td>10,423</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="user-cell">
-                        <img src="https://ui-avatars.com/api/?name=Darrell+Steward&background=random" alt="Darrell" />
-                        <div className="user-info">
-                          <p className="name">Darrell Steward</p>
-                          <p className="email">Design</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>84</td>
-                    <td>8,549</td>
-                  </tr>
+                      </td>
+                      <td>-</td>
+                      <td>{performer.points.toLocaleString()}</td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="3">Loading...</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -502,7 +610,7 @@ const DashboardLayout = () => {
                  <span className="more-options">⋮</span>
                </div>
                <div className="premium-price">
-                 <h2>1,250</h2>
+                 <h2>{userAnalytics ? userAnalytics.totalPoints.toLocaleString() : "0"}</h2>
                  <div className="price-details">
                    <p>Points</p>
                    <p>Available</p>
@@ -510,14 +618,14 @@ const DashboardLayout = () => {
                </div>
                <p className="premium-desc">Claim your reward points to get gift cards, extra time off, or company merch! 🎁</p>
                 <div className="premium-actions">
-                  <button className="get-started-btn">Redeem Now</button>
+                  <button className="get-started-btn" onClick={() => setActiveMenu('AchievementsRewards')}>Redeem Now</button>
                   <button className="star-btn">★</button>
                 </div>
              </div>
           </div>
           </>
           ) : (
-             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                <h2>{activeMenu}</h2>
                <p style={{ marginTop: '10px' }}>This section is currently under development.</p>
              </div>
@@ -532,34 +640,31 @@ const DashboardLayout = () => {
         <div className="right-section">
           <h3 className="right-title">Notifications</h3>
           <ul className="list-items">
-            <li className="list-item">
-              <div className="icon-circle green">📋</div>
-              <div className="item-details">
-                <p className="item-title">New project 'Website Redesign' assigned.</p>
-                <p className="item-time">Just now</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">✉</div>
-              <div className="item-details">
-                <p className="item-title">Feedback received from Manager.</p>
-                <p className="item-time">59 Minutes ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">🎁</div>
-              <div className="item-details">
-                <p className="item-title">150 Reward points credited.</p>
-                <p className="item-time">12 Hours ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <div className="icon-circle outline">💬</div>
-              <div className="item-details">
-                <p className="item-title">5 Unread team messages.</p>
-                <p className="item-time">Today, 11:59 PM</p>
-              </div>
-            </li>
+            {notifications.length === 0 ? (
+              <li className="list-item" style={{ justifyContent: 'center', opacity: 0.5, paddingTop: '10px' }}>
+                <p>No notifications</p>
+              </li>
+            ) : (
+              notifications.map((notif) => (
+                <li 
+                  key={notif.id} 
+                  className="list-item" 
+                  style={{ cursor: 'pointer', transition: 'background 0.2s', padding: '8px', borderRadius: '8px' }}
+                  onClick={() => setSelectedNotification(notif)}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div className="icon-circle outline">✉</div>
+                  <div className="item-details">
+                    <p className="item-title">{notif.title}</p>
+                    <p className="item-time">
+                      {new Date(notif.createdAt).toLocaleDateString()}{' '}
+                      {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </li>
+              ))
+            )}
           </ul>
         </div>
 
@@ -600,39 +705,70 @@ const DashboardLayout = () => {
         <div className="right-section">
           <h3 className="right-title">Team Members</h3>
           <ul className="list-items contacts-list">
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Daniel+Craig&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Daniel Craig</p>
-              <span className="more-options">⋯</span>
-            </li>
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Kate+Morrison&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Kate Morrison</p>
-              <span className="more-options">⋯</span>
-            </li>
-            <li className="list-item contact-item active-contact">
-              <img src="https://ui-avatars.com/api/?name=Nataniel+Donowan&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Nataniel Donowan</p>
-              <div className="contact-actions">
-                 <span className="c-action">✉</span>
-                 <span className="c-action">📞</span>
-              </div>
-            </li>
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Elisabeth+Wayne&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Elisabeth Wayne</p>
-              <span className="more-options">⋯</span>
-            </li>
-            <li className="list-item contact-item">
-              <img src="https://ui-avatars.com/api/?name=Felicia+Raspet&background=random" alt="user" className="tiny-avatar" />
-              <p className="item-title">Felicia Raspet</p>
-              <span className="more-options">⋯</span>
-            </li>
+            {teamMembers.length > 0 ? (
+              teamMembers.map(member => (
+                <li key={member.id} className="list-item contact-item">
+                  <img src={member.avatar} alt="user" className="tiny-avatar" />
+                  <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <p className="item-title" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{member.name}</p>
+                    {member.designation && <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginTop: '2px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{member.designation}</p>}
+                  </div>
+                  <div className="contact-actions" style={{ display: 'flex', gap: '8px' }}>
+                     <a href={`mailto:${member.email}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                       <span className="c-action" style={{ cursor: 'pointer' }} title="Email">✉</span>
+                     </a>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="list-item contact-item" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
+                No other team members found.
+              </li>
+            )}
           </ul>
         </div>
 
       </aside>
       {activeMenu !== 'Chat' && <Chatbot isSidebarOpen={isRightSidebarOpen} />}
+      
+      {/* Notification Details Modal */}
+      {selectedNotification && createPortal(
+        <div className="dashboard-modal-overlay" onClick={() => setSelectedNotification(null)}>
+          <div className="dashboard-modal" onClick={e => e.stopPropagation()}>
+            <div className="dashboard-modal-header">
+              <h3>{selectedNotification.title}</h3>
+              <button className="dashboard-modal-close" onClick={() => setSelectedNotification(null)}>×</button>
+            </div>
+            <div className="dashboard-modal-body">
+              <p className="dashboard-modal-date">
+                {new Date(selectedNotification.createdAt).toLocaleDateString()}{' '}
+                {new Date(selectedNotification.createdAt).toLocaleTimeString()}
+              </p>
+              <div className="dashboard-modal-message">
+                {selectedNotification.message}
+              </div>
+            </div>
+            <div className="dashboard-modal-footer">
+              <button className="dashboard-modal-btn" onClick={() => setSelectedNotification(null)}>Close</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Toasts */}
+      {createPortal(
+        <div className="dashboard-toast-container">
+          {toasts.map(toast => (
+            <div key={toast.id} className="dashboard-toast">
+              <div className="dashboard-toast-title">{toast.title}</div>
+              <div className="dashboard-toast-message">{toast.message}</div>
+              <button className="dashboard-toast-close" onClick={() => dismissToast(toast.id)}>×</button>
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

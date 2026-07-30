@@ -152,6 +152,74 @@ const Chatbot = ({ isSidebarOpen }) => {
     }
   };
 
+  const detectDepartment = (input, currentBot) => {
+    const lower = input.toLowerCase();
+    const depts = [
+      {
+        bot: 'daksh',
+        name: 'Daksh',
+        role: 'Tech Lead',
+        keywords: ['code', 'debug', 'react', 'auth', 'jwt', 'database', 'query', 'sql', 'c#', 'dotnet', 'javascript', 'backend', 'frontend', 'bug', 'error', 'api', 'compil']
+      },
+      {
+        bot: 'ayush',
+        name: 'Ayush',
+        role: 'HR Specialist',
+        keywords: ['leave', 'voucher', 'appreciat', 'thank', 'social score', 'holiday', 'policy', 'benefits', 'salary', 'hr', 'appraisal', 'culture', 'vibe']
+      },
+      {
+        bot: 'rachit',
+        name: 'Rachit',
+        role: 'Operations Optimizer',
+        keywords: ['workflow', 'efficien', 'time', 'productivity', 'priority', 'bottleneck', 'automat', 'optimise', 'optimize', 'performance', 'pomodoro']
+      },
+      {
+        bot: 'kartik',
+        name: 'Kartik',
+        role: 'Mentorship Advisor',
+        keywords: ['learn', 'study', 'frontend path', 'skill', 'mentor', 'interview', 'prep', 'career', 'study', 'acqui', 'certification']
+      }
+    ];
+
+    for (const dept of depts) {
+      if (dept.bot === currentBot) continue;
+      if (dept.keywords.some(kw => lower.includes(kw))) {
+        return dept;
+      }
+    }
+    return null;
+  };
+
+  const handleTransfer = (targetBot, originalText) => {
+    setSelectedBot(targetBot);
+    
+    const transferMsg = {
+      sender: 'bot',
+      text: `🔄 Transferred conversation to ${botConfigs[targetBot].name} (${botConfigs[targetBot].role}).`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatHistories(prev => ({
+      ...prev,
+      [targetBot]: [...prev[targetBot], transferMsg]
+    }));
+
+    setIsTyping(true);
+    setTimeout(() => {
+      const responseText = botConfigs[targetBot].getResponse(originalText);
+      const botMessage = {
+        sender: 'bot',
+        text: `Hey, I received your transferred query! Regarding your question:\n\n"${responseText}"`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setChatHistories(prev => ({
+        ...prev,
+        [targetBot]: [...prev[targetBot], botMessage]
+      }));
+      setIsTyping(false);
+    }, 1500);
+  };
+
   const handleSendMessage = (textToSend) => {
     const text = textToSend || inputText;
     if (!text.trim() || !selectedBot) return;
@@ -169,8 +237,25 @@ const Chatbot = ({ isSidebarOpen }) => {
 
     // Simulate response delay
     setTimeout(() => {
-      const botResponseText = botConfigs[selectedBot].getResponse(text);
-      const botMessage = { sender: 'bot', text: botResponseText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+      const otherDept = detectDepartment(text, selectedBot);
+      let botResponseText = botConfigs[selectedBot].getResponse(text);
+      let transferInfo = null;
+
+      if (otherDept) {
+        botResponseText = `${botResponseText}\n\n*Note:* This sounds like a question for the **${otherDept.role}** department.`;
+        transferInfo = {
+          targetBot: otherDept.bot,
+          targetName: otherDept.name,
+          userQuery: text
+        };
+      }
+
+      const botMessage = { 
+        sender: 'bot', 
+        text: botResponseText, 
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        transferInfo: transferInfo
+      };
       
       setChatHistories(prev => ({
         ...prev,
@@ -290,6 +375,27 @@ const Chatbot = ({ isSidebarOpen }) => {
                           }}>
                             {msg.text}
                           </div>
+                          {msg.transferInfo && (
+                            <button
+                              onClick={() => handleTransfer(msg.transferInfo.targetBot, msg.transferInfo.userQuery)}
+                              style={{
+                                marginTop: '10px',
+                                padding: '8px 16px',
+                                backgroundColor: 'rgba(255, 215, 0, 0.15)',
+                                border: '1px solid #ffd700',
+                                color: '#ffd700',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                display: 'block',
+                                transition: 'all 0.2s ease',
+                                outline: 'none'
+                              }}
+                            >
+                              🔄 Transfer to {msg.transferInfo.targetName}
+                            </button>
+                          )}
                           {msg.timestamp && (
                             <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', textAlign: msg.sender === 'user' ? 'right' : 'left' }}>
                               {msg.timestamp}

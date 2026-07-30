@@ -11,6 +11,7 @@ namespace Backend.Data
         {
         }
 
+        public DbSet<Admin> Admins { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserProfile> Profiles { get; set; }
         public DbSet<Project> Projects { get; set; }
@@ -19,15 +20,42 @@ namespace Backend.Data
         public DbSet<ProjectFeedback> ProjectFeedbacks { get; set; }
         public DbSet<ProjectTeamMember> ProjectTeamMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<AppNotification> AppNotifications { get; set; }
+        public DbSet<UserNotification> UserNotifications { get; set; }
+        public DbSet<DepartmentAnnouncement> DepartmentAnnouncements { get; set; }
         public DbSet<ProjectMessage> ProjectMessages { get; set; }
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
         public DbSet<CompanyEvent> CompanyEvents { get; set; }
         public DbSet<EventAttendance> EventAttendances { get; set; }
+        public DbSet<UserClaimedBonus> UserClaimedBonuses { get; set; }
+        public DbSet<RewardRedemption> RewardRedemptions { get; set; }
+        public DbSet<UserLoginLog> UserLoginLogs { get; set; }
+
+        public DbSet<SuperAdmin> SuperAdmins { get; set; }
+        public DbSet<Department> Departments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<SuperAdmin>().HasData(
+                new SuperAdmin
+                {
+                    Id = 1,
+                    Email = "connect2rachit882@gmail.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rachit@12"),
+                    FullName = "Rachit"
+                }
+            );
+
+            modelBuilder.Entity<Department>().HasData(
+                new Department { Id = 1, Name = "Engineering" },
+                new Department { Id = 2, Name = "Marketing" },
+                new Department { Id = 3, Name = "Sales" },
+                new Department { Id = 4, Name = "Human Resources" },
+                new Department { Id = 5, Name = "Product" }
+            );
 
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
@@ -86,6 +114,25 @@ namespace Backend.Data
                 .WithMany()
                 .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure AppNotification Foreign Keys
+            modelBuilder.Entity<AppNotification>()
+                .HasOne(n => n.Project)
+                .WithMany()
+                .HasForeignKey(n => n.ProjectId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<AppNotification>()
+                .HasOne(n => n.Task)
+                .WithMany()
+                .HasForeignKey(n => n.TaskId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<AppNotification>()
+                .HasOne(n => n.Meeting)
+                .WithMany()
+                .HasForeignKey(n => n.MeetingId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ProjectMessage>()
                 .HasOne(m => m.Sender)

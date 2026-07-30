@@ -23,7 +23,10 @@ const Calendar = () => {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched meetings:", data);
         setMeetings(data);
+      } else {
+        console.error("Failed to fetch meetings, status:", response.status);
       }
     } catch (error) {
       console.error("Failed to fetch meetings:", error);
