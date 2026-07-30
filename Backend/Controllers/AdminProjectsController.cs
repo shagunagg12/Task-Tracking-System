@@ -30,6 +30,7 @@ namespace Backend.Controllers
                     u.Id,
                     u.FullName,
                     u.Email,
+                    ProfilePictureUrl = !string.IsNullOrEmpty(u.ProfilePictureUrl) ? u.ProfilePictureUrl : _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault(),
                     Projects = u.Projects.Select(p => new
                     {
                         p.Id,
@@ -208,6 +209,15 @@ namespace Backend.Controllers
             task.Status = dto.Status;
             task.StatusClass = dto.StatusClass;
 
+            if (dto.Status == "Completed" || dto.Status == "Done") 
+            {
+                task.CompletedAt = DateTime.UtcNow;
+            }
+            else 
+            {
+                task.CompletedAt = null;
+            }
+
             await _context.SaveChangesAsync();
             return Ok(task);
         }
@@ -299,6 +309,17 @@ namespace Backend.Controllers
             _context.ProjectTeamMembers.Add(member);
             await _context.SaveChangesAsync();
             return Ok(member);
+        }
+
+        [HttpDelete("{projectId}/team-members/{memberId}")]
+        public async Task<IActionResult> DeleteTeamMember(int projectId, int memberId)
+        {
+            var member = await _context.ProjectTeamMembers.FirstOrDefaultAsync(m => m.Id == memberId && m.ProjectId == projectId);
+            if (member == null) return NotFound("Member not found");
+
+            _context.ProjectTeamMembers.Remove(member);
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         public class AddDeadlineDto

@@ -56,7 +56,8 @@ const SuperAdminDashboard = () => {
     tasksCompleted: 0,
     productivityTrend: [],
     workforceDistribution: [],
-    departmentPerformance: []
+    departmentPerformance: [],
+    recentOnboarding: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -72,7 +73,8 @@ const SuperAdminDashboard = () => {
           tasksCompleted: data.tasksCompleted,
           productivityTrend: data.productivityTrend,
           workforceDistribution: data.workforceDistribution,
-          departmentPerformance: data.departmentPerformance
+          departmentPerformance: data.departmentPerformance,
+          recentOnboarding: data.recentOnboarding
         });
       }
     } catch (error) {
@@ -219,39 +221,6 @@ const SuperAdminDashboard = () => {
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="sa-chart-card">
-          <div className="sa-chart-header">
-             <h3>Workforce Distribution</h3>
-             <button className="sa-icon-btn small">⋮</button>
-          </div>
-          <div className="sa-chart-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={stats.workforceDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={65}
-                  outerRadius={95}
-                  paddingAngle={5}
-                  dataKey="value"
-                  stroke="none"
-                  animationDuration={1500}
-                >
-                  {stats.workforceDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.9)', backdropFilter: 'blur(10px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="sa-chart-legend">
-             <div className="sa-legend-item"><span className="sa-dot" style={{background: COLORS[0]}}></span> Remote (40%)</div>
-             <div className="sa-legend-item"><span className="sa-dot" style={{background: COLORS[1]}}></span> On-site (30%)</div>
-             <div className="sa-legend-item"><span className="sa-dot" style={{background: COLORS[2]}}></span> Hybrid (30%)</div>
-          </div>
-        </motion.div>
       </motion.div>
 
       {/* CHARTS ROW 2 */}
@@ -281,20 +250,26 @@ const SuperAdminDashboard = () => {
                <button className="sa-btn-text">View All</button>
             </div>
             <div className="sa-recent-list">
-               {[1, 2, 3, 4, 5].map((i) => (
-                 <motion.div 
-                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.05)' }}
-                    className="sa-recent-item" 
-                    key={i}
-                 >
-                    <img src={`https://ui-avatars.com/api/?name=New+Hire+${i}&background=random`} alt="Avatar" />
-                    <div className="sa-recent-info">
-                       <p className="sa-recent-name">Sarah Connor {i}</p>
-                       <p className="sa-recent-role">Senior Engineer</p>
-                    </div>
-                    <span className="sa-status-badge pending">In Progress</span>
-                 </motion.div>
-               ))}
+               {stats.recentOnboarding && stats.recentOnboarding.length > 0 ? (
+                 stats.recentOnboarding.map((user, index) => (
+                   <motion.div 
+                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                      className="sa-recent-item" 
+                      key={user.id}
+                   >
+                      <img src={user.avatar || user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random`} alt="Avatar" />
+                      <div className="sa-recent-info">
+                         <p className="sa-recent-name">{user.name || 'Unknown'}</p>
+                         <p className="sa-recent-role">{user.email}</p>
+                      </div>
+                      <span className="sa-status-badge pending">Pending Profile</span>
+                   </motion.div>
+                 ))
+               ) : (
+                 <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
+                    All users have completed their profiles.
+                 </div>
+               )}
             </div>
          </motion.div>
       </motion.div>

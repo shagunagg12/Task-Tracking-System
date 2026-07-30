@@ -45,7 +45,7 @@ namespace Backend.Controllers
                 InProgressTasks = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "In Progress"),
                 PendingTasks = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "Todo"),
                 BlockedTasks = u.Projects.SelectMany(p => p.Tasks).Count(t => t.Status == "Blocked"),
-                Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random"
+                Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) ? u.ProfilePictureUrl : (!string.IsNullOrEmpty(_context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault()) ? _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault() : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random")
             })
             .OrderByDescending(u => u.CompletedTasks)
             .ToList();
