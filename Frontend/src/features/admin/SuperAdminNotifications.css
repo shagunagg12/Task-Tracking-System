@@ -1,0 +1,171 @@
+.sa-notifications-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+  max-width: 1000px;
+}
+
+.sa-notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sa-notification-card {
+  background: var(--sa-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--sa-border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sa-notification-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: transparent;
+  transition: background-color 0.3s ease;
+}
+
+.sa-notification-card.unread {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(190, 242, 100, 0.3);
+}
+
+.sa-notification-card.unread::before {
+  background-color: var(--sa-primary);
+}
+
+.sa-notification-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.sa-notif-icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sa-notification-card.unread .sa-notif-icon-container {
+  background: rgba(190, 242, 100, 0.1);
+}
+
+.sa-notif-content {
+  flex: 1;
+}
+
+.sa-notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sa-notif-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sa-notif-time {
+  font-size: 0.85rem;
+  color: var(--sa-muted);
+}
+
+.sa-notif-content p {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.sa-notif-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.sa-notif-actions .sa-btn-text {
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+
+.danger-text {
+  color: #ef4444 !important;
+}
+
+.danger-text:hover {
+  color: #dc2626 !important;
+}
+
+/* Colors for specific icons */
+.text-danger {
+  color: #ef4444;
+}
+.text-success {
+  color: #10b981;
+}
+.text-primary {
+  color: var(--sa-primary);
+}
+.text-info {
+  color: #3b82f6;
+}
+.text-warning {
+  color: #f59e0b;
+}
+
+/* Empty State */
+.sa-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  background: var(--sa-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.sa-empty-icon {
+  color: var(--sa-muted);
+  opacity: 0.5;
+  margin-bottom: 20px;
+}
+
+.sa-empty-state h3 {
+  font-size: 1.4rem;
+  color: #fff;
+  margin: 0 0 12px 0;
+}
+
+.sa-empty-state p {
+  color: var(--sa-muted);
+  margin: 0;
+  font-size: 1rem;
+  max-width: 400px;
+}
