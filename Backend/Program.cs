@@ -137,6 +137,25 @@ using (var scope = app.Services.CreateScope())
         context.Admins.Add(admin);
         context.SaveChanges();
     }
+
+    if (!context.Users.Any(u => u.Email == "alice.engineer@example.com"))
+    {
+        var dummyUser = new Backend.Models.User
+        {
+            FullName = "Alice Engineer",
+            Email = "alice.engineer@example.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            Profile = new Backend.Models.UserProfile
+            {
+                Department = "Engineering",
+                Designation = "Senior Developer",
+                Location = "Remote",
+                Bio = "I write code."
+            }
+        };
+        context.Users.Add(dummyUser);
+        context.SaveChanges();
+    }
 }
 
 app.Run();
