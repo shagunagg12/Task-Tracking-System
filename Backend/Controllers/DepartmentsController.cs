@@ -33,19 +33,29 @@ namespace Backend.Controllers
             var users = await _context.Users
                 .Include(u => u.Profile)
                 .ToListAsync();
+                
+            var admins = await _context.Admins.ToListAsync();
 
             var result = departments.Select(d => new
             {
                 Id = d.Id,
                 Name = d.Name,
                 Users = users.Where(u => u.Profile != null && string.Equals(u.Profile.Department, d.Name, StringComparison.OrdinalIgnoreCase))
-                    .Select(u => new 
+                    .Select(u => 
                     {
-                        Id = u.Id,
-                        Name = u.FullName,
-                        Email = u.Email,
-                        Designation = u.Profile?.Designation,
-                        Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random"
+                        var adminAvatar = admins.FirstOrDefault(a => a.Email == u.Email)?.ProfilePictureUrl;
+                        return new 
+                        {
+                            Id = u.Id,
+                            Name = u.FullName,
+                            Email = u.Email,
+                            Designation = u.Profile?.Designation,
+                            Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) 
+                                ? u.ProfilePictureUrl 
+                                : (!string.IsNullOrEmpty(adminAvatar)
+                                    ? adminAvatar
+                                    : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName ?? "")}&background=random")
+                        };
                     }).ToList()
             }).ToList();
 
