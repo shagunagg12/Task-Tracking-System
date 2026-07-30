@@ -117,18 +117,32 @@ namespace Backend.Controllers
                 return Ok(new List<object>());
             }
 
-            var members = await _context.Users
+            var membersQuery = await _context.Users
                 .Include(u => u.Profile)
                 .Where(u => u.Profile != null && u.Profile.Department == userDepartment && u.Id != userId)
                 .Select(u => new
                 {
                     u.Id,
-                    Name = u.FullName,
-                    Email = u.Email,
+                    u.FullName,
+                    u.Email,
                     Designation = u.Profile != null ? u.Profile.Designation : "",
-                    Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) ? u.ProfilePictureUrl : (!string.IsNullOrEmpty(_context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault()) ? _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault() : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random")
+                    u.ProfilePictureUrl,
+                    AdminAvatar = _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault()
                 })
                 .ToListAsync();
+
+            var members = membersQuery.Select(u => new
+            {
+                u.Id,
+                Name = u.FullName,
+                Email = u.Email,
+                Designation = u.Designation,
+                Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) 
+                    ? u.ProfilePictureUrl 
+                    : (!string.IsNullOrEmpty(u.AdminAvatar) 
+                        ? u.AdminAvatar 
+                        : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName ?? "")}&background=random")
+            }).ToList();
 
             return Ok(members);
         }
