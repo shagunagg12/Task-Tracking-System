@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Plus, CheckSquare, GripVertical, Edit2, Trash2, Check } from 'lucide-react';
+import { X, Plus, CheckSquare, GripVertical, Edit2, Trash2, Check, ChevronDown } from 'lucide-react';
 import './ProjectKanbanBoard.css';
 
 const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
@@ -32,6 +32,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
   const [newTeamMember, setNewTeamMember] = useState({ name: '' });
   const [newDeadline, setNewDeadline] = useState({ title: '', description: '', day: '', month: '', color: 'green' });
   const [newFeedback, setNewFeedback] = useState({ text: '', authorName: '' });
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (project && project.tasks) {
@@ -47,6 +48,25 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
       setLoading(false);
     }
   }, [project]);
+
+  const [allUsers, setAllUsers] = useState([]);
+
+  useEffect(() => {
+    if (activeTab === 'team') {
+      const fetchUsers = async () => {
+        try {
+          const res = await fetch('http://localhost:5024/api/AdminUsers');
+          if (res.ok) {
+            const data = await res.json();
+            setAllUsers(data);
+          }
+        } catch (e) {
+          console.error('Failed to fetch users', e);
+        }
+      };
+      fetchUsers();
+    }
+  }, [activeTab]);
 
   const handleDragStart = (e, task) => {
     setDraggedTask(task);
@@ -184,6 +204,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
 
   const handleAddTeamMember = async (e) => {
     e.preventDefault();
+    if (!newTeamMember.name) return;
     try {
       const response = await fetch(`http://localhost:5024/api/AdminProjects/${project.id}/team-members`, {
         method: 'POST',
@@ -195,6 +216,19 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
         onTasksChanged();
       }
     } catch (error) { console.error(error); }
+  };
+
+  const handleDeleteTeamMember = async (memberId) => {
+    try {
+      const response = await fetch(`http://localhost:5024/api/AdminProjects/${project.id}/team-members/${memberId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        onTasksChanged();
+      }
+    } catch (error) {
+      console.error('Failed to delete team member:', error);
+    }
   };
 
   const handleAddDeadline = async (e) => {
@@ -392,8 +426,77 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
               <form onSubmit={handleAddTeamMember}>
                 <div className="sap-form-group">
-                  <label>New Member Name</label>
-                  <input type="text" value={newTeamMember.name} onChange={e => setNewTeamMember({...newTeamMember, name: e.target.value})} placeholder="e.g. Alice Smith" required />
+                  <label>Select New Member</label>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <div 
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      style={{
+                        background: 'rgba(255,255,255,0.05)', 
+                        color: '#fff', 
+                        border: '1px solid rgba(255,255,255,0.1)', 
+                        padding: '12px 16px', 
+                        borderRadius: '12px', 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      {newTeamMember.name ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                           <img src={newTeamMember.avatar || newTeamMember.profilePictureUrl || `https://ui-avatars.com/api/?name=${newTeamMember.name}&background=random`} style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+                           <span>{newTeamMember.name}</span>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Select a team member...</span>
+                      )}
+                      <ChevronDown size={16} />
+                    </div>
+
+                    {isDropdownOpen && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        marginTop: '8px',
+                        background: '#1e1e1e',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px',
+                        maxHeight: '250px',
+                        overflowY: 'auto',
+                        zIndex: 10,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                      }}>
+                        {allUsers.map(u => (
+                          <div 
+                            key={u.id}
+                            onClick={() => {
+                              setNewTeamMember({...newTeamMember, name: u.fullName});
+                              setIsDropdownOpen(false);
+                            }}
+                            style={{
+                              padding: '12px 16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid rgba(255,255,255,0.05)',
+                              transition: 'background 0.2s ease'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <img src={u.avatar || `https://ui-avatars.com/api/?name=${u.fullName}&background=random`} style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
+                            <div>
+                              <div style={{ color: '#fff', fontWeight: '500' }}>{u.fullName}</div>
+                              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>{u.email}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="sap-modal-actions">
                   <button type="submit" className="sap-btn-primary"><Plus size={16} /> Add Member</button>
@@ -406,6 +509,14 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '8px 16px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
                            <img src={m.image} alt={m.name} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
                            <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '600' }}>{m.name}</span>
+                           <button 
+                             type="button"
+                             onClick={() => handleDeleteTeamMember(m.id)}
+                             style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', marginLeft: '4px' }}
+                             title="Remove Member"
+                           >
+                             <Trash2 size={14} />
+                           </button>
                         </div>
                       ))}
                     </div>

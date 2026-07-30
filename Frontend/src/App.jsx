@@ -3,6 +3,7 @@ import DashboardLayout from './features/dashboard/DashboardLayout';
 import SuperAdminLayout from './features/admin/SuperAdminLayout';
 import Preloader from './components/common/Preloader';
 import Login from './components/Login';
+import * as signalR from '@microsoft/signalr';
 import './styles/index.css';
 
 function App() {
@@ -24,6 +25,42 @@ function App() {
       setIsAdmin(true);
     }
   };
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    let userId = null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userId = payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+    } catch (e) {}
+
+    if (!userId) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5024/adminDashboardHub")
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ForceLogout", (blockedUserId) => {
+      if (userId == blockedUserId) {
+        localStorage.clear();
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+        setShowAdminPanel(false);
+        alert("Your account has been blocked by the administrator.");
+      }
+    });
+
+    connection.start().catch(e => console.error("SignalR Global App connection error:", e));
+
+    return () => {
+      connection.stop();
+    };
+  }, [isAuthenticated]);
 
   return (
     <>

@@ -6,6 +6,8 @@ import './SuperAdminUsers.css';
 const SuperAdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('All Roles');
+  const [statusFilter, setStatusFilter] = useState('All Status');
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -118,6 +120,25 @@ const SuperAdminUsers = () => {
     }
   };
 
+  const handleToggleStatus = async (user, e) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5024/api/AdminUsers/${user.id}/toggle-status`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        fetchUsers();
+        if (selectedUser && selectedUser.id === user.id) {
+            setSelectedUser({...selectedUser, status: selectedUser.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE'});
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const openEditModal = (user, e) => {
     e.stopPropagation();
     setSelectedUser(user);
@@ -179,10 +200,15 @@ const SuperAdminUsers = () => {
     setTimeout(() => setCopiedEmail(false), 2000);
   };
 
-  const filteredUsers = users.filter(u => 
-    u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'All Roles' || u.role === roleFilter;
+    const matchesStatus = statusFilter === 'All Status' || 
+                          (statusFilter === 'Active' && u.status === 'ACTIVE') || 
+                          (statusFilter === 'Inactive' && u.status === 'BLOCKED');
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   return (
     <div className="sau-container">
@@ -212,15 +238,15 @@ const SuperAdminUsers = () => {
           />
         </div>
         <div className="sau-filters">
-          <select className="sau-select">
-            <option>All Roles</option>
-            <option>Admin</option>
-            <option>Employee</option>
+          <select className="sau-select" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+            <option value="All Roles">All Roles</option>
+            <option value="Admin">Admin</option>
+            <option value="Employee">Employee</option>
           </select>
-          <select className="sau-select">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Inactive</option>
+          <select className="sau-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
           </select>
         </div>
       </div>
@@ -261,7 +287,12 @@ const SuperAdminUsers = () => {
                   </div>
                 </td>
                 <td>
-                  <span className={`sau-status-badge ${user.status.toLowerCase()}`}>
+                  <span 
+                    className={`sau-status-badge ${user.status.toLowerCase()}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e) => handleToggleStatus(user, e)}
+                    title="Click to toggle status"
+                  >
                     {user.status}
                   </span>
                 </td>
@@ -357,8 +388,12 @@ const SuperAdminUsers = () => {
                       <button className="sap-btn-secondary" onClick={(e) => openEditModal(selectedUser, e)}>
                         <Edit2 size={16} /> Edit Profile
                       </button>
-                      <button className="sap-btn-primary" style={{ background: '#ef4444', color: '#fff', borderColor: '#ef4444' }} onClick={(e) => openDeleteModal(selectedUser, e)}>
-                        <Trash2 size={16} /> Suspend User
+                      <button 
+                        className="sap-btn-primary" 
+                        style={{ background: selectedUser.status === 'ACTIVE' ? '#ef4444' : '#10b981', color: '#fff', borderColor: selectedUser.status === 'ACTIVE' ? '#ef4444' : '#10b981' }} 
+                        onClick={(e) => handleToggleStatus(selectedUser, e)}
+                      >
+                        {selectedUser.status === 'ACTIVE' ? <><Trash2 size={16} /> Block User</> : <><CheckCircle size={16} /> Unblock User</>}
                       </button>
                     </div>
                   </div>
@@ -422,7 +457,8 @@ const SuperAdminUsers = () => {
                   <select 
                     value={formData.department || ''} 
                     onChange={e => setFormData({...formData, department: e.target.value})}
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--sa-border)', color: 'white' }}
+                    className="sau-select"
+                    style={{ width: '100%' }}
                   >
                     <option value="">Select Department...</option>
                     {departments.map((dept, idx) => (
@@ -435,7 +471,8 @@ const SuperAdminUsers = () => {
                   <select 
                     value={formData.designation || ''} 
                     onChange={e => setFormData({...formData, designation: e.target.value})}
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--sa-border)', color: 'white' }}
+                    className="sau-select"
+                    style={{ width: '100%' }}
                   >
                     <option value="">Select Designation...</option>
                     <option value="Software Engineer">Software Engineer</option>

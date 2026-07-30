@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Controllers
 {
@@ -10,10 +11,12 @@ namespace Backend.Controllers
     public class AdminUsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<Backend.Hubs.AdminDashboardHub> _hubContext;
 
-        public AdminUsersController(ApplicationDbContext context)
+        public AdminUsersController(ApplicationDbContext context, IHubContext<Backend.Hubs.AdminDashboardHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -26,8 +29,8 @@ namespace Backend.Controllers
                     u.FullName,
                     u.Email,
                     Role = _context.Admins.Any(a => a.Email == u.Email) ? "Admin" : "Employee",
-                    Status = "Active",
-                    Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random"
+                    Status = u.IsActive ? "ACTIVE" : "BLOCKED",
+                    Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) ? u.ProfilePictureUrl : (!string.IsNullOrEmpty(_context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault()) ? _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault() : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random")
                 })
                 .ToListAsync();
 
@@ -164,7 +167,7 @@ namespace Backend.Controllers
             
             await _context.SaveChangesAsync();
 
-            return Ok(new { user.Id, user.FullName, user.Email, Role = admin != null ? "Admin" : "Employee", Status = "Active", Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.FullName)}&background=random" });
+            return Ok(new { user.Id, user.FullName, user.Email, Role = admin != null ? "Admin" : "Employee", Status = user.IsActive ? "ACTIVE" : "BLOCKED", Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.FullName)}&background=random" });
         }
 
         [HttpDelete("{id}")]
@@ -177,6 +180,24 @@ namespace Backend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "User deleted successfully" });
+        }
+
+        [HttpPut("{id}/toggle-status")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> ToggleUserStatus(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found" });
+
+            user.IsActive = !user.IsActive;
+            await _context.SaveChangesAsync();
+
+            if (!user.IsActive)
+            {
+                await _hubContext.Clients.All.SendAsync("ForceLogout", user.Id);
+            }
+
+            return Ok(new { message = $"User {(user.IsActive ? "unblocked" : "blocked")} successfully" });
         }
 
         [HttpGet("{id}/insights")]
@@ -208,6 +229,15 @@ namespace Backend.Controllers
                     p.Status
                 });
 
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == user.Email);
+            
+            var profileData = new {
+                Designation = admin != null && !string.IsNullOrEmpty(admin.Designation) ? admin.Designation : user.Profile?.Designation,
+                Department = admin != null && !string.IsNullOrEmpty(admin.Department) ? admin.Department : user.Profile?.Department,
+                Location = admin != null && !string.IsNullOrEmpty(admin.Location) ? admin.Location : user.Profile?.Location,
+                Bio = admin != null && !string.IsNullOrEmpty(admin.Bio) ? admin.Bio : user.Profile?.Bio
+            };
+
             return Ok(new
             {
                 TotalProjects = totalProjects,
@@ -216,13 +246,7 @@ namespace Backend.Controllers
                 CompletedTasks = completedTasks,
                 CompletionRate = totalTasks > 0 ? (int)((double)completedTasks / totalTasks * 100) : 0,
                 RecentProjects = recentProjects,
-                Profile = user.Profile != null ? new 
-                {
-                    user.Profile.Designation,
-                    user.Profile.Department,
-                    user.Profile.Location,
-                    user.Profile.Bio
-                } : null
+                Profile = profileData
             });
         }
     }

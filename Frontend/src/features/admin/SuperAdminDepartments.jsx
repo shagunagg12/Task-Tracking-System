@@ -336,17 +336,54 @@ const SuperAdminDepartments = ({ addToast }) => {
               
               <div className="sad-users-list">
                 {dept.users && dept.users.length > 0 ? (
-                  dept.users.map((user) => (
-                    <div key={user.id} className="sad-user-item">
-                      <img src={user.avatar} alt={user.name} className="sad-user-avatar" />
-                      <div className="sad-user-info">
-                        <span className="sad-user-name">{user.name}</span>
-                        <span className="sad-user-role">{user.designation || 'No designation'}</span>
-                      </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px' }}>
+                    <div style={{ display: 'flex', position: 'relative' }}>
+                      {dept.users.slice(0, 4).map((user, index) => (
+                        <img 
+                          key={user.id} 
+                          src={user.avatar} 
+                          alt={user.name} 
+                          style={{ 
+                            width: '36px', 
+                            height: '36px', 
+                            borderRadius: '50%', 
+                            border: '2px solid #1a1a1a', 
+                            marginLeft: index === 0 ? '0' : '-12px',
+                            position: 'relative',
+                            zIndex: 10 - index,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }} 
+                          title={`${user.name} - ${user.designation || 'No designation'}`}
+                        />
+                      ))}
+                      {dept.users.length > 4 && (
+                        <div style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          background: 'rgba(255,255,255,0.1)',
+                          color: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.8rem',
+                          fontWeight: 'bold',
+                          border: '2px solid #1a1a1a',
+                          marginLeft: '-12px',
+                          position: 'relative',
+                          zIndex: 0,
+                          backdropFilter: 'blur(4px)'
+                        }}>
+                          +{dept.users.length - 4}
+                        </div>
+                      )}
                     </div>
-                  ))
+                    <div style={{ marginLeft: '16px', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+                      Click to view {dept.users.length} member{dept.users.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
                 ) : (
-                  <div className="sad-no-users">No personnel assigned to this department yet.</div>
+                  <div className="sad-no-users" style={{ marginTop: '16px', fontSize: '0.9rem' }}>No personnel assigned yet.</div>
                 )}
               </div>
             </div>

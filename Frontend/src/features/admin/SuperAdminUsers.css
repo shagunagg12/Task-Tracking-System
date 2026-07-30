@@ -99,6 +99,11 @@
   border-color: var(--sa-primary);
 }
 
+.sau-select option {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
 /* Table Styles */
 .sau-table-container {
   background: rgba(255, 255, 255, 0.02);

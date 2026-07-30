@@ -88,6 +88,17 @@ namespace Backend.Controllers
             
             // 0. Check SuperAdmins Table First
             var superAdmin = await _context.SuperAdmins.FirstOrDefaultAsync(s => s.Email == dto.Email);
+            
+            // Check if user is blocked
+            if (superAdmin == null)
+            {
+                var checkUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+                if (checkUser != null && !checkUser.IsActive)
+                {
+                    return Unauthorized(new { message = "Your account has been blocked by the administrator." });
+                }
+            }
+
             if (superAdmin != null)
             {
                 if (!BCrypt.Net.BCrypt.Verify(dto.Password, superAdmin.PasswordHash))

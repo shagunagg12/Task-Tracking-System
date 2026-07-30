@@ -4,6 +4,7 @@ using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260729153000_AddCompletedAtToTasks")]
+    partial class AddCompletedAtToTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -584,7 +587,7 @@ namespace Backend.Migrations
                             Id = 1,
                             Email = "connect2rachit882@gmail.com",
                             FullName = "Rachit",
-                            PasswordHash = "$2a$11$JVPMr.sOQs5izpZEhdk4aeUbzJ2pfxBMPNBweXiVK1PF.S9AnhyJ6"
+                            PasswordHash = "$2a$11$qiK9KOfKXKnwICc1e.lgGu83eXW3qYy/HG624sexp3QinFhWqvJBq"
                         });
                 });
 
@@ -612,10 +615,6 @@ namespace Backend.Migrations
 
                     b.Property<string>("GoogleRefreshToken")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("IsActive");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
