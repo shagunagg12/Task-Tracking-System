@@ -107,16 +107,26 @@ const ChatLayout = () => {
 
   useEffect(() => {
     if (connection && connection.state === signalR.HubConnectionState.Disconnected) {
-      connection.start()
-        .then(() => {
-          console.log('Connected to SignalR Chat Hub!');
-          connection.invoke('GetOnlineUsers')
-            .then(users => {
-              setOnlineUsers(new Set(users.map(String)));
-            })
-            .catch(e => console.error('Error fetching online users:', e));
-        })
-        .catch(e => console.log('Connection failed: ', e));
+      const startPromise = connection.start()
+      .then(() => {
+        console.log("Connected to SignalR Chat Hub!");
+        connection.invoke('GetOnlineUsers')
+          .then(users => {
+            setOnlineUsers(new Set(users.map(String)));
+          })
+          .catch(e => console.error('Error fetching online users:', e));
+      })
+      .catch(err => {
+        if (err.name !== 'AbortError' && err.message !== 'The connection was stopped during negotiation.' && !err.message.includes('HttpConnection before stop')) {
+          console.error("SignalR Connection Error: ", err);
+        }
+      });
+
+      return () => {
+        startPromise.then(() => {
+          connection.stop();
+        });
+      };
     }
   }, [connection]);
 
