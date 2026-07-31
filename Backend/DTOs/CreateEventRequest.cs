@@ -18,6 +18,8 @@ namespace Backend.DTOs
         [Required]
         public DateTime EventDate { get; set; }
 
+        public int DurationHours { get; set; } = 1;
+
         public string Location { get; set; } = string.Empty;
 
         public int Points { get; set; } = 10;

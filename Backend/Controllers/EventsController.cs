@@ -39,6 +39,7 @@ namespace Backend.Controllers
             }
 
             var events = await _context.CompanyEvents
+                .Where(e => e.OrganizerId == currentUserId || e.Attendees.Any(a => a.UserId == currentUserId))
                 .Include(e => e.Organizer)
                 .Include(e => e.Attendees)
                     .ThenInclude(a => a.User)
@@ -50,6 +51,7 @@ namespace Backend.Controllers
                     e.Description,
                     e.Type,
                     e.EventDate,
+                    e.DurationHours,
                     e.Location,
                     e.Points,
                     Organizer = string.IsNullOrEmpty(e.Organizer.FullName) ? e.Organizer.Email : e.Organizer.FullName,
@@ -86,6 +88,7 @@ namespace Backend.Controllers
                 Description = request.Description,
                 Type = request.Type,
                 EventDate = request.EventDate,
+                DurationHours = request.DurationHours,
                 Location = request.Location,
                 Points = request.Points,
                 OrganizerId = currentUserId
@@ -205,18 +208,7 @@ namespace Backend.Controllers
             }
             else
             {
-                var attendance = new EventAttendance
-                {
-                    EventId = id,
-                    UserId = currentUserId,
-                    Status = request.Status
-                };
-                _context.EventAttendances.Add(attendance);
-                
-                if (request.Status == "Going")
-                {
-                    profile.SocialPoints += companyEvent.Points;
-                }
+                return BadRequest("You are not invited to this event.");
             }
 
             await _context.SaveChangesAsync();
