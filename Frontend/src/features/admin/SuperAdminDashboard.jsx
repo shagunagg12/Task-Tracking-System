@@ -97,12 +97,16 @@ const SuperAdminDashboard = () => {
       fetchStats();
     });
 
-    connection.start()
-      .then(() => console.log("Connected to Admin Dashboard SignalR Hub"))
-      .catch(err => console.error("SignalR Connection Error: ", err));
+    const startPromise = connection.start().catch(err => {
+      if (err.name !== 'AbortError' && err.message !== 'The connection was stopped during negotiation.' && !err.message.includes('HttpConnection before stop')) {
+        console.error("SignalR Connection Error: ", err);
+      }
+    });
 
     return () => {
-      connection.stop();
+      startPromise.then(() => {
+        connection.stop();
+      });
     };
   }, []);
 

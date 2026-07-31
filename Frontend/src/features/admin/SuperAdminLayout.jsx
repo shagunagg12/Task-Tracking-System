@@ -177,11 +177,17 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
       highestLoadedId = Math.max(highestLoadedId, notifId);
     });
 
-    connection.start()
-      .then(() => console.log("Connected to Admin Dashboard Hub"))
-      .catch(err => console.error("SignalR Connection Error: ", err));
+    const startPromise = connection.start().catch(err => {
+      if (err.name !== 'AbortError' && err.message !== 'The connection was stopped during negotiation.' && !err.message.includes('HttpConnection before stop')) {
+        console.error("SignalR SuperAdmin Connection Error: ", err);
+      }
+    });
 
-    return () => { connection.stop(); };
+    return () => {
+      startPromise.then(() => {
+        connection.stop();
+      });
+    };
   }, []);
 
   // Close notification panel on outside click
