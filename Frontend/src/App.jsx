@@ -55,10 +55,16 @@ function App() {
       }
     });
 
-    connection.start().catch(e => console.error("SignalR Global App connection error:", e));
+    const startPromise = connection.start().catch(e => {
+      if (e.name !== 'AbortError' && e.message !== 'The connection was stopped during negotiation.') {
+        console.error("SignalR Global App connection error:", e);
+      }
+    });
 
     return () => {
-      connection.stop();
+      startPromise.then(() => {
+        connection.stop();
+      });
     };
   }, [isAuthenticated]);
 
