@@ -107,8 +107,23 @@ namespace Backend.Controllers
                     return Unauthorized(new { message = "Invalid email or password." });
                 }
                 
+                var userRecord = await _context.Users.FirstOrDefaultAsync(u => u.Email == superAdmin.Email);
+                if (userRecord == null)
+                {
+                    userRecord = new User
+                    {
+                        FullName = superAdmin.FullName,
+                        Email = superAdmin.Email,
+                        PasswordHash = superAdmin.PasswordHash,
+                        IsActive = true,
+                        ProfilePictureUrl = superAdmin.ProfilePictureUrl
+                    };
+                    _context.Users.Add(userRecord);
+                    await _context.SaveChangesAsync();
+                }
+
                 isSuperAdmin = true;
-                userId = superAdmin.Id;
+                userId = userRecord.Id;
                 userFullName = superAdmin.FullName;
                 userProfilePictureUrl = superAdmin.ProfilePictureUrl ?? "";
             }
@@ -117,27 +132,37 @@ namespace Backend.Controllers
                 // 1. Check Admins Table
                 var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == dto.Email);
                 if (admin != null)
-            {
-                if (!BCrypt.Net.BCrypt.Verify(dto.Password, admin.PasswordHash))
                 {
-                    await LogFailedLogin(dto.Email);
-                    return Unauthorized(new { message = "Invalid email or password." });
-                }
-                
-                if (admin.FullName == "Admin")
-                {
-                    var signupUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == admin.Email);
-                    if (signupUser != null)
+                    if (!BCrypt.Net.BCrypt.Verify(dto.Password, admin.PasswordHash))
                     {
-                        admin.FullName = signupUser.FullName;
+                        await LogFailedLogin(dto.Email);
+                        return Unauthorized(new { message = "Invalid email or password." });
+                    }
+                    
+                    var userRecord = await _context.Users.FirstOrDefaultAsync(u => u.Email == admin.Email);
+                    if (userRecord == null)
+                    {
+                        userRecord = new User
+                        {
+                            FullName = admin.FullName ?? "Admin",
+                            Email = admin.Email,
+                            PasswordHash = admin.PasswordHash,
+                            IsActive = true,
+                            ProfilePictureUrl = admin.ProfilePictureUrl
+                        };
+                        _context.Users.Add(userRecord);
                         await _context.SaveChangesAsync();
                     }
+                    else if (admin.FullName == "Admin" && userRecord.FullName != "Admin")
+                    {
+                        admin.FullName = userRecord.FullName;
+                        await _context.SaveChangesAsync();
+                    }
+                    
+                    isAdmin = true;
+                    userId = userRecord.Id;
+                    userFullName = admin.FullName ?? "Admin";
                 }
-                
-                isAdmin = true;
-                userId = admin.Id;
-                userFullName = admin.FullName ?? "Admin";
-            }
             else
             {
                 // 2. Fallback to normal Users table
