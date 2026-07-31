@@ -279,12 +279,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
           </div>
           
           <div className="sa-topnav-actions">
-            <button className="sa-btn-primary">
-              <Plus size={18} />
-              <span>Create New</span>
-            </button>
-            
-            <div className="sa-nav-divider"></div>
+
             
             <button 
               className="sa-btn-outline" 
