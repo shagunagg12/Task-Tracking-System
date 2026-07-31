@@ -57,6 +57,34 @@ namespace Backend.Controllers
                 })
                 .ToListAsync();
 
+            var allAdmins = await _context.Admins.ToListAsync();
+            var allUsers = users.ToList(); // Since we already queried all users above
+            // To fetch all users with pictures properly, let's just query db directly:
+            var allUsersWithPics = await _context.Users.ToListAsync();
+
+            foreach (var u in users)
+            {
+                foreach (var p in u.Projects)
+                {
+                    foreach (var tm in p.TeamMembers)
+                    {
+                        var actualUser = allUsersWithPics.FirstOrDefault(x => x.FullName == tm.Name);
+                        if (actualUser != null && !string.IsNullOrEmpty(actualUser.ProfilePictureUrl))
+                        {
+                            tm.Image = actualUser.ProfilePictureUrl;
+                        }
+                        else
+                        {
+                            var admin = allAdmins.FirstOrDefault(x => x.FullName == tm.Name);
+                            if (admin != null && !string.IsNullOrEmpty(admin.ProfilePictureUrl))
+                            {
+                                tm.Image = admin.ProfilePictureUrl;
+                            }
+                        }
+                    }
+                }
+            }
+
             return Ok(users);
         }
 
