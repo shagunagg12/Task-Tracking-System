@@ -212,10 +212,16 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
       }
     });
 
-    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+    const startPromise = connection.start().catch(err => {
+      if (err.name !== 'AbortError' && err.message !== 'The connection was stopped during negotiation.' && !err.message.includes('HttpConnection before stop')) {
+        console.error("SignalR Connection Error: ", err);
+      }
+    });
 
     return () => {
-      connection.stop();
+      startPromise.then(() => {
+        connection.stop();
+      });
     };
   }, [userProfileData]);
 
@@ -224,7 +230,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
     localStorage.setItem('lastActiveMenu', activeMenu);
   }, [activeMenu]);
   const [isBrightTheme, setIsBrightTheme] = useState(false);
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
 
   const toggleTheme = () => {
@@ -418,7 +424,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           {activeMenu === 'Profile' ? (
             <ProfileSettings />
           ) : activeMenu === 'Standings' ? (
-            <StandingsLayout />
+            <StandingsLayout setActiveMenu={setActiveMenu} />
           ) : activeMenu === 'Projects' ? (
             <AssignedProjects />
           ) : activeMenu === 'Report' ? (

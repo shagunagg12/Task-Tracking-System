@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './StandingsLayout.css';
 
-const StandingsLayout = () => {
+const StandingsLayout = ({ setActiveMenu }) => {
   const [activeTab, setActiveTab] = useState('social');
   const [socialSubTab, setSocialSubTab] = useState('dashboard');
   const [myDashboard, setMyDashboard] = useState(null);
@@ -14,6 +14,7 @@ const StandingsLayout = () => {
     description: '',
     type: 'Dinner',
     eventDate: '',
+    durationHours: 1,
     location: '',
     points: 10,
     invitedUserIds: []
@@ -325,7 +326,7 @@ const StandingsLayout = () => {
                 <h3><span className="icon">📅</span> Upcoming Events</h3>
                 <div className="header-actions">
                   <button className="create-event-btn gradient-btn" onClick={() => setShowEventModal(true)}>+ New</button>
-                  <button className="view-all-btn" onClick={() => showNotification('Coming soon!', 'success')}>View calendar</button>
+                  <button className="view-all-btn" onClick={() => setActiveMenu && setActiveMenu('Calendar')}>View calendar</button>
                 </div>
               </div>
               <div className="events-list-new">
@@ -554,6 +555,17 @@ const StandingsLayout = () => {
                   <div className="form-group">
                     <label>Date & Time</label>
                     <input type="datetime-local" required value={newEvent.eventDate} onChange={e => setNewEvent({...newEvent, eventDate: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label>Duration</label>
+                    <select required value={newEvent.durationHours} onChange={e => setNewEvent({...newEvent, durationHours: parseInt(e.target.value)})}>
+                      <option value={1}>1 Hour</option>
+                      <option value={2}>2 Hours</option>
+                      <option value={3}>3 Hours</option>
+                      <option value={4}>4 Hours</option>
+                      <option value={5}>5 Hours</option>
+                      <option value={8}>8 Hours (All day)</option>
+                    </select>
                   </div>
                   <div className="form-group">
                     <label>Location</label>
