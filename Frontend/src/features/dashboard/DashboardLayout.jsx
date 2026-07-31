@@ -173,7 +173,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             });
             if (membersRes.ok) {
               const membersData = await membersRes.json();
-              setTeamMembers(membersData);
+              setTeamMembers(membersData.filter(m => m.id !== data.id));
             }
           } catch(err) {
             console.error(err);
