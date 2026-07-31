@@ -55,6 +55,29 @@ namespace Backend.Controllers
                 .Where(p => p.UserId == actualUserId || p.TeamMembers.Any(tm => tm.UserId == actualUserId))
                 .ToListAsync();
 
+            var allUsers = await _context.Users.ToListAsync();
+            var allAdmins = await _context.Admins.ToListAsync();
+
+            foreach (var p in projects)
+            {
+                foreach (var tm in p.TeamMembers)
+                {
+                    var u = allUsers.FirstOrDefault(x => x.FullName == tm.Name);
+                    if (u != null && !string.IsNullOrEmpty(u.ProfilePictureUrl))
+                    {
+                        tm.Image = u.ProfilePictureUrl;
+                    }
+                    else
+                    {
+                        var a = allAdmins.FirstOrDefault(x => x.FullName == tm.Name);
+                        if (a != null && !string.IsNullOrEmpty(a.ProfilePictureUrl))
+                        {
+                            tm.Image = a.ProfilePictureUrl;
+                        }
+                    }
+                }
+            }
+
             return Ok(projects);
         }
 
