@@ -38,9 +38,10 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
             {
-                var admin = await _context.Admins.FindAsync(userId);
+                var email = User.FindFirstValue(ClaimTypes.Email);
+                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
                 if (admin == null) return NotFound("Admin not found.");
 
                 if (admin.FullName == "Admin")
@@ -101,9 +102,10 @@ namespace Backend.Controllers
 
             string userDepartment = "";
 
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
             {
-                var admin = await _context.Admins.FindAsync(userId);
+                var email = User.FindFirstValue(ClaimTypes.Email);
+                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
                 if (admin == null) return NotFound();
                 userDepartment = admin.Department;
             }
@@ -158,9 +160,10 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
             {
-                var admin = await _context.Admins.FindAsync(userId);
+                var email = User.FindFirstValue(ClaimTypes.Email);
+                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
                 if (admin == null) return NotFound("Admin not found.");
 
                 admin.FullName = dto.FullName;
@@ -242,9 +245,10 @@ namespace Backend.Controllers
                 return StatusCode(500, $"Cloudinary upload failed: {uploadResult.Error.Message}");
             }
 
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
             {
-                var admin = await _context.Admins.FindAsync(userId);
+                var email = User.FindFirstValue(ClaimTypes.Email);
+                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
                 if (admin == null) return NotFound("Admin not found.");
 
                 admin.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
