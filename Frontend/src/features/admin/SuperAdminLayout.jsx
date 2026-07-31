@@ -118,7 +118,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
   addToastRef.current = addToast;
 
   useEffect(() => {
-    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isDevelopment = import.meta.env.DEV;
     const backendUrl = isDevelopment ? 'http://localhost:5024' : window.location.origin;
 
     // Track the highest ID already loaded from DB — don't toast these
