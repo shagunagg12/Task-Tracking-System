@@ -15,21 +15,45 @@ const Calendar = () => {
   const [meetings, setMeetings] = useState([]);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
 
-  const fetchMeetings = async () => {
+  const fetchCalendarData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5024/api/meetings', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Fetched meetings:", data);
-        setMeetings(data);
-      } else {
-        console.error("Failed to fetch meetings, status:", response.status);
+      
+      const [meetingsRes, eventsRes] = await Promise.all([
+        fetch('http://localhost:5024/api/meetings', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('http://localhost:5024/api/events', { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+
+      let allItems = [];
+
+      if (meetingsRes.ok) {
+        const data = await meetingsRes.json();
+        const mappedMeetings = data.map(m => ({ ...m, itemType: 'meeting' }));
+        allItems = [...allItems, ...mappedMeetings];
       }
+
+      if (eventsRes.ok) {
+        const eventsData = await eventsRes.json();
+        const mappedEvents = eventsData.map(e => {
+          const start = new Date(e.eventDate);
+          const end = new Date(start);
+          end.setHours(end.getHours() + (e.durationHours || 1));
+          return {
+            id: `event_${e.id}`, // prefix to avoid collision
+            title: e.title,
+            brief: e.description,
+            startTime: start.toISOString(),
+            endTime: end.toISOString(),
+            itemType: 'event',
+            location: e.location
+          };
+        });
+        allItems = [...allItems, ...mappedEvents];
+      }
+
+      setMeetings(allItems);
     } catch (error) {
-      console.error("Failed to fetch meetings:", error);
+      console.error("Failed to fetch calendar data:", error);
     }
   };
 
@@ -59,7 +83,7 @@ const Calendar = () => {
     };
     
     setDays(getWeekDays(currentDate));
-    fetchMeetings();
+    fetchCalendarData();
     
     // Check Google Connection Status
     const checkGoogleStatus = async () => {
@@ -107,7 +131,7 @@ const Calendar = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedSlot(null);
-    fetchMeetings();
+    fetchCalendarData();
   };
 
   const handleNextWeek = () => {
@@ -157,7 +181,7 @@ const Calendar = () => {
       
       // Calculate top percentage. Each row is 1 hour.
       if (hour >= startHour && hour <= endHour) {
-         const rowIndex = hour - startHour;
+         const rowIndex = hour;
          const totalMinutes = (endHour - startHour + 1) * 60;
          const elapsedMinutes = (rowIndex * 60) + minutes;
          setCurrentTimeLine((elapsedMinutes / totalMinutes) * 100);
@@ -166,6 +190,52 @@ const Calendar = () => {
     
     updateTimeLine();
   }, []);
+
+  const meetingsWithLayout = React.useMemo(() => {
+    // Group meetings by dayIndex
+    const layoutInfo = {};
+    const grouped = {};
+    
+    meetings.forEach(meeting => {
+      const start = new Date(meeting.startTime);
+      const dayIndex = days.findIndex(d => d.date === start.getDate() && d.fullDate.getMonth() === start.getMonth());
+      if (dayIndex === -1) return;
+      if (!grouped[dayIndex]) grouped[dayIndex] = [];
+      grouped[dayIndex].push(meeting);
+    });
+
+    Object.keys(grouped).forEach(dayIndex => {
+      let dailyMeetings = grouped[dayIndex];
+      // Sort by start time
+      dailyMeetings.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      
+      let columns = [];
+      dailyMeetings.forEach(meeting => {
+        let placed = false;
+        for (let i = 0; i < columns.length; i++) {
+          let column = columns[i];
+          let lastMeetingInColumn = column[column.length - 1];
+          if (new Date(lastMeetingInColumn.endTime) <= new Date(meeting.startTime)) {
+            column.push(meeting);
+            layoutInfo[meeting.id] = { column: i };
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          columns.push([meeting]);
+          layoutInfo[meeting.id] = { column: columns.length - 1 };
+        }
+      });
+      
+      // Update max columns for width calculation
+      dailyMeetings.forEach(meeting => {
+        layoutInfo[meeting.id].totalColumns = columns.length;
+      });
+    });
+    
+    return layoutInfo;
+  }, [meetings, days]);
 
   return (
     <div className="teams-calendar-container">
@@ -176,10 +246,12 @@ const Calendar = () => {
           <h2>Calendar</h2>
         </div>
         <div className="calendar-header-right">
-          {!isGoogleConnected && (
-            <button className="btn-secondary" onClick={handleConnectGoogle}>
+          {!isGoogleConnected ? (
+            <button className="btn-connect-google" onClick={handleConnectGoogle}>
               🔗 Connect Google Calendar
             </button>
+          ) : (
+            <div className="google-connected-badge">✓ Google Calendar Connected</div>
           )}
           <button className="btn-primary" onClick={() => setIsModalOpen(true)}><span className="icon-plus">+</span> New meeting</button>
         </div>
@@ -192,11 +264,11 @@ const Calendar = () => {
             <span className="icon-calendar">📅</span> Today
           </button>
           <div className="nav-arrows">
-            <button className="nav-btn" onClick={handlePrevWeek}>‹</button>
-            <button className="nav-btn" onClick={handleNextWeek}>›</button>
-          </div>
-          <div className="current-month-year">
-            {currentMonthName} {currentYear} <span className="chevron-down">⌄</span>
+            <button className="nav-btn" onClick={handlePrevWeek}>&lt;</button>
+            <button className="nav-btn" onClick={handleNextWeek}>&gt;</button>
+            <span className="current-month-year">
+              {currentMonthName} {currentYear}
+            </span>
           </div>
         </div>
         <div className="toolbar-right">
@@ -266,8 +338,6 @@ const Calendar = () => {
             const isPast = end < now;
             
             // Check if meeting is in the current week view
-            const meetingDayId = start.getDay() || 7; // Convert 0 (Sun) to 7 or just map correctly
-            // Actually, we mapped days in getWeekDays. Let's find the matching day index
             const dayIndex = days.findIndex(d => d.date === start.getDate() && d.fullDate.getMonth() === start.getMonth());
             
             if (dayIndex === -1) return null; // Meeting is not in this week's view
@@ -278,17 +348,23 @@ const Calendar = () => {
             const endM = end.getMinutes();
 
             // Calculate position
-            // top = 90px (header) + (hour - 1) * 80px + (min / 60) * 80px
-            const topOffset = 90 + (startH - 1) * 80 + (startM / 60) * 80;
+            // top = 90px (header) + hour * 80px + (min / 60) * 80px
+            const topOffset = 90 + startH * 80 + (startM / 60) * 80;
             
             // height = duration in mins / 60 * 80px (minimum 40px to ensure visibility)
             let durationMins = (end - start) / (1000 * 60);
             if (durationMins <= 0 || isNaN(durationMins)) durationMins = 30; // Default to 30 mins if invalid or 0
             const height = Math.max((durationMins / 60) * 80, 40);
 
-            // left = 70px (time col) + (dayIndex * (100% - 70px) / 7)
-            const leftCalc = `calc(70px + ((100% - 70px) / 7) * ${dayIndex})`;
-            const widthCalc = `calc((100% - 70px) / 7 - 10px)`;
+            // Fetch layout logic
+            const layout = meetingsWithLayout[meeting.id] || { column: 0, totalColumns: 1 };
+            
+            // Base left for the column
+            const colWidth = `((100% - 70px) / 7)`;
+            
+            // Adjust left and width for overlap
+            const leftCalc = `calc(70px + (${colWidth} * ${dayIndex}) + ((${colWidth}) / ${layout.totalColumns}) * ${layout.column})`;
+            const widthCalc = `calc(${colWidth} / ${layout.totalColumns} - 2px)`; // 2px margin
 
             let blockStyle = {
               top: `${topOffset}px`,
@@ -308,7 +384,8 @@ const Calendar = () => {
                 { border: '#ffeb3b', bg: 'rgba(255, 235, 59, 0.15)', text: '#fff59d' },
                 { border: '#7986cb', bg: 'rgba(121, 134, 203, 0.15)', text: '#c5cae9' }
               ];
-              const colorIndex = meeting.id % meetingColors.length;
+              const numericId = parseInt(String(meeting.id).replace(/\D/g, '')) || 0;
+              const colorIndex = numericId % meetingColors.length;
               const theme = meetingColors[colorIndex];
               blockStyle.border = `1px solid ${theme.border}80`; // 80 adds some transparency to the thin border
               blockStyle.borderLeft = `4px solid ${theme.border}`;
