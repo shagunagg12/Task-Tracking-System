@@ -148,7 +148,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     const fetchAdminProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${backendUrl}/api/AdminSettings/my-profile`, {
+        const res = await fetch(`${backendUrl}/api/profile`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
