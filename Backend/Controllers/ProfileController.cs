@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Backend.Data;
-using Backend.Models;
+using Backend.DTOs;
+using Backend.Interfaces;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
+using System;
 
 namespace Backend.Controllers
 {
@@ -12,21 +15,11 @@ namespace Backend.Controllers
     [Route("api/[controller]")]
     public class ProfileController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IProfileService _profileService;
 
-        public ProfileController(ApplicationDbContext context)
+        public ProfileController(IProfileService profileService)
         {
-            _context = context;
-        }
-
-        public class UpdateProfileDto
-        {
-            public string FullName { get; set; } = string.Empty;
-            public string Email { get; set; } = string.Empty;
-            public string Designation { get; set; } = string.Empty;
-            public string Department { get; set; } = string.Empty;
-            public string Location { get; set; } = string.Empty;
-            public string Bio { get; set; } = string.Empty;
+            _profileService = profileService;
         }
 
         [HttpGet]
@@ -38,57 +31,15 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            try
             {
-                var email = User.FindFirstValue(ClaimTypes.Email);
-                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
-                if (admin == null) return NotFound("Admin not found.");
-
-                if (admin.FullName == "Admin")
-                {
-                    var signupUser = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Email == admin.Email);
-                    if (signupUser != null)
-                    {
-                        admin.FullName = signupUser.FullName;
-                        if (string.IsNullOrEmpty(admin.ProfilePictureUrl)) admin.ProfilePictureUrl = signupUser.ProfilePictureUrl;
-                        if (signupUser.Profile != null)
-                        {
-                            if (string.IsNullOrEmpty(admin.Designation)) admin.Designation = signupUser.Profile.Designation;
-                            if (string.IsNullOrEmpty(admin.Department)) admin.Department = signupUser.Profile.Department;
-                            if (string.IsNullOrEmpty(admin.Location)) admin.Location = signupUser.Profile.Location;
-                            if (string.IsNullOrEmpty(admin.Bio)) admin.Bio = signupUser.Profile.Bio;
-                        }
-                        await _context.SaveChangesAsync();
-                    }
-                }
-
-                return Ok(new
-                {
-                    Id = admin.Id,
-                    FullName = admin.FullName,
-                    admin.Email,
-                    ProfilePictureUrl = admin.ProfilePictureUrl,
-                    Designation = admin.Designation,
-                    Department = admin.Department,
-                    Location = admin.Location,
-                    Bio = admin.Bio
-                });
+                var result = await _profileService.GetProfileAsync(User, userId);
+                return Ok(result);
             }
-
-            var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null) return NotFound("User not found.");
-
-            return Ok(new
+            catch (KeyNotFoundException ex)
             {
-                Id = user.Id,
-                user.FullName,
-                user.Email,
-                ProfilePictureUrl = user.ProfilePictureUrl ?? "",
-                Designation = user.Profile?.Designation ?? "",
-                Department = user.Profile?.Department ?? "",
-                Location = user.Profile?.Location ?? "",
-                Bio = user.Profile?.Bio ?? ""
-            });
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpGet("department-members")]
@@ -100,55 +51,15 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            string userDepartment = "";
-
-            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            try
             {
-                var email = User.FindFirstValue(ClaimTypes.Email);
-                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
-                if (admin == null) return NotFound();
-                userDepartment = admin.Department;
+                var result = await _profileService.GetDepartmentMembersAsync(User, userId);
+                return Ok(result);
             }
-            else
+            catch (KeyNotFoundException)
             {
-                var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
-                if (user == null) return NotFound();
-                userDepartment = user.Profile?.Department ?? "";
+                return NotFound();
             }
-
-            if (string.IsNullOrEmpty(userDepartment))
-            {
-                return Ok(new List<object>());
-            }
-
-            var membersQuery = await _context.Users
-                .Include(u => u.Profile)
-                .Where(u => u.Profile != null && u.Profile.Department == userDepartment && u.Id != userId)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.FullName,
-                    u.Email,
-                    Designation = u.Profile != null ? u.Profile.Designation : "",
-                    u.ProfilePictureUrl,
-                    AdminAvatar = _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault()
-                })
-                .ToListAsync();
-
-            var members = membersQuery.Select(u => new
-            {
-                u.Id,
-                Name = u.FullName,
-                Email = u.Email,
-                Designation = u.Designation,
-                Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) 
-                    ? u.ProfilePictureUrl 
-                    : (!string.IsNullOrEmpty(u.AdminAvatar) 
-                        ? u.AdminAvatar 
-                        : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName ?? "")}&background=random")
-            }).ToList();
-
-            return Ok(members);
         }
 
         [HttpPut]
@@ -160,55 +71,17 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            try
             {
-                var email = User.FindFirstValue(ClaimTypes.Email);
-                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
-                if (admin == null) return NotFound("Admin not found.");
-
-                admin.FullName = dto.FullName;
-                admin.Email = dto.Email;
-                admin.Designation = dto.Designation;
-                admin.Department = dto.Department;
-                admin.Location = dto.Location;
-                admin.Bio = dto.Bio;
-                
-                var adminUser = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Email == admin.Email);
-                if (adminUser != null)
-                {
-                    adminUser.FullName = dto.FullName;
-                    adminUser.Email = dto.Email;
-                    if (adminUser.Profile == null) adminUser.Profile = new UserProfile();
-                    adminUser.Profile.Designation = dto.Designation;
-                    adminUser.Profile.Department = dto.Department;
-                    adminUser.Profile.Location = dto.Location;
-                    adminUser.Profile.Bio = dto.Bio;
-                }
-
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Admin profile updated successfully!" });
+                var result = await _profileService.UpdateProfileAsync(User, userId, dto);
+                return Ok(result);
             }
-
-            var user = await _context.Users.Include(u => u.Profile).FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null) return NotFound("User not found.");
-
-            user.FullName = dto.FullName;
-            user.Email = dto.Email;
-
-            if (user.Profile == null) 
+            catch (KeyNotFoundException ex)
             {
-                user.Profile = new UserProfile();
+                return NotFound(ex.Message);
             }
-
-            user.Profile.Designation = dto.Designation;
-            user.Profile.Department = dto.Department;
-            user.Profile.Location = dto.Location;
-            user.Profile.Bio = dto.Bio;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Profile updated successfully!" });
         }
+
         [HttpPost("picture")]
         public async Task<IActionResult> UploadProfilePicture(IFormFile file)
         {
@@ -218,53 +91,22 @@ namespace Backend.Controllers
                 return Unauthorized();
             }
 
-            if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
-
-            var cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
-            var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
-            var apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
-
-            if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
+            try
             {
-                return StatusCode(500, "Cloudinary configuration is missing.");
+                var result = await _profileService.UploadProfilePictureAsync(User, userId, file);
+                return Ok(result);
             }
-
-            var account = new CloudinaryDotNet.Account(cloudName, apiKey, apiSecret);
-            var cloudinary = new CloudinaryDotNet.Cloudinary(account);
-
-            var uploadParams = new CloudinaryDotNet.Actions.ImageUploadParams()
+            catch (ArgumentException ex)
             {
-                File = new CloudinaryDotNet.FileDescription(file.FileName, file.OpenReadStream()),
-                Transformation = new CloudinaryDotNet.Transformation().Width(500).Height(500).Crop("fill").Gravity("face")
-            };
-
-            var uploadResult = await cloudinary.UploadAsync(uploadParams);
-
-            if (uploadResult.Error != null)
-            {
-                return StatusCode(500, $"Cloudinary upload failed: {uploadResult.Error.Message}");
+                return BadRequest(ex.Message);
             }
-
-            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            catch (InvalidOperationException ex)
             {
-                var email = User.FindFirstValue(ClaimTypes.Email);
-                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
-                if (admin == null) return NotFound("Admin not found.");
-
-                admin.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
-                await _context.SaveChangesAsync();
-
-                return Ok(new { url = admin.ProfilePictureUrl });
+                return StatusCode(500, ex.Message);
             }
-            else
+            catch (KeyNotFoundException ex)
             {
-                var user = await _context.Users.FindAsync(userId);
-                if (user == null) return NotFound("User not found.");
-
-                user.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
-                await _context.SaveChangesAsync();
-
-                return Ok(new { url = user.ProfilePictureUrl });
+                return NotFound(ex.Message);
             }
         }
     }

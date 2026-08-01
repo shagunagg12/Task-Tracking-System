@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Backend.Data;
 using Backend.Models;
-using Microsoft.AspNetCore.Authorization;
-using System.Linq;
+using Backend.Interfaces;
+using System.Threading.Tasks;
+using System;
 
 namespace Backend.Controllers
 {
@@ -11,76 +10,57 @@ namespace Backend.Controllers
     [ApiController]
     public class DepartmentsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDepartmentsService _departmentsService;
 
-        public DepartmentsController(ApplicationDbContext context)
+        public DepartmentsController(IDepartmentsService departmentsService)
         {
-            _context = context;
+            _departmentsService = departmentsService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetDepartments()
         {
-            var departments = await _context.Departments.ToListAsync();
-            return Ok(departments);
+            try
+            {
+                var result = await _departmentsService.GetDepartmentsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpGet("with-users")]
         public async Task<IActionResult> GetDepartmentsWithUsers()
         {
-            var departments = await _context.Departments.ToListAsync();
-            
-            var users = await _context.Users
-                .Include(u => u.Profile)
-                .ToListAsync();
-                
-            var admins = await _context.Admins.ToListAsync();
-
-            var result = departments.Select(d => new
+            try
             {
-                Id = d.Id,
-                Name = d.Name,
-                Users = users.Where(u => u.Profile != null && string.Equals(u.Profile.Department, d.Name, StringComparison.OrdinalIgnoreCase))
-                    .Select(u => 
-                    {
-                        var adminAvatar = admins.FirstOrDefault(a => a.Email == u.Email)?.ProfilePictureUrl;
-                        return new 
-                        {
-                            Id = u.Id,
-                            Name = u.FullName,
-                            Email = u.Email,
-                            Designation = u.Profile?.Designation,
-                            Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) 
-                                ? u.ProfilePictureUrl 
-                                : (!string.IsNullOrEmpty(adminAvatar)
-                                    ? adminAvatar
-                                    : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName ?? "")}&background=random")
-                        };
-                    }).ToList()
-            }).ToList();
-
-            return Ok(result);
+                var result = await _departmentsService.GetDepartmentsWithUsersAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateDepartment([FromBody] Department model)
         {
-            if (string.IsNullOrWhiteSpace(model.Name))
+            try
             {
-                return BadRequest(new { message = "Department name is required" });
+                var result = await _departmentsService.CreateDepartmentAsync(model);
+                return Ok(result);
             }
-
-            var exists = await _context.Departments.AnyAsync(d => d.Name.ToLower() == model.Name.ToLower());
-            if (exists)
+            catch (ArgumentException ex)
             {
-                return BadRequest(new { message = "Department already exists" });
+                return BadRequest(new { message = ex.Message });
             }
-
-            var newDept = new Department { Name = model.Name };
-            _context.Departments.Add(newDept);
-            await _context.SaveChangesAsync();
-
-            return Ok(newDept);
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }
