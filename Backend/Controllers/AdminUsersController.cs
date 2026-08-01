@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Backend.Data;
-using Backend.Models;
-using Microsoft.AspNetCore.SignalR;
+using Backend.DTOs;
+using Backend.Interfaces;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
 
 namespace Backend.Controllers
 {
@@ -10,30 +11,17 @@ namespace Backend.Controllers
     [ApiController]
     public class AdminUsersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IHubContext<Backend.Hubs.AdminDashboardHub> _hubContext;
+        private readonly IAdminUsersService _adminUsersService;
 
-        public AdminUsersController(ApplicationDbContext context, IHubContext<Backend.Hubs.AdminDashboardHub> hubContext)
+        public AdminUsersController(IAdminUsersService adminUsersService)
         {
-            _context = context;
-            _hubContext = hubContext;
+            _adminUsersService = adminUsersService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users
-                .Select(u => new
-                {
-                    u.Id,
-                    u.FullName,
-                    u.Email,
-                    Role = _context.Admins.Any(a => a.Email == u.Email) ? "Admin" : "Employee",
-                    Status = u.IsActive ? "ACTIVE" : "BLOCKED",
-                    Avatar = !string.IsNullOrEmpty(u.ProfilePictureUrl) ? u.ProfilePictureUrl : (!string.IsNullOrEmpty(_context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault()) ? _context.Admins.Where(a => a.Email == u.Email).Select(a => a.ProfilePictureUrl).FirstOrDefault() : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(u.FullName)}&background=random")
-                })
-                .ToListAsync();
-
+            var users = await _adminUsersService.GetUsersAsync();
             return Ok(users);
         }
 
@@ -41,144 +29,77 @@ namespace Backend.Controllers
         [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> PromoteToAdmin(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound(new { message = "User not found" });
-
-            if (await _context.Admins.AnyAsync(a => a.Email == user.Email))
+            try
             {
-                return BadRequest(new { message = "User is already an Admin" });
+                await _adminUsersService.PromoteToAdminAsync(id);
+                return Ok(new { message = "User successfully promoted to Admin" });
             }
-
-            var newAdmin = new Admin
+            catch (KeyNotFoundException ex)
             {
-                Email = user.Email,
-                FullName = user.FullName,
-                PasswordHash = user.PasswordHash,
-                Designation = "Admin",
-                Department = "Management",
-                Location = "",
-                Bio = "System Administrator",
-                ProfilePictureUrl = user.ProfilePictureUrl
-            };
-
-            _context.Admins.Add(newAdmin);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "User successfully promoted to Admin" });
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{id}/demote")]
         [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> DemoteFromAdmin(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound(new { message = "User not found" });
-
-            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == user.Email);
-            if (admin == null)
+            try
             {
-                return BadRequest(new { message = "User is not an Admin" });
+                await _adminUsersService.DemoteFromAdminAsync(id);
+                return Ok(new { message = "User successfully demoted to Employee" });
             }
-
-            _context.Admins.Remove(admin);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "User successfully demoted to Employee" });
-        }
-
-        public class CreateUserDto
-        {
-            public string FullName { get; set; } = string.Empty;
-            public string Email { get; set; } = string.Empty;
-            public string Password { get; set; } = string.Empty;
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+            try
             {
-                return BadRequest("Email already exists");
+                var result = await _adminUsersService.CreateUserAsync(dto);
+                return Ok(result);
             }
-
-            var user = new User
+            catch (InvalidOperationException ex)
             {
-                FullName = dto.FullName,
-                Email = dto.Email,
-                // In a real app, hash this.
-                PasswordHash = dto.Password
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            var profile = new UserProfile
-            {
-                UserId = user.Id,
-                Designation = "Employee",
-                Bio = "New team member",
-                Department = "",
-                Location = ""
-            };
-            _context.Profiles.Add(profile);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { user.Id, user.FullName, user.Email, Role = "Employee", Status = "Active", Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.FullName)}&background=random" });
-        }
-
-        public class UpdateUserDto
-        {
-            public string FullName { get; set; } = string.Empty;
-            public string Email { get; set; } = string.Empty;
-            public string Department { get; set; } = string.Empty;
-            public string Designation { get; set; } = string.Empty;
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound("User not found");
-
-            // check email conflict
-            if (await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != id))
+            try
             {
-                return BadRequest("Email already exists");
+                var result = await _adminUsersService.UpdateUserAsync(id, dto);
+                return Ok(result);
             }
-
-            user.FullName = dto.FullName;
-            user.Email = dto.Email;
-            
-            var profile = await _context.Profiles.FirstOrDefaultAsync(p => p.UserId == id);
-            if (profile != null)
+            catch (KeyNotFoundException ex)
             {
-                if (!string.IsNullOrEmpty(dto.Department)) profile.Department = dto.Department;
-                if (!string.IsNullOrEmpty(dto.Designation)) profile.Designation = dto.Designation;
+                return NotFound(ex.Message);
             }
-            
-            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == user.Email);
-            if (admin != null)
+            catch (InvalidOperationException ex)
             {
-                admin.FullName = dto.FullName;
-                admin.Email = dto.Email;
-                if (!string.IsNullOrEmpty(dto.Department)) admin.Department = dto.Department;
-                if (!string.IsNullOrEmpty(dto.Designation)) admin.Designation = dto.Designation;
+                return BadRequest(ex.Message);
             }
-            
-            await _context.SaveChangesAsync();
-
-            return Ok(new { user.Id, user.FullName, user.Email, Role = admin != null ? "Admin" : "Employee", Status = user.IsActive ? "ACTIVE" : "BLOCKED", Avatar = $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.FullName)}&background=random" });
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
+            var success = await _adminUsersService.DeleteUserAsync(id);
+            if (!success) return NotFound();
             return Ok(new { message = "User deleted successfully" });
         }
 
@@ -186,68 +107,29 @@ namespace Backend.Controllers
         [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> ToggleUserStatus(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound(new { message = "User not found" });
-
-            user.IsActive = !user.IsActive;
-            await _context.SaveChangesAsync();
-
-            if (!user.IsActive)
+            try
             {
-                await _hubContext.Clients.All.SendAsync("ForceLogout", user.Id);
+                var result = await _adminUsersService.ToggleUserStatusAsync(id);
+                return Ok(result);
             }
-
-            return Ok(new { message = $"User {(user.IsActive ? "unblocked" : "blocked")} successfully" });
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         [HttpGet("{id}/insights")]
         public async Task<IActionResult> GetUserInsights(int id)
         {
-            var user = await _context.Users
-                .Include(u => u.Projects)
-                    .ThenInclude(p => p.Tasks)
-                .Include(u => u.Profile)
-                .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user == null) return NotFound("User not found");
-
-            // Compute insights
-            var totalProjects = user.Projects.Count;
-            var activeProjects = user.Projects.Count(p => p.Status != "Completed");
-            
-            var allTasks = user.Projects.SelectMany(p => p.Tasks).ToList();
-            var totalTasks = allTasks.Count;
-            var completedTasks = allTasks.Count(t => t.Status == "Completed" || t.Status == "Done");
-
-            var recentProjects = user.Projects
-                .OrderByDescending(p => p.Id)
-                .Take(3)
-                .Select(p => new
-                {
-                    p.Id,
-                    p.Name,
-                    p.Status
-                });
-
-            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == user.Email);
-            
-            var profileData = new {
-                Designation = admin != null && !string.IsNullOrEmpty(admin.Designation) ? admin.Designation : user.Profile?.Designation,
-                Department = admin != null && !string.IsNullOrEmpty(admin.Department) ? admin.Department : user.Profile?.Department,
-                Location = admin != null && !string.IsNullOrEmpty(admin.Location) ? admin.Location : user.Profile?.Location,
-                Bio = admin != null && !string.IsNullOrEmpty(admin.Bio) ? admin.Bio : user.Profile?.Bio
-            };
-
-            return Ok(new
+            try
             {
-                TotalProjects = totalProjects,
-                ActiveProjects = activeProjects,
-                TotalTasks = totalTasks,
-                CompletedTasks = completedTasks,
-                CompletionRate = totalTasks > 0 ? (int)((double)completedTasks / totalTasks * 100) : 0,
-                RecentProjects = recentProjects,
-                Profile = profileData
-            });
+                var result = await _adminUsersService.GetUserInsightsAsync(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
