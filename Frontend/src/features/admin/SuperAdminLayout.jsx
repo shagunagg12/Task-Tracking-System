@@ -119,7 +119,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
 
   useEffect(() => {
     const isDevelopment = import.meta.env.DEV;
-    const backendUrl = isDevelopment ? 'http://localhost:5024' : window.location.origin;
+    const backendUrl = isDevelopment ? (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5024') : window.location.origin;
 
     // Track the highest ID already loaded from DB — don't toast these
     let highestLoadedId = 0;

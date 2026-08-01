@@ -75,7 +75,7 @@ const SuperAdminProjects = () => {
     if (!projectToDelete) return;
     
     try {
-      const response = await fetch(`http://localhost:5024/api/AdminProjects/${projectToDelete}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${projectToDelete}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -145,7 +145,7 @@ const SuperAdminProjects = () => {
     if (!newTask.title.trim() || !activeProjectId) return;
 
     try {
-      const response = await fetch(`http://localhost:5024/api/AdminProjects/${activeProjectId}/tasks`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${activeProjectId}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newTask)

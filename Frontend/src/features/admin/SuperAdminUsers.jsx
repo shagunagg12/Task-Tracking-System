@@ -79,7 +79,7 @@ const SuperAdminUsers = () => {
   const handleEditUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${selectedUser.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminUsers/${selectedUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -107,7 +107,7 @@ const SuperAdminUsers = () => {
 
   const handleDeleteUser = async () => {
     try {
-      const response = await fetch(`http://localhost:5024/api/AdminUsers/${selectedUser.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${selectedUser.id}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -124,7 +124,7 @@ const SuperAdminUsers = () => {
     e.stopPropagation();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5024/api/AdminUsers/${user.id}/toggle-status`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${user.id}/toggle-status`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -164,7 +164,7 @@ const SuperAdminUsers = () => {
     setInsights(null);
     setLoadingInsights(true);
     try {
-      const response = await fetch(`http://localhost:5024/api/AdminUsers/${user.id}/insights`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${user.id}/insights`);
       if (response.ok) {
         const data = await response.json();
         setInsights(data);
