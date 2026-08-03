@@ -5,7 +5,7 @@ import {
   Briefcase, Calendar, Clock, DollarSign, Star, 
   BarChart2, LineChart, Bell, FileText, Activity, Settings, 
   Search, Plus, ChevronDown, Moon, Sun, X, CheckCircle2,
-  AlertCircle, Briefcase as BriefcaseIcon, ChevronRight, Inbox
+  AlertCircle, Briefcase as BriefcaseIcon, ChevronRight, Inbox, LogOut
 } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 import './SuperAdminLayout.css';
@@ -99,6 +99,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [adminProfile, setAdminProfile] = useState(null);
   const notifRef = useRef(null);
@@ -354,17 +355,50 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
               )}
             </div>
             
-            <div className="sa-profile-dropdown" onClick={handleLogout}>
-              <img 
-                src={adminProfile?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(adminProfile?.fullName || 'Admin')}&background=random`} 
-                alt="Profile" 
-                className="sa-avatar" 
-              />
-              <div className="sa-profile-info">
-                <span className="sa-profile-name">{adminProfile?.fullName || 'Super Admin'}</span>
-                <span className="sa-profile-role">{adminProfile?.designation || 'System Admin'}</span>
+            <div className="sa-profile-wrapper" style={{ position: 'relative' }}>
+              <div className="sa-profile-dropdown" onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} style={{ cursor: 'pointer' }}>
+                <img 
+                  src={adminProfile?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(adminProfile?.fullName || 'Admin')}&background=random`} 
+                  alt="Profile" 
+                  className="sa-avatar" 
+                />
+                <div className="sa-profile-info">
+                  <span className="sa-profile-name">{adminProfile?.fullName || 'Super Admin'}</span>
+                  <span className="sa-profile-role">{adminProfile?.designation || 'System Admin'}</span>
+                </div>
+                <ChevronDown size={16} className="sa-profile-chevron" style={{ transform: isProfileMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
               </div>
-              <ChevronDown size={16} className="sa-profile-chevron" />
+
+              {isProfileMenuOpen && (
+                <div className="sa-notif-panel" style={{ right: 0, top: 'calc(100% + 10px)', width: '260px', zIndex: 1000 }}>
+                  <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', borderRadius: '12px 12px 0 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{adminProfile?.fullName || 'Super Admin'}</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{adminProfile?.email || 'admin@matts.com'}</div>
+                  </div>
+                  <div className="sa-notif-list" style={{ maxHeight: 'none', padding: '8px' }}>
+                    <div 
+                      className="sa-notif-item" 
+                      onClick={() => { setActiveMenu('Settings'); setIsProfileMenuOpen(false); }} 
+                      style={{ cursor: 'pointer', padding: '10px 12px', borderRadius: '8px', border: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '12px' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <Settings size={16} color="var(--text-muted)" />
+                      <span style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: '500' }}>Account Settings</span>
+                    </div>
+                    <div 
+                      className="sa-notif-item" 
+                      onClick={handleLogout} 
+                      style={{ cursor: 'pointer', padding: '10px 12px', borderRadius: '8px', border: 'none', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <LogOut size={16} color="#ef4444" />
+                      <span style={{ color: '#ef4444', fontSize: '14px', fontWeight: '500' }}>Logout</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
