@@ -66,5 +66,22 @@ namespace Backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpPost("github-login")]
+        public async Task<IActionResult> GithubLogin(GithubLoginDto dto)
+        {
+            try
+            {
+                var result = await _authService.GithubLoginAsync(dto);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

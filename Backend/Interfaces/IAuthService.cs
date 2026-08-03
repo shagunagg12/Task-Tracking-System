@@ -8,5 +8,6 @@ namespace Backend.Interfaces
         Task<object> RegisterAsync(RegisterDto dto);
         Task<object> LoginAsync(LoginDto dto);
         Task<object> GoogleLoginAsync(GoogleLoginDto dto);
+        Task<object> GithubLoginAsync(GithubLoginDto dto);
     }
 }
