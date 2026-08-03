@@ -141,7 +141,16 @@ namespace Backend.Services
                         UserId = p.Id
                     };
                     _context.MeetingParticipants.Add(mp);
-                    emails.Add(p.Email);
+                    
+                    var userEntity = await _context.Users.FindAsync(p.Id);
+                    if (userEntity != null && !string.IsNullOrEmpty(userEntity.Email))
+                    {
+                        emails.Add(userEntity.Email);
+                    }
+                    else if (!string.IsNullOrEmpty(p.Email))
+                    {
+                        emails.Add(p.Email);
+                    }
                 }
 
                 await _context.SaveChangesAsync();
@@ -165,7 +174,16 @@ namespace Backend.Services
                 _context.AppNotifications.Add(notification);
                 await _context.SaveChangesAsync();
                 
-                await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification", new
+                {
+                    id = notification.Id,
+                    title = notification.Title,
+                    message = notification.Message,
+                    type = notification.Type,
+                    createdAt = notification.CreatedAt,
+                    isRead = notification.IsRead,
+                    meetingId = notification.MeetingId
+                });
 
                 return new { message = "Meeting scheduled successfully", meetLink = meetLink };
             }

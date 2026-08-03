@@ -48,7 +48,7 @@ const itemVariants = {
   }
 };
 
-const SuperAdminDashboard = () => {
+const SuperAdminDashboard = ({ onNavigate }) => {
   const [stats, setStats] = useState({
     totalEmployees: 0,
     activeToday: 0,
@@ -251,7 +251,7 @@ const SuperAdminDashboard = () => {
          <motion.div variants={itemVariants} className="sa-chart-card">
             <div className="sa-chart-header">
                <h3>Recent Onboarding</h3>
-               <button className="sa-btn-text">View All</button>
+               <button className="sa-btn-text" onClick={() => onNavigate && onNavigate('User Management')}>View All</button>
             </div>
             <div className="sa-recent-list">
                {stats.recentOnboarding && stats.recentOnboarding.length > 0 ? (

@@ -246,13 +246,6 @@ const Calendar = () => {
           <h2>Calendar</h2>
         </div>
         <div className="calendar-header-right">
-          {!isGoogleConnected ? (
-            <button className="btn-connect-google" onClick={handleConnectGoogle}>
-              🔗 Connect Google Calendar
-            </button>
-          ) : (
-            <div className="google-connected-badge">✓ Google Calendar Connected</div>
-          )}
           <button className="btn-primary" onClick={() => setIsModalOpen(true)}><span className="icon-plus">+</span> New meeting</button>
         </div>
       </header>

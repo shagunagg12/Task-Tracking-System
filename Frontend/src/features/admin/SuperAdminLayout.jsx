@@ -372,7 +372,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
         {/* CONTENT SCROLL */}
         <main className="sa-content-area">
            {activeMenu === 'Dashboard' ? (
-             <SuperAdminDashboard />
+             <SuperAdminDashboard onNavigate={setActiveMenu} />
            ) : activeMenu === 'Projects' ? (
              <SuperAdminProjects />
            ) : activeMenu === 'User Management' ? (
