@@ -3,7 +3,7 @@ import avatar from '../assets/chatbot-avatar.png';
 import Preloader from './common/Preloader';
 import ReactMarkdown from 'react-markdown';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5024/api';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api');
 
 const botConfigs = {
   daksh: {
