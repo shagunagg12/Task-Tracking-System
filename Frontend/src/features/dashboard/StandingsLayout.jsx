@@ -210,14 +210,14 @@ const StandingsLayout = ({ setActiveMenu }) => {
           <button 
             className={`tab-btn ${activeTab === 'social' ? 'active' : ''}`}
             onClick={() => setActiveTab('social')}
-            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'social' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'transparent', color: activeTab === 'social' ? '#fff' : 'var(--text-muted)' }}
+            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'social' ? 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)' : 'transparent', color: activeTab === 'social' ? '#101213' : 'var(--text-muted)' }}
           >
             Social Standings
           </button>
           <button 
             className={`tab-btn ${activeTab === 'efficiency' ? 'active' : ''}`}
             onClick={() => setActiveTab('efficiency')}
-            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'efficiency' ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' : 'transparent', color: activeTab === 'efficiency' ? '#fff' : 'var(--text-muted)' }}
+            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'efficiency' ? 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)' : 'transparent', color: activeTab === 'efficiency' ? '#101213' : 'var(--text-muted)' }}
           >
             Efficiency Standings
           </button>
