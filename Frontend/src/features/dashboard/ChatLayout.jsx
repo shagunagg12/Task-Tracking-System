@@ -9,7 +9,7 @@ import './ChatLayout.css';
 const API_URL = `${import.meta.env.VITE_API_URL}`;
 const BASE_URL = API_URL.replace('/api', '');
 
-const ChatLayout = () => {
+const ChatLayout = ({ initialChatUserId }) => {
   const [activeTab, setActiveTab] = useState('direct'); // 'direct' | 'projects'
   
   const [users, setUsers] = useState([]);
@@ -88,8 +88,17 @@ const ChatLayout = () => {
           axios.get(`${API_URL}/Users`, { headers: { Authorization: `Bearer ${token}` } }),
           axios.get(`${API_URL}/Projects`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
-        setUsers(usersRes.data.filter(u => u.id !== parseInt(userId)));
+        const fetchedUsers = usersRes.data.filter(u => u.id !== parseInt(userId));
+        setUsers(fetchedUsers);
         setProjects(projectsRes.data);
+        
+        if (initialChatUserId) {
+           const target = fetchedUsers.find(u => u.id === parseInt(initialChatUserId));
+           if (target) {
+               setSelectedUser(target);
+               setActiveTab('direct');
+           }
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -104,6 +113,16 @@ const ChatLayout = () => {
 
     setConnection(newConnection);
   }, []);
+  
+  useEffect(() => {
+    if (initialChatUserId && users.length > 0) {
+      const targetUser = users.find(u => u.id === parseInt(initialChatUserId));
+      if (targetUser) {
+        setSelectedUser(targetUser);
+        setActiveTab('direct');
+      }
+    }
+  }, [initialChatUserId, users]);
 
   useEffect(() => {
     if (connection && connection.state === signalR.HubConnectionState.Disconnected) {
@@ -177,6 +196,7 @@ const ChatLayout = () => {
           const updatedUser = { ...newUsers[userIndex] };
           const timestamp = message.timestamp ?? message.Timestamp;
           updatedUser.lastMessageTime = timestamp || new Date().toISOString();
+          updatedUser.lastMessageContent = message.content ?? message.Content;
           
           if (msgSenderId !== currentId && msgSenderId !== currentSelectedUser?.id) {
             updatedUser.unreadCount = (updatedUser.unreadCount || 0) + 1;
