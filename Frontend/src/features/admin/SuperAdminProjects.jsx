@@ -46,7 +46,7 @@ const SuperAdminProjects = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5024/api/AdminProjects/users');
+      const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/AdminProjects/users');
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -75,7 +75,7 @@ const SuperAdminProjects = () => {
     if (!projectToDelete) return;
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${projectToDelete}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${projectToDelete}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -121,7 +121,7 @@ const SuperAdminProjects = () => {
         feedbackAuthorName: newProject.feedbackAuthorName
       };
 
-      const response = await fetch('http://localhost:5024/api/AdminProjects', {
+      const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/AdminProjects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -145,7 +145,7 @@ const SuperAdminProjects = () => {
     if (!newTask.title.trim() || !activeProjectId) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${activeProjectId}/tasks`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${activeProjectId}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newTask)
@@ -407,7 +407,7 @@ const SuperAdminProjects = () => {
             onClose={() => setKanbanProject(null)} 
             onTasksChanged={() => {
               // Re-fetch users to get updated tasks, then update the selected user and the kanban project
-              fetch('http://localhost:5024/api/AdminProjects/users')
+              fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/AdminProjects/users')
                 .then(res => res.json())
                 .then(data => {
                   setUsers(data);
