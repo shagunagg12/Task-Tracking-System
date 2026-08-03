@@ -50,7 +50,7 @@ const AchievementsRewards = () => {
   const fetchStatus = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5024/api/rewards/status', {
+      const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/rewards/status', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -209,7 +209,7 @@ const AchievementsRewards = () => {
     if (points >= reward.points) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5024/api/rewards/redeem', {
+        const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/rewards/redeem', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -238,7 +238,7 @@ const AchievementsRewards = () => {
     if (milestone.status === 'claimable') {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5024/api/rewards/claim', {
+        const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/rewards/claim', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -268,7 +268,7 @@ const AchievementsRewards = () => {
     if (allAchievementsUnlocked && !allAchievementsClaimed) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5024/api/rewards/claim', {
+        const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/rewards/claim', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
