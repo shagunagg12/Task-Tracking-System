@@ -32,7 +32,7 @@ const SuperAdminNotifications = ({ notifications = [], setNotifications, unreadC
 
   const handleMarkAsRead = async (id) => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminDashboard/notifications/${id}/read`, { method: 'PATCH' });
+      await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminDashboard/notifications/${id}/read`, { method: 'PATCH' });
       setNotifications(notifications.map(notif => 
         notif.id === id ? { ...notif, isRead: true } : notif
       ));
@@ -44,7 +44,7 @@ const SuperAdminNotifications = ({ notifications = [], setNotifications, unreadC
 
   const handleMarkAllAsRead = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminDashboard/notifications/read-all`, { method: 'PATCH' });
+      await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminDashboard/notifications/read-all`, { method: 'PATCH' });
       setNotifications(notifications.map(notif => ({ ...notif, isRead: true })));
       if (setUnreadCount) setUnreadCount(0);
     } catch (err) {
@@ -55,7 +55,7 @@ const SuperAdminNotifications = ({ notifications = [], setNotifications, unreadC
   const handleDelete = async (id) => {
     try {
       const notifToDelete = notifications.find(n => n.id === id);
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminDashboard/notifications/${id}`, { method: 'DELETE' });
+      await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminDashboard/notifications/${id}`, { method: 'DELETE' });
       setNotifications(notifications.filter(notif => notif.id !== id));
       if (notifToDelete && !notifToDelete.isRead && setUnreadCount) {
         setUnreadCount(prev => Math.max(0, prev - 1));
