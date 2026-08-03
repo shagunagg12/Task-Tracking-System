@@ -161,124 +161,131 @@ app.MapGet("/weatherforecast", () =>
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    
-    // Ensure UserPoints table is created
     try
     {
-        using (var command = context.Database.GetDbConnection().CreateCommand())
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        // Ensure UserPoints table is created
+        try
         {
-            command.CommandText = @"
-                IF OBJECT_ID('UserPoints', 'U') IS NULL
-                CREATE TABLE UserPoints (
-                    id INT IDENTITY(1,1) PRIMARY KEY,
-                    UserId INT NOT NULL,
-                    Points INT NOT NULL
-                );";
-            context.Database.OpenConnection();
-            command.ExecuteNonQuery();
+            using (var command = context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = @"
+                    IF OBJECT_ID('UserPoints', 'U') IS NULL
+                    CREATE TABLE UserPoints (
+                        id INT IDENTITY(1,1) PRIMARY KEY,
+                        UserId INT NOT NULL,
+                        Points INT NOT NULL
+                    );";
+                context.Database.OpenConnection();
+                command.ExecuteNonQuery();
+            }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DB ERROR] Failed to create UserPoints table: {ex.Message}");
+        }
+
+        if (!context.Admins.Any(a => a.Email == "connect2rachit882@gmail.com"))
+        {
+            var admin = new Backend.Models.Admin
+            {
+                Email = "connect2rachit882@gmail.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rachit@12")
+            };
+            context.Admins.Add(admin);
+            context.SaveChanges();
+        }
+        if (!context.Users.Any(u => u.Email == "alice.engineer@example.com"))
+        {
+            var dummyUser = new Backend.Models.User
+            {
+                FullName = "Alice Engineer",
+                Email = "alice.engineer@example.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+                Points = 0,
+                Profile = new Backend.Models.UserProfile
+                {
+                    Department = "Engineering",
+                    Designation = "Senior Developer",
+                    Location = "Remote",
+                    Bio = "I write code."
+                }
+            };
+            context.Users.Add(dummyUser);
+            context.SaveChanges();
+        }
+
+        // Reset points to 0 for everyone on startup in the UserPoints table, and clear redemptions
+        try
+        {
+            var allPoints = context.UserPoints.ToList();
+            context.UserPoints.RemoveRange(allPoints);
+            
+            var allRedemptions = context.RewardRedemptions.ToList();
+            context.RewardRedemptions.RemoveRange(allRedemptions);
+
+            context.SaveChanges();
+        }
+        catch (Exception)
+        {
+            // Table might not exist yet before migration
+        }
+
+        // Sync admin profile pictures to user records
+        var admins = context.Admins.ToList();
+        foreach (var admin in admins)
+        {
+            var u = context.Users.FirstOrDefault(x => x.Email == admin.Email);
+            if (u != null && !string.IsNullOrEmpty(admin.ProfilePictureUrl))
+            {
+                u.ProfilePictureUrl = admin.ProfilePictureUrl;
+            }
+        }
+        context.SaveChanges();
+
+        var users = context.Users.Include(u => u.Projects).ToList();
+        foreach (var u in users)
+        {
+            context.UserPoints.Add(new Backend.Models.UserPoints { UserId = u.Id, Points = 0 });
+            u.Points = 0;
+
+            if (u.Projects == null || !u.Projects.Any())
+            {
+                var p1 = new Backend.Models.Project
+                {
+                    Name = "Website Redesign",
+                    Status = "In Progress",
+                    Hours = 40,
+                    HoursTrend = "+5%",
+                    Tasks = new List<Backend.Models.ProjectTask>
+                    {
+                        new Backend.Models.ProjectTask { Title = "Design Mockups", Status = "Done", StatusClass = "completed" },
+                        new Backend.Models.ProjectTask { Title = "Frontend Dev", Status = "In Progress", StatusClass = "in-progress" },
+                        new Backend.Models.ProjectTask { Title = "Backend API", Status = "To Do", StatusClass = "todo" }
+                    }
+                };
+                var p2 = new Backend.Models.Project
+                {
+                    Name = "Mobile App Launch",
+                    Status = "Completed",
+                    Hours = 120,
+                    HoursTrend = "-2%",
+                    Tasks = new List<Backend.Models.ProjectTask>
+                    {
+                        new Backend.Models.ProjectTask { Title = "Beta Testing", Status = "Done", StatusClass = "completed" },
+                        new Backend.Models.ProjectTask { Title = "App Store Submission", Status = "Done", StatusClass = "completed" }
+                    }
+                };
+                u.Projects = new List<Backend.Models.Project> { p1, p2 };
+            }
+        }
+        context.SaveChanges();
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[DB ERROR] Failed to create UserPoints table: {ex.Message}");
+        Console.WriteLine($"[CRITICAL STARTUP ERROR] Database seeding failed: {ex.Message}");
     }
-
-    if (!context.Admins.Any(a => a.Email == "connect2rachit882@gmail.com"))
-    {
-        var admin = new Backend.Models.Admin
-        {
-            Email = "connect2rachit882@gmail.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rachit@12")
-        };
-        context.Admins.Add(admin);
-        context.SaveChanges();
-    }
-    if (!context.Users.Any(u => u.Email == "alice.engineer@example.com"))
-    {
-        var dummyUser = new Backend.Models.User
-        {
-            FullName = "Alice Engineer",
-            Email = "alice.engineer@example.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
-            Points = 0,
-            Profile = new Backend.Models.UserProfile
-            {
-                Department = "Engineering",
-                Designation = "Senior Developer",
-                Location = "Remote",
-                Bio = "I write code."
-            }
-        };
-        context.Users.Add(dummyUser);
-        context.SaveChanges();
-    }
-
-    // Reset points to 0 for everyone on startup in the UserPoints table, and clear redemptions
-    try
-    {
-        var allPoints = context.UserPoints.ToList();
-        context.UserPoints.RemoveRange(allPoints);
-        
-        var allRedemptions = context.RewardRedemptions.ToList();
-        context.RewardRedemptions.RemoveRange(allRedemptions);
-
-        context.SaveChanges();
-    }
-    catch (Exception)
-    {
-        // Table might not exist yet before migration
-    }
-
-    // Sync admin profile pictures to user records
-    var admins = context.Admins.ToList();
-    foreach (var admin in admins)
-    {
-        var u = context.Users.FirstOrDefault(x => x.Email == admin.Email);
-        if (u != null && !string.IsNullOrEmpty(admin.ProfilePictureUrl))
-        {
-            u.ProfilePictureUrl = admin.ProfilePictureUrl;
-        }
-    }
-    context.SaveChanges();
-
-    var users = context.Users.Include(u => u.Projects).ToList();
-    foreach (var u in users)
-    {
-        context.UserPoints.Add(new Backend.Models.UserPoints { UserId = u.Id, Points = 0 });
-        u.Points = 0;
-
-        if (u.Projects == null || !u.Projects.Any())
-        {
-            var p1 = new Backend.Models.Project
-            {
-                Name = "Website Redesign",
-                Status = "In Progress",
-                Hours = 40,
-                HoursTrend = "+5%",
-                Tasks = new List<Backend.Models.ProjectTask>
-                {
-                    new Backend.Models.ProjectTask { Title = "Design Mockups", Status = "Done", StatusClass = "completed" },
-                    new Backend.Models.ProjectTask { Title = "Frontend Dev", Status = "In Progress", StatusClass = "in-progress" },
-                    new Backend.Models.ProjectTask { Title = "Backend API", Status = "To Do", StatusClass = "todo" }
-                }
-            };
-            var p2 = new Backend.Models.Project
-            {
-                Name = "Mobile App Launch",
-                Status = "Completed",
-                Hours = 120,
-                HoursTrend = "-2%",
-                Tasks = new List<Backend.Models.ProjectTask>
-                {
-                    new Backend.Models.ProjectTask { Title = "Beta Testing", Status = "Done", StatusClass = "completed" },
-                    new Backend.Models.ProjectTask { Title = "App Store Submission", Status = "Done", StatusClass = "completed" }
-                }
-            };
-            u.Projects = new List<Backend.Models.Project> { p1, p2 };
-        }
-    }
-    context.SaveChanges();
 }
 
 app.UseDefaultFiles();
