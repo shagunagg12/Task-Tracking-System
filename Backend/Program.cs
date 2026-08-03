@@ -37,16 +37,27 @@ var dbName = Environment.GetEnvironmentVariable("DB_NAME");
 var dbUser = Environment.GetEnvironmentVariable("DB_USER");
 var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
 
-string connectionString;
-if (string.IsNullOrWhiteSpace(dbUser))
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? Environment.GetEnvironmentVariable("SQLAZURECONNSTR_DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
 {
-    // Use Windows Authentication (no username/password needed for local SSMS)
-    connectionString = $"Server={dbServer};Database={dbName};Integrated Security=True;TrustServerCertificate=True;";
-}
-else
-{
-    // Use SQL Server Authentication
-    connectionString = $"Server={dbServer};Database={dbName};User Id={dbUser};Password={dbPassword};TrustServerCertificate=True;";
+    if (string.IsNullOrWhiteSpace(dbUser) && !string.IsNullOrWhiteSpace(dbServer))
+    {
+        // Use Windows Authentication (no username/password needed for local SSMS)
+        connectionString = $"Server={dbServer};Database={dbName};Integrated Security=True;TrustServerCertificate=True;";
+    }
+    else if (!string.IsNullOrWhiteSpace(dbServer))
+    {
+        // Use SQL Server Authentication
+        connectionString = $"Server={dbServer};Database={dbName};User Id={dbUser};Password={dbPassword};TrustServerCertificate=True;";
+    }
+    else
+    {
+        // Fallback to prevent immediate crash if missing from Azure (will fail on DB hit instead)
+        connectionString = "Server=tcp:missing.database.windows.net,1433;Database=Missing;User Id=missing;Password=missing;TrustServerCertificate=True;";
+    }
 }
 
 Console.WriteLine("=============================================");
