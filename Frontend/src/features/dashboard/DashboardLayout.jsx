@@ -80,14 +80,14 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      const userRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/analytics/user/${userId}`, { headers });
+      const userRes = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/analytics/user/${userId}`, { headers });
       if (userRes.ok) setUserAnalytics(await userRes.json());
 
-      const orgRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/analytics/organization`, { headers });
+      const orgRes = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/analytics/organization`, { headers });
       if (orgRes.ok) setOrgAnalytics(await orgRes.json());
 
       if (department) {
-        const deptRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/analytics/department/${encodeURIComponent(department)}`, { headers });
+        const deptRes = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/analytics/department/${encodeURIComponent(department)}`, { headers });
         if (deptRes.ok) setDeptAnalytics(await deptRes.json());
       }
     } catch (err) {
@@ -113,7 +113,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const res = await fetch('http://localhost:5024/api/profile', {
+        const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/profile', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -155,7 +155,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
           // Fetch notifications
           try {
-            const notifRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/DepartmentNotifications/${encodeURIComponent(data.department)}`, {
+            const notifRes = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/DepartmentNotifications/${encodeURIComponent(data.department)}`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (notifRes.ok) {
@@ -168,7 +168,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           
           // Fetch team members
           try {
-            const membersRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/profile/department-members`, {
+            const membersRes = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/profile/department-members`, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (membersRes.ok) {
@@ -191,7 +191,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
     // Connect to SignalR
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5024/adminDashboardHub")
+      .withUrl((import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5024') + '/adminDashboardHub')
       .withAutomaticReconnect()
       .build();
 
