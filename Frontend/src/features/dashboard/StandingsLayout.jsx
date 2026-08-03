@@ -64,7 +64,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
 
   const fetchMyDashboard = async () => {
     try {
-      const res = await fetch('http://localhost:5024/api/standings/me', {
+      const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/standings/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -78,7 +78,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
 
   const fetchSocialStandings = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/standings/social?timeframe=${leaderboardTimeframe}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/standings/social?timeframe=${leaderboardTimeframe}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -92,7 +92,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
 
   const fetchEfficiencyStandings = async () => {
     try {
-      const res = await fetch('http://localhost:5024/api/standings/efficiency', {
+      const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/standings/efficiency', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -106,7 +106,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch('http://localhost:5024/api/events', {
+      const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/events', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -140,7 +140,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
 
   const fetchSearchedUsers = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/users/search?q=${searchQuery}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/users/search?q=${searchQuery}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -156,7 +156,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch('http://localhost:5024/api/events', {
+      const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/events', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
 
   const handleRsvp = async (eventId, status) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/events/${eventId}/rsvp`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/events/${eventId}/rsvp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
