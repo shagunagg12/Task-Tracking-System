@@ -30,4 +30,17 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <Target Name="BuildFrontend" BeforeTargets="ComputeFilesToPublish">
+    <Exec Command="npm install" WorkingDirectory="..\Frontend" />
+    <Exec Command="npm run build" WorkingDirectory="..\Frontend" />
+    <ItemGroup>
+      <DistFiles Include="..\Frontend\dist\**" />
+      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot\%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
 </Project>

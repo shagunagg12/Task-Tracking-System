@@ -281,6 +281,10 @@ using (var scope = app.Services.CreateScope())
     context.SaveChanges();
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
+
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
