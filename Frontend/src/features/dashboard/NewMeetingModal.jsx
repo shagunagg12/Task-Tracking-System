@@ -50,7 +50,7 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
       const fetchUsers = async () => {
         try {
           const token = localStorage.getItem('token');
-          const response = await fetch('http://localhost:5024/api/users', {
+          const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/users', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -95,7 +95,7 @@ const NewMeetingModal = ({ isOpen, onClose, selectedSlot, currentMonthName, curr
         participants: selectedParticipants
       };
 
-      const response = await fetch('http://localhost:5024/api/meetings', {
+      const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/meetings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
