@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Calendar.css';
 import NewMeetingModal from './NewMeetingModal';
 
-const Calendar = () => {
+const Calendar = ({ isProfileComplete = true, setActiveMenu, addToast }) => {
   const [currentTimeLine, setCurrentTimeLine] = useState(0);
 
   // Constants to match the screenshot or requirements
@@ -114,6 +114,11 @@ const Calendar = () => {
   };
 
   const handleCellClick = (day, hour) => {
+    if (!isProfileComplete) {
+       if (addToast) addToast({ title: 'Action Required', message: 'Please complete your profile to create meetings or events.', type: 'warning' });
+       if (setActiveMenu) setActiveMenu('Profile');
+       return;
+    }
     handleDayClick(day.id);
     setSelectedSlot({ day, hour });
     setMeetingTitle('');
@@ -246,7 +251,14 @@ const Calendar = () => {
           <h2>Calendar</h2>
         </div>
         <div className="calendar-header-right">
-          <button className="btn-primary" onClick={() => setIsModalOpen(true)}><span className="icon-plus">+</span> New meeting</button>
+          <button className="btn-primary" onClick={() => {
+            if (!isProfileComplete) {
+               if (addToast) addToast({ title: 'Action Required', message: 'Please complete your profile to create meetings or events.', type: 'warning' });
+               if (setActiveMenu) setActiveMenu('Profile');
+               return;
+            }
+            setIsModalOpen(true);
+          }}><span className="icon-plus">+</span> New meeting</button>
         </div>
       </header>
 
