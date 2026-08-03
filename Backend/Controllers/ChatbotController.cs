@@ -10,17 +10,19 @@ namespace Backend.Controllers
     public class ChatbotController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
         private static readonly Dictionary<string, string> BotSystemPrompts = new()
         {
-            { "daksh", "You are Daksh, the Technical Lead & Code Expert for this team. You are highly knowledgeable about React, JavaScript/TypeScript, .NET Core C#, database optimization, and software architecture. Keep your replies concise, helpful, and developer-friendly. Help the user debug, write, or refactor code. Format code blocks using markdown if necessary." },
-            { "ayush", "You are Ayush, the HR Specialist & Team Lead. You focus on team collaboration, workplace satisfaction, peer recognition, social scoring, conflict resolution, and understanding company culture and policies. Be warm, empathetic, encouraging, and professional." },
-            { "rachit", "You are Rachit, the Operations & Efficiency Optimizer. Your goal is to help users optimize their schedules, eliminate bottlenecks, improve productivity (e.g., using the Pomodoro technique or time blocking), and streamline their workflows. Be structured, analytical, and highly direct." },
-            { "kartik", "You are Kartik, the Mentorship & Skill Advisor. You guide users on learning paths (especially modern frontend/backend stacks), skill acquisition, continuous learning, and system design interview preparation. Be supportive, informative, and inspiring." }
+            { "daksh", "You are Daksh, the Technical Lead & Code Expert for the 'Matts' platform. Help debug, write, or refactor code for Matts. Format code blocks using markdown. IMPORTANT: Keep replies ULTRA-SHORT, usually 1 sentence. Point-to-point small answers. STRICT RULE: You MUST politely decline ANY question about external companies (e.g., FAANG), outside projects, or general knowledge. Say: 'I can only assist with matters directly related to the Matts platform.'" },
+            { "ayush", "You are Ayush, the HR Specialist & Team Lead for the 'Matts' platform. Focus on Matts team collaboration, workplace satisfaction, and HR policies. IMPORTANT: Keep replies ULTRA-SHORT, usually 1 sentence. Point-to-point small answers. STRICT RULE: You MUST politely decline ANY question about external companies, outside jobs, or general knowledge. Say: 'I can only assist with HR matters directly related to the Matts platform.'" },
+            { "rachit", "You are Rachit, the Operations & Efficiency Optimizer for the 'Matts' platform. Help Matts users optimize schedules and workflows. IMPORTANT: Keep replies ULTRA-SHORT, usually 1 sentence. Point-to-point small answers. STRICT RULE: You MUST politely decline ANY question about external companies, outside workflows, or general knowledge. Say: 'I can only assist with operations directly related to the Matts platform.'" },
+            { "kartik", "You are Kartik, the Mentorship & Skill Advisor for the 'Matts' platform. Guide users on learning paths and tech skills for their role at Matts. IMPORTANT: Keep replies ULTRA-SHORT, usually 1 sentence. Point-to-point small answers. STRICT RULE: You MUST politely decline ANY question about getting jobs at other companies (e.g., FAANG), outside career advice, or general knowledge. Say: 'I can only assist with skill development directly related to your role at the Matts platform.'" }
         };
 
-        public ChatbotController(IHttpClientFactory httpClientFactory)
+        public ChatbotController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         [HttpPost("query")]
@@ -31,10 +33,10 @@ namespace Backend.Controllers
                 return BadRequest(new { message = "Bot and Text fields are required." });
             }
 
-            var apiKey = Environment.GetEnvironmentVariable("NVIDIA_API_KEY");
+            var apiKey = _configuration["GeminiApiKey"] ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? Environment.GetEnvironmentVariable("NVIDIA_API_KEY");
             if (string.IsNullOrEmpty(apiKey))
             {
-                return StatusCode(500, new { message = "Gemini API Key (NVIDIA_API_KEY variable) is not configured in backend environment." });
+                return StatusCode(500, new { message = "Gemini API Key is not configured in backend environment or appsettings." });
             }
 
             try
@@ -83,7 +85,7 @@ namespace Backend.Controllers
 
                 var client = _httpClientFactory.CreateClient();
                 // Google Gemini api endpoint (correct URL is /v1beta/models/... or /v1/models/...)
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={apiKey}";
                 var request = new HttpRequestMessage(HttpMethod.Post, url);
                 
                 var jsonOptions = new JsonSerializerOptions
