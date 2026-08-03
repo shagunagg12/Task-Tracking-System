@@ -1,0 +1,14 @@
+==================================================
+LEAVE VOUCHER REDEMPTION REQUEST (PENDING HR APPROVAL)
+==================================================
+Timestamp: 2026-08-03 08:58:22 UTC
+User ID: 18
+Employee Name: Rachit
+Employee Email: connect2rachit882@gmail.com
+
+Reward Details:
+- Reward Name: Leave Voucher (Approved by HR)
+- Points Deducted: 1000 pts
+
+Status: Pending HR Verification & Processing
+==================================================

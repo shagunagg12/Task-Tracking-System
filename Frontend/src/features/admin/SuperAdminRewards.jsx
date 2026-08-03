@@ -50,6 +50,25 @@ const SuperAdminRewards = () => {
     }
   };
 
+  const handleDecline = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/rewards/decline-redemption/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        setSuccessMessage('Reward redemption declined and points refunded!');
+        fetchRedemptions();
+        setTimeout(() => setSuccessMessage(''), 4000);
+      }
+    } catch (error) {
+      console.error('Error declining reward:', error);
+    }
+  };
+
   // Metrics calculations
   const totalPoints = redemptions.reduce((sum, r) => sum + r.pointsSpent, 0);
   const pendingApprovals = redemptions.filter(r => r.status.toLowerCase().includes('pending')).length;
@@ -168,9 +187,19 @@ const SuperAdminRewards = () => {
                     </td>
                     <td>
                       {isPending ? (
-                        <button className="sar-approve-btn" onClick={() => handleApprove(item.id)} title="Approve Request">
-                          <Check size={16} /> Approve
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="sar-approve-btn" onClick={() => handleApprove(item.id)} title="Approve Request">
+                            <Check size={16} /> Approve
+                          </button>
+                          <button 
+                            className="sar-decline-btn" 
+                            onClick={() => handleDecline(item.id)} 
+                            title="Decline Request" 
+                            style={{ background: 'var(--accent-red)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            <ShieldAlert size={16} /> Decline
+                          </button>
+                        </div>
                       ) : (
                         <span style={{ color: 'var(--accent-green)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <CheckCircle2 size={16} /> Closed

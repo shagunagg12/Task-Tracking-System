@@ -345,7 +345,7 @@ const AchievementsRewards = () => {
                 <p className="ar-req-desc">{m.requirement}</p>
                 <div className="ar-milestone-progress">
                   <div className="ar-progress-text">
-                    Progress: {m.progress.current} / {m.progress.total} {m.id === 'excellence-bonus' ? '%' : (m.id === 'task-rookie' || m.id === 'task-master' ? 'tasks' : 'days')}
+                    Progress: {Math.min(m.progress.current, m.progress.total)} / {m.progress.total} {m.id === 'excellence-bonus' ? '%' : (m.id === 'task-rookie' || m.id === 'task-master' ? 'tasks' : 'days')}
                   </div>
                   <div className="ar-progress-track">
                     <div 
@@ -404,7 +404,7 @@ const AchievementsRewards = () => {
                   
                   <div className="ach-progress-bar-wrapper">
                     <div className="ach-progress-text">
-                      Progress: {item.progress.current} / {item.progress.total}
+                      Progress: {Math.min(item.progress.current, item.progress.total)} / {item.progress.total}
                     </div>
                     <div className="ach-progress-track">
                       <div 
