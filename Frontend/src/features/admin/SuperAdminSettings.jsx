@@ -21,7 +21,7 @@ const SuperAdminSettings = () => {
     setIsLoggingIn(true);
     setLoginError('');
     try {
-      const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api');
+      const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api'));
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,7 +45,7 @@ const SuperAdminSettings = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5024/api/AdminUsers', {
+      const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/AdminUsers', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -76,8 +76,8 @@ const SuperAdminSettings = () => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = action === 'promote' 
-        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${user.id}/promote`
-        : `${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${user.id}/demote`;
+        ? `${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminUsers/${user.id}/promote`
+        : `${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminUsers/${user.id}/demote`;
         
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -99,7 +99,7 @@ const SuperAdminSettings = () => {
   const fetchSuperAdmins = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5024/api/superadmins', {
+      const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/superadmins', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
