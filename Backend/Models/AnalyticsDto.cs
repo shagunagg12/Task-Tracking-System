@@ -54,6 +54,7 @@ namespace Backend.Models
         public string FullName { get; set; } = string.Empty;
         public int Points { get; set; }
         public string ProfilePictureUrl { get; set; } = string.Empty;
+        public int CompletedTasks { get; set; }
     }
 
     public class UserAnalyticsDto
