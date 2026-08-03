@@ -3,6 +3,7 @@ using Backend.DTOs;
 using Backend.Hubs;
 using Backend.Interfaces;
 using Backend.Models;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -157,6 +158,182 @@ namespace Backend.Services
                     userId = user.Id;
                     userFullName = user.FullName;
                     userProfilePictureUrl = user.ProfilePictureUrl ?? "";
+                }
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "super_secret_fallback_key_that_is_long_enough_12345!";
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, userEmail),
+                new Claim(ClaimTypes.Name, userFullName)
+            };
+
+            if (isSuperAdmin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "SuperAdmin"));
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+            else if (isAdmin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+
+            claims.Add(new Claim("ProfilePictureUrl", userProfilePictureUrl));
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            
+            return new
+            {
+                token = tokenHandler.WriteToken(token),
+                user = new { Id = userId, FullName = userFullName, Email = userEmail, isAdmin = (isAdmin || isSuperAdmin), isSuperAdmin = isSuperAdmin, ProfilePictureUrl = userProfilePictureUrl }
+            };
+        }
+
+        public async Task<object> GoogleLoginAsync(GoogleLoginDto dto)
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { "380754775994-nvj1bh4qqarii4ulbpisrnit8orisi2t.apps.googleusercontent.com" }
+            };
+
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                payload = await GoogleJsonWebSignature.ValidateAsync(dto.Token, settings);
+            }
+            catch (Exception ex)
+            {
+                throw new UnauthorizedAccessException($"Invalid Google token. {ex.Message}");
+            }
+
+            string userEmail = payload.Email;
+            string userFullName = payload.Name ?? "Google User";
+            string userProfilePictureUrl = payload.Picture ?? "";
+            
+            bool isSuperAdmin = false;
+            bool isAdmin = false;
+            int userId = 0;
+
+            var superAdmin = await _context.SuperAdmins.FirstOrDefaultAsync(s => s.Email == userEmail);
+            
+            if (superAdmin == null)
+            {
+                var checkUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                if (checkUser != null && !checkUser.IsActive)
+                {
+                    throw new UnauthorizedAccessException("Your account has been blocked by the administrator.");
+                }
+            }
+
+            if (superAdmin != null)
+            {
+                var userRecord = await _context.Users.FirstOrDefaultAsync(u => u.Email == superAdmin.Email);
+                if (userRecord == null)
+                {
+                    userRecord = new User
+                    {
+                        FullName = superAdmin.FullName,
+                        Email = superAdmin.Email,
+                        PasswordHash = superAdmin.PasswordHash, // Use existing hash
+                        IsActive = true,
+                        ProfilePictureUrl = userProfilePictureUrl // Update picture from google
+                    };
+                    _context.Users.Add(userRecord);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    userRecord.ProfilePictureUrl = userProfilePictureUrl;
+                    await _context.SaveChangesAsync();
+                }
+
+                isSuperAdmin = true;
+                userId = userRecord.Id;
+                userFullName = superAdmin.FullName;
+            }
+            else
+            {
+                var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == userEmail);
+                if (admin != null)
+                {
+                    var userRecord = await _context.Users.FirstOrDefaultAsync(u => u.Email == admin.Email);
+                    if (userRecord == null)
+                    {
+                        userRecord = new User
+                        {
+                            FullName = admin.FullName ?? userFullName,
+                            Email = admin.Email,
+                            PasswordHash = admin.PasswordHash,
+                            IsActive = true,
+                            ProfilePictureUrl = userProfilePictureUrl
+                        };
+                        _context.Users.Add(userRecord);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        if (admin.FullName == "Admin" && userRecord.FullName != "Admin")
+                        {
+                            admin.FullName = userRecord.FullName;
+                        }
+                        userRecord.ProfilePictureUrl = userProfilePictureUrl;
+                        await _context.SaveChangesAsync();
+                    }
+                    
+                    isAdmin = true;
+                    userId = userRecord.Id;
+                    userFullName = admin.FullName ?? userFullName;
+                }
+                else
+                {
+                    var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                    if (user == null)
+                    {
+                        // Create a new user automatically since Google verified them
+                        user = new User
+                        {
+                            FullName = userFullName,
+                            Email = userEmail,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()), // random password
+                            IsActive = true,
+                            ProfilePictureUrl = userProfilePictureUrl,
+                            Profile = new UserProfile()
+                        };
+                        _context.Users.Add(user);
+                        await _context.SaveChangesAsync();
+                        
+                        var notification = new AppNotification
+                        {
+                            Title = "New User Registered via Google",
+                            Message = $"{user.FullName} has registered as a new user via Google.",
+                            Type = "user",
+                            CreatedAt = DateTime.UtcNow,
+                            IsRead = false
+                        };
+                        _context.AppNotifications.Add(notification);
+                        await _context.SaveChangesAsync();
+                        await _hubContext.Clients.All.SendAsync("ReceiveNotification", notification);
+                        await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate");
+                    }
+                    else
+                    {
+                        user.ProfilePictureUrl = userProfilePictureUrl;
+                        await _context.SaveChangesAsync();
+                    }
+                    
+                    userId = user.Id;
+                    userFullName = user.FullName;
                 }
             }
 
