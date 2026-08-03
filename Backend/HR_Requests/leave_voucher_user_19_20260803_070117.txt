@@ -1,0 +1,14 @@
+==================================================
+LEAVE VOUCHER REDEMPTION REQUEST (PENDING HR APPROVAL)
+==================================================
+Timestamp: 2026-08-03 07:01:17 UTC
+User ID: 19
+Employee Name: Kartik Goyal
+Employee Email: kartikgoyal8091@gmail.com
+
+Reward Details:
+- Reward Name: Leave Voucher (Approved by HR)
+- Points Deducted: 1000 pts
+
+Status: Pending HR Verification & Processing
+==================================================
