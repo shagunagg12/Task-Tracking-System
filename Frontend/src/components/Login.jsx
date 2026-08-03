@@ -101,12 +101,18 @@ export default function Login({ onLogin }) {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code, isRegistering })
       });
       
       const data = await response.json();
       if (!response.ok) {
-        setError(data.message || 'GitHub sign-in failed.');
+        const errorMsg = data.message || 'GitHub sign-in failed.';
+        if (!isRegistering && errorMsg.includes('Account not found')) {
+          setIsRegistering(true);
+          setError('Please register yourself first to continue with GitHub.');
+        } else {
+          setError(errorMsg);
+        }
         setIsLoading(false);
         return;
       }
@@ -147,12 +153,18 @@ export default function Login({ onLogin }) {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: credentialResponse.credential })
+        body: JSON.stringify({ token: credentialResponse.credential, isRegistering })
       });
       
       const data = await response.json();
       if (!response.ok) {
-        setError(data.message || 'Google sign-in failed.');
+        const errorMsg = data.message || 'Google sign-in failed.';
+        if (!isRegistering && errorMsg.includes('Account not found')) {
+          setIsRegistering(true);
+          setError('Please register yourself first to continue with Google.');
+        } else {
+          setError(errorMsg);
+        }
         setIsLoading(false);
         return;
       }
