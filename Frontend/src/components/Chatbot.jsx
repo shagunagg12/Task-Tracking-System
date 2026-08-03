@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import avatar from '../assets/chatbot-avatar.png';
 import Preloader from './common/Preloader';
+import ReactMarkdown from 'react-markdown';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5024/api';
 
@@ -10,7 +11,7 @@ const botConfigs = {
     role: 'Technical Lead & Code Expert',
     video: '/image/daksh.mp4',
     initialMessages: [
-      { sender: 'bot', text: 'Hey there! I am Daksh, your tech lead. Need help debugging code, configuring database schemas, or writing clean scripts? Let me know what we are building today!' }
+      { sender: 'bot', text: 'Hello, I am Daksh. How can I help you?' }
     ],
     suggestions: [
       'Help me debug a React error',
@@ -36,7 +37,7 @@ const botConfigs = {
     role: 'HR Specialist & Team Lead',
     video: '/image/Ayush%20Badola%20Video.mp4',
     initialMessages: [
-      { sender: 'bot', text: 'Hello! I am Ayush, here to help you with team collaboration, peer appreciation, and understanding your social scoring. How is the team vibe today?' }
+      { sender: 'bot', text: 'Hello, I am Ayush. How can I help you?' }
     ],
     suggestions: [
       'Check my social scoring',
@@ -62,7 +63,7 @@ const botConfigs = {
     role: 'Operations & Efficiency Optimizer',
     video: '/image/rachit.mp4',
     initialMessages: [
-      { sender: 'bot', text: 'Hey, I am Rachit. Let’s look at your workflow and find where we can optimize performance, automate tasks, or clear bottlenecks. Time is money, let’s get efficient!' }
+      { sender: 'bot', text: 'Hello, I am Rachit. How can I help you?' }
     ],
     suggestions: [
       'Analyze my task bottlenecks',
@@ -88,7 +89,7 @@ const botConfigs = {
     role: 'Mentorship & Skill Advisor',
     video: '/image/kartik.mp4',
     initialMessages: [
-      { sender: 'bot', text: 'Hi! I am Kartik. I focus on learning paths, skills acquisition, and professional growth. What is a skill or technology you want to master next?' }
+      { sender: 'bot', text: 'Hello, I am Kartik. How can I help you?' }
     ],
     suggestions: [
       'Suggest a frontend learning path',
@@ -138,6 +139,13 @@ const Chatbot = ({ isSidebarOpen }) => {
       kartik: [...botConfigs.kartik.initialMessages]
     };
   });
+  const [sessionStartLengths] = useState(() => ({
+    daksh: chatHistories.daksh?.length || 1,
+    ayush: chatHistories.ayush?.length || 1,
+    rachit: chatHistories.rachit?.length || 1,
+    kartik: chatHistories.kartik?.length || 1
+  }));
+  const [showPrevious, setShowPrevious] = useState({});
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
@@ -439,7 +447,24 @@ const Chatbot = ({ isSidebarOpen }) => {
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-dark)', height: 'calc(100vh - 80px)' }}>
                 {/* MESSAGES AREA */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '30px 40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {chatHistories[selectedBot].map((msg, index) => (
+                  {!showPrevious[selectedBot] && sessionStartLengths[selectedBot] > botConfigs[selectedBot].initialMessages.length && (
+                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                      <button 
+                        onClick={() => setShowPrevious({ ...showPrevious, [selectedBot]: true })}
+                        style={{ 
+                          padding: '8px 16px', backgroundColor: 'var(--bg-card)', color: 'var(--text-main)', 
+                          border: '1px solid var(--border-color)', borderRadius: '20px', cursor: 'pointer',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Load Previous Chat
+                      </button>
+                    </div>
+                  )}
+                  {(showPrevious[selectedBot] 
+                    ? chatHistories[selectedBot] 
+                    : [ ...botConfigs[selectedBot].initialMessages, ...(chatHistories[selectedBot] || []).slice(sessionStartLengths[selectedBot]) ]
+                  ).map((msg, index) => (
                     <div key={index} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start', width: '100%' }}>
                       <div style={{ display: 'flex', gap: '12px', maxWidth: '70%', flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row' }}>
                         {msg.sender === 'bot' && (
@@ -459,7 +484,11 @@ const Chatbot = ({ isSidebarOpen }) => {
                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                             whiteSpace: 'pre-line'
                           }}>
-                            {msg.text}
+                            {msg.sender === 'bot' ? (
+                              <ReactMarkdown>{msg.text}</ReactMarkdown>
+                            ) : (
+                              msg.text
+                            )}
                           </div>
                           {msg.transferInfo && (
                             <button
