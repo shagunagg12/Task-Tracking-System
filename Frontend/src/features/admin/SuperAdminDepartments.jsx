@@ -28,7 +28,7 @@ const SuperAdminDepartments = ({ addToast }) => {
   const fetchAnnouncements = async (deptName) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/DepartmentNotifications/${encodeURIComponent(deptName)}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api'))}/DepartmentNotifications/${encodeURIComponent(deptName)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -44,7 +44,7 @@ const SuperAdminDepartments = ({ addToast }) => {
     if (!window.confirm('Are you sure you want to delete this announcement?')) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/DepartmentNotifications/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api'))}/DepartmentNotifications/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -63,7 +63,7 @@ const SuperAdminDepartments = ({ addToast }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/DepartmentNotifications/${editingAnnouncement.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api'))}/DepartmentNotifications/${editingAnnouncement.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ const SuperAdminDepartments = ({ addToast }) => {
     setIsSending(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/DepartmentNotifications/${encodeURIComponent(selectedDepartment.name)}/notify`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api'))}/DepartmentNotifications/${encodeURIComponent(selectedDepartment.name)}/notify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
