@@ -355,7 +355,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                             ) : ev.userRsvpStatus === 'Going' ? (
                               <span className="going-text green">Going</span>
                             ) : (
-                              <button style={{ background: '#8b5cf6', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '15px', cursor: 'pointer', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); handleRsvp(ev.id, 'Going'); }}>RSVP</button>
+                              <button style={{ background: 'var(--accent-green)', color: '#101213', border: 'none', padding: '5px 12px', borderRadius: '15px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }} onClick={(e) => { e.stopPropagation(); handleRsvp(ev.id, 'Going'); }}>RSVP</button>
                             )}
                           </div>
                         </div>
@@ -369,7 +369,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                             </div>
                             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ev.totalAttendees > 0 ? `${ev.totalAttendees} attending` : 'Be the first to RSVP!'}</span>
                           </div>
-                          <button style={{ background: 'transparent', border: 'none', color: '#8b5cf6', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }} onClick={() => { setSelectedEventForParticipants(ev); setShowParticipantsModal(true); }}>See all</button>
+                          <button style={{ background: 'transparent', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }} onClick={() => { setSelectedEventForParticipants(ev); setShowParticipantsModal(true); }}>See all</button>
                         </div>
                       </div>
                     );
@@ -401,8 +401,8 @@ const StandingsLayout = ({ setActiveMenu }) => {
                   </div>
                 )) : (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: '0.95rem', padding: '20px', textAlign: 'center', gap: '15px' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(139, 92, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(185, 246, 90, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="8" r="7"></circle>
                         <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                       </svg>
@@ -439,12 +439,12 @@ const StandingsLayout = ({ setActiveMenu }) => {
                    const effScore = myStats.score ?? myStats.Score ?? 0;
                    return (
                      <div style={{ marginBottom: '40px', width: '100%' }}>
-                       <h3 style={{ marginBottom: '15px', color: '#e5e7eb', fontSize: '1.2rem', paddingLeft: '10px', borderLeft: '4px solid #8b5cf6' }}>Your Performance Details</h3>
+                       <h3 style={{ marginBottom: '15px', color: '#e5e7eb', fontSize: '1.2rem', paddingLeft: '10px', borderLeft: '4px solid var(--accent-green)' }}>Your Performance Details</h3>
                        
-                       <div className="premium-hover" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                       <div className="premium-hover" style={{ background: 'rgba(185, 246, 90, 0.05)', border: '1px solid rgba(185, 246, 90, 0.15)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                          
                          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                           <div className="rank-circle" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', width: '60px', height: '60px', fontSize: '1.5rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)' }}>
+                           <div className="rank-circle" style={{ background: 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)', width: '60px', height: '60px', fontSize: '1.5rem', color: '#101213', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(185, 246, 90, 0.2)' }}>
                              #{myIndex + 1}
                            </div>
                            <img src={myStats.avatar || myStats.Avatar || 'https://via.placeholder.com/80'} alt="Avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
@@ -465,7 +465,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                            </div>
                            <div style={{ textAlign: 'center' }}>
                              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>Efficiency Score</div>
-                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>{effScore}%</div>
+                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent-green)' }}>{effScore}%</div>
                            </div>
                          </div>
                          
@@ -475,7 +475,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                              <span style={{ color: '#fff', fontWeight: '600' }}>{effScore}%</span>
                            </div>
                            <div style={{ width: '100%', height: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '5px', overflow: 'hidden' }}>
-                             <div style={{ width: `${effScore}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #10b981)', transition: 'width 1s ease-out' }}></div>
+                             <div style={{ width: `${effScore}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent-green), #10b981)', transition: 'width 1s ease-out' }}></div>
                            </div>
                          </div>
                          
@@ -693,7 +693,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                             ) : ev.userRsvpStatus === 'Going' ? (
                               <span className="going-text green">Going</span>
                             ) : (
-                              <button style={{ background: '#8b5cf6', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '15px', cursor: 'pointer', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); handleRsvp(ev.id, 'Going'); }}>RSVP</button>
+                              <button style={{ background: 'var(--accent-green)', color: '#101213', border: 'none', padding: '5px 12px', borderRadius: '15px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }} onClick={(e) => { e.stopPropagation(); handleRsvp(ev.id, 'Going'); }}>RSVP</button>
                             )}
                           </div>
                         </div>
@@ -707,7 +707,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                             </div>
                             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ev.totalAttendees > 0 ? `${ev.totalAttendees} attending` : 'Be the first to RSVP!'}</span>
                           </div>
-                          <button style={{ background: 'transparent', border: 'none', color: '#8b5cf6', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }} onClick={() => { setSelectedEventForParticipants(ev); setShowParticipantsModal(true); }}>See all</button>
+                          <button style={{ background: 'transparent', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }} onClick={() => { setSelectedEventForParticipants(ev); setShowParticipantsModal(true); }}>See all</button>
                         </div>
                       </div>
                     );
