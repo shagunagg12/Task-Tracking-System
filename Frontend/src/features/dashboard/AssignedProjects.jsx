@@ -25,15 +25,39 @@ const AssignedProjects = () => {
         }
         
         const data = await response.json();
-        const normalizedData = data.map(proj => ({
-            ...proj,
-            status: (proj.status === 'Done') ? 'Completed' : proj.status,
-            tasks: proj.tasks ? proj.tasks.map(t => ({
-                ...t,
-                status: (t.status === 'Done') ? 'Completed' : t.status,
-                statusClass: (t.statusClass === 'status-done' || t.status === 'Done') ? 'status-completed' : (t.statusClass || '')
-            })) : []
-        }));
+        const normalizedData = data.map(proj => {
+            let pStatus = (proj.status === 'Done') ? 'Completed' : proj.status;
+            
+            const computedTasks = proj.tasks ? proj.tasks.map(t => {
+                let mappedStatus = (t.status === 'Done') ? 'Completed' : t.status;
+                let mappedClass = '';
+                if (mappedStatus === 'Completed') mappedClass = 'status-completed';
+                else if (mappedStatus === 'In Progress') mappedClass = 'status-inprogress';
+                else if (mappedStatus === 'Pending') mappedClass = 'status-pending';
+                else if (mappedStatus === 'Blocked') mappedClass = 'status-blocked';
+                
+                return {
+                    ...t,
+                    status: mappedStatus,
+                    statusClass: mappedClass
+                };
+            }) : [];
+            
+            const totalTasks = computedTasks.length;
+            const completedTasks = computedTasks.filter(t => t.status === 'Completed').length;
+            
+            if (totalTasks > 0 && completedTasks === totalTasks) {
+                pStatus = 'Completed';
+            } else {
+                pStatus = 'In Progress';
+            }
+            
+            return {
+                ...proj,
+                status: pStatus,
+                tasks: computedTasks
+            };
+        });
         setProjectsData(normalizedData);
         if (normalizedData && normalizedData.length > 0) {
             setSelectedProjectId(normalizedData[0].id);
