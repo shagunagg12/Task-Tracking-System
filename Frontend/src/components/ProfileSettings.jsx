@@ -85,7 +85,7 @@ export default function ProfileSettings() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5024/api/profile/picture', {
+      const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/profile/picture', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
