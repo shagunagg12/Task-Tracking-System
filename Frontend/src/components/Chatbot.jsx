@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import avatar from '../assets/chatbot-avatar.png';
 import Preloader from './common/Preloader';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5024/api';
+
 const botConfigs = {
   daksh: {
     name: 'Daksh',
@@ -109,6 +111,13 @@ const botConfigs = {
   }
 };
 
+const botSystemPrompts = {
+  daksh: "You are Daksh, the Technical Lead & Code Expert for this team. You are highly knowledgeable about React, JavaScript/TypeScript, .NET Core C#, database optimization, and software architecture. Keep your replies concise, helpful, and developer-friendly. Help the user debug, write, or refactor code.",
+  ayush: "You are Ayush, the HR Specialist & Team Lead. You focus on team collaboration, workplace satisfaction, peer recognition, social scoring, conflict resolution, and understanding company culture and policies. Be warm, empathetic, encouraging, and professional.",
+  rachit: "You are Rachit, the Operations & Efficiency Optimizer. Your goal is to help users optimize their schedules, eliminate bottlenecks, improve productivity (e.g., using the Pomodoro technique or time blocking), and streamline their workflows. Be structured, analytical, and highly direct.",
+  kartik: "You are Kartik, the Mentorship & Skill Advisor. You guide users on learning paths (especially modern frontend/backend stacks), skill acquisition, continuous learning, and system design interview preparation. Be supportive, informative, and inspiring."
+};
+
 const Chatbot = ({ isSidebarOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -205,11 +214,37 @@ const Chatbot = ({ isSidebarOpen }) => {
     }));
 
     setIsTyping(true);
-    setTimeout(() => {
-      const responseText = botConfigs[targetBot].getResponse(originalText);
+    setTimeout(async () => {
+      let botResponseText = "";
+      try {
+        const response = await fetch(`${API_URL}/chatbot/query`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bot: targetBot,
+            text: originalText,
+            messages: [
+              { role: 'user', content: originalText }
+            ]
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          botResponseText = data.reply;
+        } else {
+          botResponseText = botConfigs[targetBot].getResponse(originalText);
+        }
+      } catch (err) {
+        console.error("NVIDIA API transfer call failed, using fallback:", err);
+        botResponseText = botConfigs[targetBot].getResponse(originalText);
+      }
+
       const botMessage = {
         sender: 'bot',
-        text: `Hey, I received your transferred query! Regarding your question:\n\n"${responseText}"`,
+        text: `Hey, I received your transferred query! Regarding your question:\n\n${botResponseText}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setChatHistories(prev => ({
@@ -220,26 +255,50 @@ const Chatbot = ({ isSidebarOpen }) => {
     }, 1500);
   };
 
-  const handleSendMessage = (textToSend) => {
+  const handleSendMessage = async (textToSend) => {
     const text = textToSend || inputText;
     if (!text.trim() || !selectedBot) return;
 
     // Add user message
     const userMessage = { sender: 'user', text: text.trim(), timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     
+    const updatedHistory = [...chatHistories[selectedBot], userMessage];
     setChatHistories(prev => ({
       ...prev,
-      [selectedBot]: [...prev[selectedBot], userMessage]
+      [selectedBot]: updatedHistory
     }));
 
     if (!textToSend) setInputText('');
     setIsTyping(true);
 
-    // Simulate response delay
-    setTimeout(() => {
+    try {
       const otherDept = detectDepartment(text, selectedBot);
-      let botResponseText = botConfigs[selectedBot].getResponse(text);
       let transferInfo = null;
+      let botResponseText = "";
+
+      const apiMessages = updatedHistory.slice(-10).map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+
+      const response = await fetch(`${API_URL}/chatbot/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          bot: selectedBot,
+          text: text,
+          messages: apiMessages
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        botResponseText = data.reply;
+      } else {
+        botResponseText = botConfigs[selectedBot].getResponse(text);
+      }
 
       if (otherDept) {
         botResponseText = `${botResponseText}\n\n*Note:* This sounds like a question for the **${otherDept.role}** department.`;
@@ -261,8 +320,35 @@ const Chatbot = ({ isSidebarOpen }) => {
         ...prev,
         [selectedBot]: [...prev[selectedBot], botMessage]
       }));
+    } catch (error) {
+      console.error("Error calling NVIDIA API, using fallback:", error);
+      const otherDept = detectDepartment(text, selectedBot);
+      let transferInfo = null;
+      let botResponseText = botConfigs[selectedBot].getResponse(text);
+
+      if (otherDept) {
+        botResponseText = `${botResponseText}\n\n*Note:* This sounds like a question for the **${otherDept.role}** department.`;
+        transferInfo = {
+          targetBot: otherDept.bot,
+          targetName: otherDept.name,
+          userQuery: text
+        };
+      }
+
+      const botMessage = { 
+        sender: 'bot', 
+        text: botResponseText, 
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        transferInfo: transferInfo
+      };
+      
+      setChatHistories(prev => ({
+        ...prev,
+        [selectedBot]: [...prev[selectedBot], botMessage]
+      }));
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (

@@ -25,9 +25,18 @@ const AssignedProjects = () => {
         }
         
         const data = await response.json();
-        setProjectsData(data);
-        if (data && data.length > 0) {
-            setSelectedProjectId(data[0].id);
+        const normalizedData = data.map(proj => ({
+            ...proj,
+            status: (proj.status === 'Done') ? 'Completed' : proj.status,
+            tasks: proj.tasks ? proj.tasks.map(t => ({
+                ...t,
+                status: (t.status === 'Done') ? 'Completed' : t.status,
+                statusClass: (t.statusClass === 'status-done' || t.status === 'Done') ? 'status-completed' : (t.statusClass || '')
+            })) : []
+        }));
+        setProjectsData(normalizedData);
+        if (normalizedData && normalizedData.length > 0) {
+            setSelectedProjectId(normalizedData[0].id);
         }
       } catch (error) {
         console.error('Error fetching projects:', error);

@@ -85,6 +85,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<Backend.Services.IEmailService, Backend.Services.SmtpEmailService>();
+builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<Backend.Interfaces.IAdminDashboardService, Backend.Services.AdminDashboardService>();
 builder.Services.AddScoped<Backend.Interfaces.IAdminProjectsService, Backend.Services.AdminProjectsService>();
@@ -161,6 +162,28 @@ app.MapGet("/weatherforecast", () =>
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    
+    // Ensure UserPoints table is created
+    try
+    {
+        using (var command = context.Database.GetDbConnection().CreateCommand())
+        {
+            command.CommandText = @"
+                IF OBJECT_ID('UserPoints', 'U') IS NULL
+                CREATE TABLE UserPoints (
+                    id INT IDENTITY(1,1) PRIMARY KEY,
+                    UserId INT NOT NULL,
+                    Points INT NOT NULL
+                );";
+            context.Database.OpenConnection();
+            command.ExecuteNonQuery();
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB ERROR] Failed to create UserPoints table: {ex.Message}");
+    }
+
     if (!context.Admins.Any(a => a.Email == "connect2rachit882@gmail.com"))
     {
         var admin = new Backend.Models.Admin
@@ -178,6 +201,7 @@ using (var scope = app.Services.CreateScope())
             FullName = "Alice Engineer",
             Email = "alice.engineer@example.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            Points = 0,
             Profile = new Backend.Models.UserProfile
             {
                 Department = "Engineering",
@@ -189,6 +213,25 @@ using (var scope = app.Services.CreateScope())
         context.Users.Add(dummyUser);
         context.SaveChanges();
     }
+
+    // Reset points to 0 for everyone on startup in the UserPoints table
+    try
+    {
+        var allPoints = context.UserPoints.ToList();
+        context.UserPoints.RemoveRange(allPoints);
+        context.SaveChanges();
+    }
+    catch (Exception)
+    {
+        // Table might not exist yet before migration
+    }
+
+    var users = context.Users.ToList();
+    foreach (var u in users)
+    {
+        context.UserPoints.Add(new Backend.Models.UserPoints { UserId = u.Id, Points = 0 });
+    }
+    context.SaveChanges();
 }
 
 app.Run();

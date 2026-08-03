@@ -32,7 +32,7 @@ const AnimatedCounter = ({ value }) => {
 };
 
 const AchievementsRewards = () => {
-  const [points, setPoints] = useState(1250);
+  const [points, setPoints] = useState(0);
   const [redeemedItems, setRedeemedItems] = useState([]);
   const [redemptionSuccess, setRedemptionSuccess] = useState(null);
   const [allAchievementsClaimed, setAllAchievementsClaimed] = useState(false);
@@ -57,16 +57,18 @@ const AchievementsRewards = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setPoints(data.points);
-        setClaimedBonuses(data.claimedBonuses || []);
+        const pts = data.points !== undefined ? data.points : (data.Points !== undefined ? data.Points : 0);
+        const bonuses = data.claimedBonuses || data.ClaimedBonuses || [];
+        setPoints(pts);
+        setClaimedBonuses(bonuses);
         setDbStats({
-          completedTasks: data.completedTasks,
-          completedProjects: data.completedProjects,
-          efficiency: data.efficiency,
-          weeklyLogins: data.weeklyLogins ?? 7,
-          monthlyLogins: data.monthlyLogins ?? 21
+          completedTasks: data.completedTasks !== undefined ? data.completedTasks : (data.CompletedTasks !== undefined ? data.CompletedTasks : 0),
+          completedProjects: data.completedProjects !== undefined ? data.completedProjects : (data.CompletedProjects !== undefined ? data.CompletedProjects : 0),
+          efficiency: data.efficiency !== undefined ? data.efficiency : (data.Efficiency !== undefined ? data.Efficiency : 0),
+          weeklyLogins: data.weeklyLogins !== undefined ? data.weeklyLogins : (data.WeeklyLogins !== undefined ? data.WeeklyLogins : 0),
+          monthlyLogins: data.monthlyLogins !== undefined ? data.monthlyLogins : (data.MonthlyLogins !== undefined ? data.MonthlyLogins : 0)
         });
-        if (data.claimedBonuses && data.claimedBonuses.includes('all-star-completion')) {
+        if (bonuses.includes('all-star-completion')) {
           setAllAchievementsClaimed(true);
         }
       }
@@ -127,20 +129,20 @@ const AchievementsRewards = () => {
 
   const efficiencyMilestones = [
     {
-      id: 'weekly-streak',
-      title: 'Weekly Consistency Streak',
-      requirement: 'Maintain >90% efficiency for 7 days in a row',
+      id: 'task-rookie',
+      title: 'Task Rookie Milestone',
+      requirement: 'Complete 5 tasks in total',
       rewardPoints: 100,
-      status: claimedBonuses.includes('weekly-streak') ? 'claimed' : (dbStats.weeklyLogins >= 7 ? 'claimable' : 'in-progress'),
-      progress: { current: dbStats.weeklyLogins, total: 7 }
+      status: claimedBonuses.includes('task-rookie') ? 'claimed' : (dbStats.completedTasks >= 5 ? 'claimable' : 'in-progress'),
+      progress: { current: dbStats.completedTasks, total: 5 }
     },
     {
-      id: 'monthly-consistency',
-      title: 'Monthly Peak Performance',
-      requirement: 'Maintain continuous 90% efficiency for 1 month',
+      id: 'task-master',
+      title: 'Task Master Milestone',
+      requirement: 'Complete 20 tasks in total',
       rewardPoints: 500,
-      status: claimedBonuses.includes('monthly-consistency') ? 'claimed' : (dbStats.monthlyLogins >= 30 ? 'claimable' : 'in-progress'),
-      progress: { current: dbStats.monthlyLogins, total: 30 }
+      status: claimedBonuses.includes('task-master') ? 'claimed' : (dbStats.completedTasks >= 20 ? 'claimable' : 'in-progress'),
+      progress: { current: dbStats.completedTasks, total: 20 }
     },
     {
       id: 'excellence-bonus',
@@ -343,7 +345,7 @@ const AchievementsRewards = () => {
                 <p className="ar-req-desc">{m.requirement}</p>
                 <div className="ar-milestone-progress">
                   <div className="ar-progress-text">
-                    Progress: {m.progress.current} / {m.progress.total} {m.id === 'excellence-bonus' ? '%' : 'days'}
+                    Progress: {m.progress.current} / {m.progress.total} {m.id === 'excellence-bonus' ? '%' : (m.id === 'task-rookie' || m.id === 'task-master' ? 'tasks' : 'days')}
                   </div>
                   <div className="ar-progress-track">
                     <div 

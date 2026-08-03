@@ -68,6 +68,20 @@ const Report = () => {
   const [needleAngle, setNeedleAngle] = useState(-90);
   const [gaugeOffset, setGaugeOffset] = useState(283);
 
+  const getRatingText = (efficiency) => {
+    if (efficiency >= 75) return 'EXCELLENT';
+    if (efficiency >= 60) return 'GOOD';
+    if (efficiency >= 45) return 'AVERAGE';
+    return 'NEEDS IMPROVEMENT';
+  };
+
+  const getRatingClass = (efficiency) => {
+    if (efficiency >= 75) return '';
+    if (efficiency >= 60) return 'good';
+    if (efficiency >= 45) return 'average';
+    return 'needs-improvement';
+  };
+
   const getUserName = () => {
     try {
       const token = localStorage.getItem('token');
@@ -113,30 +127,34 @@ const Report = () => {
   const allTasks = hasRealData ? projects.flatMap(p => p.tasks || []) : [];
   
   // 1. Task Summary Calculations
-  const totalTasksCount = hasRealData ? allTasks.length : 142;
-  const completedTasksCount = hasRealData ? allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length : 96;
-  const activeTasksCount = hasRealData ? allTasks.filter(t => t.status === 'In Progress' || t.status === 'Todo').length : 38;
-  const blockedTasksCount = hasRealData ? allTasks.filter(t => t.status === 'Blocked').length : 8;
+  const totalTasksCount = hasRealData ? allTasks.length : 0;
+  const completedTasksCount = hasRealData ? allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length : 0;
+  const activeTasksCount = hasRealData ? allTasks.filter(t => t.status === 'In Progress' || t.status === 'Todo').length : 0;
+  const blockedTasksCount = hasRealData ? allTasks.filter(t => t.status === 'Blocked').length : 0;
   // Overdue: tasks that are active and have an passed deadline (simulated or actual)
-  const overdueTasksCount = hasRealData ? Math.floor(activeTasksCount * 0.15) : 6;
-  const archivedTasksCount = hasRealData ? Math.floor(completedTasksCount * 0.25) : 24;
+  const overdueTasksCount = hasRealData ? Math.floor(activeTasksCount * 0.15) : 0;
+  const archivedTasksCount = hasRealData ? Math.floor(completedTasksCount * 0.25) : 0;
+  
+  const completionRate = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+  const delayRate = totalTasksCount > 0 ? Math.round((overdueTasksCount / totalTasksCount) * 100) : 0;
+  const deepWorkHours = completedTasksCount * 3;
 
   // 10. Priority Counts
-  const priorityHigh = hasRealData ? allTasks.filter(t => t.priority === 'High').length : 28;
-  const priorityMedium = hasRealData ? allTasks.filter(t => t.priority === 'Medium').length : 64;
-  const priorityLow = hasRealData ? allTasks.filter(t => t.priority === 'Low').length : 40;
-  const priorityCritical = hasRealData ? Math.floor(priorityHigh * 0.2) : 10;
+  const priorityHigh = hasRealData ? allTasks.filter(t => t.priority === 'High').length : 0;
+  const priorityMedium = hasRealData ? allTasks.filter(t => t.priority === 'Medium').length : 0;
+  const priorityLow = hasRealData ? allTasks.filter(t => t.priority === 'Low').length : 0;
+  const priorityCritical = hasRealData ? Math.floor(priorityHigh * 0.2) : 0;
 
   // 5. Efficiency Score Formula - Calculated as overall project task completion percentage
   const computedEfficiency = hasRealData 
     ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length / allTasks.length) * 100) : 0)
-    : 75;
+    : 0;
 
   // Status Distribution Percentages normalized to add up to exactly 100%
-  const completedPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length / allTasks.length) * 100) : 75;
-  const inProgressPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'In Progress').length / allTasks.length) * 100) : 15;
-  const pendingPct = hasRealData ? Math.round((allTasks.filter(t => t.status === 'Todo').length / allTasks.length) * 100) : 10;
-  const blockedPct = 100 - (completedPct + inProgressPct + pendingPct); // Ensure sum is exactly 100%
+  const completedPct = hasRealData ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length / allTasks.length) * 100) : 0) : 0;
+  const inProgressPct = hasRealData ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'In Progress').length / allTasks.length) * 100) : 0) : 0;
+  const pendingPct = hasRealData ? (allTasks.length > 0 ? Math.round((allTasks.filter(t => t.status === 'Todo').length / allTasks.length) * 100) : 0) : 0;
+  const blockedPct = hasRealData ? (allTasks.length > 0 ? 100 - (completedPct + inProgressPct + pendingPct) : 0) : 0; // Ensure sum is exactly 100%
 
   // Animate speedometer needle and gauge arc fill on load
   useEffect(() => {
@@ -244,18 +262,18 @@ const Report = () => {
                 <div className="report-card-subtitle">Daily, weekly, and monthly productivity analysis.</div>
               </div>
             </div>
-            <div className="productivity-container">
+             <div className="productivity-container">
               <div className="productivity-kpis">
                 <div className="prod-kpi-card">
-                  <div className="prod-kpi-val">82%</div>
+                  <div className="prod-kpi-val">{hasRealData ? '82%' : '0%'}</div>
                   <div className="prod-kpi-lbl">Daily Productivity</div>
                 </div>
                 <div className="prod-kpi-card">
-                  <div className="prod-kpi-val">88%</div>
+                  <div className="prod-kpi-val">{hasRealData ? '88%' : '0%'}</div>
                   <div className="prod-kpi-lbl">Weekly Productivity</div>
                 </div>
                 <div className="prod-kpi-card">
-                  <div className="prod-kpi-val">91%</div>
+                  <div className="prod-kpi-val">{hasRealData ? '91%' : '0%'}</div>
                   <div className="prod-kpi-lbl">Monthly Productivity</div>
                 </div>
               </div>
@@ -277,10 +295,10 @@ const Report = () => {
                   <line x1="40" y1="140" x2="480" y2="140" className="chart-grid-line" />
                   
                   {/* Area Fill */}
-                  <path d="M 40,140 L 100,100 L 160,110 L 220,60 L 280,75 L 340,30 L 400,50 L 460,20 L 460,140 Z" className="chart-area" />
+                  <path d={hasRealData ? "M 40,140 L 100,100 L 160,110 L 220,60 L 280,75 L 340,30 L 400,50 L 460,20 L 460,140 Z" : "M 40,140 L 460,140 L 460,140 Z"} className="chart-area" />
                   
                   {/* Line */}
-                  <path d="M 40,140 L 100,100 L 160,110 L 220,60 L 280,75 L 340,30 L 400,50 L 460,20" className="chart-line" />
+                  <path d={hasRealData ? "M 40,140 L 100,100 L 160,110 L 220,60 L 280,75 L 340,30 L 400,50 L 460,20" : "M 40,140 L 460,140"} className="chart-line" />
                   
                   {/* Labels */}
                   <text x="40" y="160" className="chart-axis-text" textAnchor="middle">Mon</text>
@@ -299,16 +317,20 @@ const Report = () => {
                   <text x="30" y="144" className="chart-axis-text" textAnchor="end">25%</text>
                   
                   {/* Dots */}
-                  <circle cx="100" cy="100" r="4" className="chart-dot" />
-                  <circle cx="220" cy="60" r="4" className="chart-dot" />
-                  <circle cx="340" cy="30" r="4" className="chart-dot" />
-                  <circle cx="460" cy="20" r="4" className="chart-dot" />
+                  {hasRealData && (
+                    <>
+                      <circle cx="100" cy="100" r="4" className="chart-dot" />
+                      <circle cx="220" cy="60" r="4" className="chart-dot" />
+                      <circle cx="340" cy="30" r="4" className="chart-dot" />
+                      <circle cx="460" cy="20" r="4" className="chart-dot" />
+                    </>
+                  )}
                 </svg>
               </div>
               
               <div style={{display: 'flex', justifycontent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', borderTop:'1px solid var(--border-color)', paddingTop: '12px', marginTop: '10px'}}>
-                <div>⏱️ Avg. Completion: <strong>4.2 hrs</strong></div>
-                <div>🔥 Focus Hours: <strong>26.4 hrs / wk</strong></div>
+                <div>⏱️ Avg. Completion: <strong>{hasRealData ? '4.2 hrs' : '0 hrs'}</strong></div>
+                <div>🔥 Focus Hours: <strong>{hasRealData ? '26.4 hrs / wk' : '0 hrs / wk'}</strong></div>
               </div>
             </div>
           </div>
@@ -377,7 +399,6 @@ const Report = () => {
                   <span className="summary-stat-icon">📊</span>
                 </div>
                 <h3 className="summary-stat-value">{totalTasksCount}</h3>
-                <span className="summary-stat-trend trend-up">↗ 12% <span style={{color:'var(--text-muted)'}}>vs last week</span></span>
               </div>
 
               <div className="summary-stat-box active">
@@ -386,7 +407,6 @@ const Report = () => {
                   <span className="summary-stat-icon">⚡</span>
                 </div>
                 <h3 className="summary-stat-value">{activeTasksCount}</h3>
-                <span className="summary-stat-trend trend-neutral">→ Stable</span>
               </div>
 
               <div className="summary-stat-box completed">
@@ -395,7 +415,6 @@ const Report = () => {
                   <span className="summary-stat-icon">✅</span>
                 </div>
                 <h3 className="summary-stat-value">{completedTasksCount}</h3>
-                <span className="summary-stat-trend trend-up">↗ 8% <span style={{color:'var(--text-muted)'}}>vs last week</span></span>
               </div>
 
               <div className="summary-stat-box overdue">
@@ -404,7 +423,6 @@ const Report = () => {
                   <span className="summary-stat-icon">📚</span>
                 </div>
                 <h3 className="summary-stat-value">{overdueTasksCount}</h3>
-                <span className="summary-stat-trend trend-down">↘ 25% <span style={{color:'var(--text-muted)'}}>improvement</span></span>
               </div>
 
               <div className="summary-stat-box upcoming">
@@ -413,7 +431,6 @@ const Report = () => {
                   <span className="summary-stat-icon">📅</span>
                 </div>
                 <h3 className="summary-stat-value">{hasRealData ? projects.reduce((acc, p) => acc + (p.deadlines ? p.deadlines.length : 0), 0) : 4}</h3>
-                <span className="summary-stat-trend trend-neutral">Next 7 days</span>
               </div>
 
               <div className="summary-stat-box archived">
@@ -422,7 +439,6 @@ const Report = () => {
                   <span className="summary-stat-icon">📁</span>
                 </div>
                 <h3 className="summary-stat-value">{archivedTasksCount}</h3>
-                <span className="summary-stat-trend trend-neutral">In repository archive</span>
               </div>
             </div>
           </div>
@@ -464,15 +480,15 @@ const Report = () => {
               </tr>
               <tr>
                 <td>Completion Rate</td>
-                <td style={{ textAlign: 'right' }}>96.3%</td>
+                <td style={{ textAlign: 'right' }}>{completionRate}%</td>
               </tr>
               <tr>
                 <td>Delay Rate</td>
-                <td style={{ textAlign: 'right' }}>3.7%</td>
+                <td style={{ textAlign: 'right' }}>{delayRate}%</td>
               </tr>
               <tr>
                 <td>Deep Work Hours</td>
-                <td style={{ textAlign: 'right' }}>32 hrs</td>
+                <td style={{ textAlign: 'right' }}>{deepWorkHours} hrs</td>
               </tr>
               <tr>
                 <td>Total Tasks</td>
@@ -522,8 +538,8 @@ const Report = () => {
           <div className="print-section">
             <h2 className="print-section-title">Performance Highlights</h2>
             <ul className="print-list">
-              <li>High efficiency score of <strong>{computedEfficiency}%</strong> maintained across active projects.</li>
-              <li>96.3% completion rate with minimal delay rate of 3.7%.</li>
+              <li>{computedEfficiency >= 75 ? 'High' : computedEfficiency >= 50 ? 'Moderate' : 'Low'} efficiency score of <strong>{computedEfficiency}%</strong> maintained across active projects.</li>
+              <li>{completionRate}% completion rate with minimal delay rate of {delayRate}%.</li>
               <li>Tasks backlog kept to a minimum of <strong>{overdueTasksCount}</strong> items.</li>
             </ul>
           </div>
@@ -540,7 +556,9 @@ const Report = () => {
 
         <div className="print-footer-rating">
           <span className="rating-label">Overall Performance Rating</span>
-          <span className="rating-badge">EXCELLENT</span>
+          <span className={`rating-badge ${getRatingClass(computedEfficiency)}`}>
+            {getRatingText(computedEfficiency)}
+          </span>
         </div>
       </div>
     </div>

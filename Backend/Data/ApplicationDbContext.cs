@@ -31,6 +31,7 @@ namespace Backend.Data
         public DbSet<UserClaimedBonus> UserClaimedBonuses { get; set; }
         public DbSet<RewardRedemption> RewardRedemptions { get; set; }
         public DbSet<UserLoginLog> UserLoginLogs { get; set; }
+        public DbSet<UserPoints> UserPoints { get; set; }
 
         public DbSet<SuperAdmin> SuperAdmins { get; set; }
         public DbSet<Department> Departments { get; set; }

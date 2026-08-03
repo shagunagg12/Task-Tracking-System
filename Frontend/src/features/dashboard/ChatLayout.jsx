@@ -477,6 +477,50 @@ const ChatLayout = () => {
     try {
       if (selectedUser) {
         await connection.invoke('SendMessage', currentUserId, selectedUser.id, msgText, null, null, replyingToMessage?.id || null);
+        
+        // Check if messaging one of the 4 bots
+        const botNames = ['daksh', 'ayush', 'kartik', 'rachit'];
+        const userNameLower = (selectedUser.name || '').toLowerCase();
+        const matchedBot = botNames.find(b => userNameLower.includes(b));
+        
+        if (matchedBot) {
+          // Simulate typing and call local chatbot endpoint after a short delay
+          setTimeout(async () => {
+            try {
+              if (connection) {
+                await connection.invoke('SendTyping', selectedUser.id, currentUserId).catch(console.error);
+              }
+
+              // Gather conversation history
+              const apiMessages = [
+                ...messages.map(m => ({
+                  role: (m.senderId ?? m.SenderId) === currentUserId ? 'user' : 'assistant',
+                  content: m.content ?? m.Content ?? ''
+                })),
+                { role: 'user', content: msgText }
+              ];
+
+              const response = await fetch(`${API_URL}/chatbot/query`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  bot: matchedBot,
+                  text: msgText,
+                  messages: apiMessages
+                })
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                await connection.invoke('SendMessage', selectedUser.id, currentUserId, data.reply, null, null, null);
+              }
+            } catch (err) {
+              console.error("Failed to generate AI response:", err);
+            }
+          }, 1500);
+        }
       } else if (selectedProject) {
         await connection.invoke('SendProjectMessage', selectedProject.id, currentUserId, msgText, null, null, replyingToMessage?.id || null);
       }

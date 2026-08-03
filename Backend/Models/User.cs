@@ -23,7 +23,7 @@ namespace Backend.Models
         public string? ProfilePictureUrl { get; set; }
 
         [Column("Points")]
-        public int Points { get; set; } = 1250;
+        public int Points { get; set; } = 0;
 
         [Column("IsActive")]
         public bool IsActive { get; set; } = true;

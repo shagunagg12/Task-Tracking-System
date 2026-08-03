@@ -18,6 +18,7 @@ import SuperAdminSettings from './SuperAdminSettings';
 import SuperAdminNotifications from './SuperAdminNotifications';
 import SuperAdminDepartments from './SuperAdminDepartments';
 import SuperAdminAnalytics from './SuperAdminAnalytics';
+import SuperAdminRewards from './SuperAdminRewards';
 
 // ─── Toast Notification Component ────────────────────────────────────────────
 const ToastNotification = ({ toast, onDismiss }) => {
@@ -234,6 +235,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     { id: 'Projects', icon: <Briefcase size={20} />, text: 'Projects' },
     { id: 'Reports', icon: <FileText size={20} />, text: 'Reports' },
     { id: 'Analytics', icon: <LineChart size={20} />, text: 'Analytics' },
+    { id: 'Rewards', icon: <Star size={20} />, text: 'Rewards & Vouchers' },
     { id: 'Notifications', icon: <Bell size={20} />, text: 'Notifications' },
     { id: 'Settings', icon: <Settings size={20} />, text: 'Settings' },
   ];
@@ -388,6 +390,8 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
              />
            ) : activeMenu === 'Analytics' ? (
              <SuperAdminAnalytics />
+           ) : activeMenu === 'Rewards' ? (
+             <SuperAdminRewards />
            ) : activeMenu === 'Settings' ? (
              <SuperAdminSettings />
            ) : (
