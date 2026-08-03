@@ -20,8 +20,8 @@ const Calendar = () => {
       const token = localStorage.getItem('token');
       
       const [meetingsRes, eventsRes] = await Promise.all([
-        fetch('http://localhost:5024/api/meetings', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('http://localhost:5024/api/events', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/meetings', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/events', { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
 
       let allItems = [];
@@ -89,7 +89,7 @@ const Calendar = () => {
     const checkGoogleStatus = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5024/api/auth/google/status', {
+        const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/auth/google/status', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -153,7 +153,7 @@ const Calendar = () => {
   const handleConnectGoogle = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5024/api/auth/google/login', {
+      const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/auth/google/login', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
