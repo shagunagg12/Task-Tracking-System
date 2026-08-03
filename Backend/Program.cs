@@ -214,11 +214,15 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 
-    // Reset points to 0 for everyone on startup in the UserPoints table
+    // Reset points to 0 for everyone on startup in the UserPoints table, and clear redemptions
     try
     {
         var allPoints = context.UserPoints.ToList();
         context.UserPoints.RemoveRange(allPoints);
+        
+        var allRedemptions = context.RewardRedemptions.ToList();
+        context.RewardRedemptions.RemoveRange(allRedemptions);
+
         context.SaveChanges();
     }
     catch (Exception)
@@ -230,6 +234,7 @@ using (var scope = app.Services.CreateScope())
     foreach (var u in users)
     {
         context.UserPoints.Add(new Backend.Models.UserPoints { UserId = u.Id, Points = 0 });
+        u.Points = 0;
     }
     context.SaveChanges();
 }
