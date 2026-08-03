@@ -217,6 +217,13 @@ namespace Backend.Services
                 if (admin == null) throw new KeyNotFoundException("Admin not found.");
 
                 admin.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
+                
+                var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == admin.Email);
+                if (adminUser != null)
+                {
+                    adminUser.ProfilePictureUrl = admin.ProfilePictureUrl;
+                }
+
                 await _context.SaveChangesAsync();
 
                 return new { url = admin.ProfilePictureUrl };
