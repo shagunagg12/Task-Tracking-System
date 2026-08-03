@@ -137,7 +137,6 @@ using (var scope = app.Services.CreateScope())
         context.Admins.Add(admin);
         context.SaveChanges();
     }
-
     if (!context.Users.Any(u => u.Email == "alice.engineer@example.com"))
     {
         var dummyUser = new Backend.Models.User
