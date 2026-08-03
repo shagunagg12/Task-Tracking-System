@@ -327,6 +327,11 @@ namespace Backend.Services
                     var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
                     if (user == null)
                     {
+                        if (!dto.IsRegistering)
+                        {
+                            throw new UnauthorizedAccessException("Account not found. Please sign up first.");
+                        }
+                        
                         // Create a new user automatically since Google verified them
                         user = new User
                         {
@@ -545,6 +550,11 @@ namespace Backend.Services
                     var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
                     if (user == null)
                     {
+                        if (!dto.IsRegistering)
+                        {
+                            throw new UnauthorizedAccessException("Account not found. Please sign up first.");
+                        }
+                        
                         user = new User
                         {
                             FullName = userFullName,
