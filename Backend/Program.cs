@@ -230,11 +230,53 @@ using (var scope = app.Services.CreateScope())
         // Table might not exist yet before migration
     }
 
-    var users = context.Users.ToList();
+    // Sync admin profile pictures to user records
+    var admins = context.Admins.ToList();
+    foreach (var admin in admins)
+    {
+        var u = context.Users.FirstOrDefault(x => x.Email == admin.Email);
+        if (u != null && !string.IsNullOrEmpty(admin.ProfilePictureUrl))
+        {
+            u.ProfilePictureUrl = admin.ProfilePictureUrl;
+        }
+    }
+    context.SaveChanges();
+
+    var users = context.Users.Include(u => u.Projects).ToList();
     foreach (var u in users)
     {
         context.UserPoints.Add(new Backend.Models.UserPoints { UserId = u.Id, Points = 0 });
         u.Points = 0;
+
+        if (u.Projects == null || !u.Projects.Any())
+        {
+            var p1 = new Backend.Models.Project
+            {
+                Name = "Website Redesign",
+                Status = "In Progress",
+                Hours = 40,
+                HoursTrend = "+5%",
+                Tasks = new List<Backend.Models.ProjectTask>
+                {
+                    new Backend.Models.ProjectTask { Title = "Design Mockups", Status = "Done", StatusClass = "completed" },
+                    new Backend.Models.ProjectTask { Title = "Frontend Dev", Status = "In Progress", StatusClass = "in-progress" },
+                    new Backend.Models.ProjectTask { Title = "Backend API", Status = "To Do", StatusClass = "todo" }
+                }
+            };
+            var p2 = new Backend.Models.Project
+            {
+                Name = "Mobile App Launch",
+                Status = "Completed",
+                Hours = 120,
+                HoursTrend = "-2%",
+                Tasks = new List<Backend.Models.ProjectTask>
+                {
+                    new Backend.Models.ProjectTask { Title = "Beta Testing", Status = "Done", StatusClass = "completed" },
+                    new Backend.Models.ProjectTask { Title = "App Store Submission", Status = "Done", StatusClass = "completed" }
+                }
+            };
+            u.Projects = new List<Backend.Models.Project> { p1, p2 };
+        }
     }
     context.SaveChanges();
 }
