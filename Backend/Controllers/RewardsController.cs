@@ -88,5 +88,63 @@ namespace Backend.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("all-redemptions")]
+        public async Task<IActionResult> GetAllRedemptions()
+        {
+            try
+            {
+                var result = await _rewardsService.GetAllRedemptionsAsync(User);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+        }
+
+        [HttpPost("approve-redemption/{id}")]
+        public async Task<IActionResult> ApproveRedemption(int id)
+        {
+            try
+            {
+                var result = await _rewardsService.ApproveRedemptionAsync(User, id);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("decline-redemption/{id}")]
+        public async Task<IActionResult> DeclineRedemption(int id)
+        {
+            try
+            {
+                var result = await _rewardsService.DeclineRedemptionAsync(User, id);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
