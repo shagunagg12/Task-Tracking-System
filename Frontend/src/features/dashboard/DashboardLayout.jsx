@@ -60,6 +60,8 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   const [activeMenu, setActiveMenu] = useState(() => {
     return localStorage.getItem('activeMenu') || localStorage.getItem('lastActiveMenu') || 'Overview';
   });
+  
+  const [activeChatUserId, setActiveChatUserId] = useState(null);
 
   const [showPendingTasks, setShowPendingTasks] = useState(false);
   const [pendingTasks, setPendingTasks] = useState([]);
@@ -88,7 +90,19 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
       if (department) {
         const deptRes = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/analytics/department/${encodeURIComponent(department)}`, { headers });
-        if (deptRes.ok) setDeptAnalytics(await deptRes.json());
+        if (deptRes.ok) {
+           const deptData = await deptRes.json();
+           setDeptAnalytics(deptData);
+           if (deptData.topPerformers) {
+              setTeamMembers(deptData.topPerformers.map(u => ({
+                 id: u.userId,
+                 name: u.fullName,
+                 designation: u.department,
+                 avatar: u.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=random`,
+                 email: u.email
+              })));
+           }
+        }
       }
     } catch (err) {
       console.error("Error fetching analytics", err);
@@ -108,6 +122,36 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   // Notifications
   const [notifications, setNotifications] = useState([]);
 
+  const [activities, setActivities] = useState([]);
+
+  const fetchActivities = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/standings/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        let allActivities = [];
+        if (data.pendingInvitations) {
+           allActivities = [...allActivities, ...data.pendingInvitations];
+        }
+        if (data.attendedEvents) {
+           allActivities = [...allActivities, ...data.attendedEvents];
+        }
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        allActivities = allActivities.filter(a => new Date(a.eventDate || a.EventDate) >= today);
+        
+        allActivities.sort((a, b) => new Date(b.eventDate || b.EventDate) - new Date(a.eventDate || a.EventDate));
+        setActivities(allActivities.slice(0, 5));
+      }
+    } catch (err) {
+      console.error("Error fetching activities", err);
+    }
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -121,6 +165,9 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
         if (res.ok) {
           const data = await res.json();
           setUserProfileData(data);
+          
+          fetchActivities();
+          
           if (data.fullName) {
             setUserName(data.fullName);
             localStorage.setItem('userName', data.fullName);
@@ -413,7 +460,11 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
 
         {activeMenu === 'Calendar' ? (
           <div className="calendar-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <Calendar />
+            <Calendar 
+               isProfileComplete={userProfileData ? !!(userProfileData.designation && userProfileData.department && userProfileData.location && userProfileData.bio) : false}
+               setActiveMenu={setActiveMenu}
+               addToast={addToast}
+            />
           </div>
         ) : (activeMenu === 'Chats' || activeMenu === 'Chat') ? (
           <div className="chat-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -460,7 +511,10 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                      <p className="stat-subtitle">Goal: 100%</p>
                   </div>
                   <div className="gauge-visual">
-                    <div className="gauge-arc animate-spin"></div>
+                    <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--brand-primary)" strokeWidth="3" strokeDasharray={`${userAnalytics ? userAnalytics.completionRate : 0}, 100`} />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -543,14 +597,11 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                     <p className="tp-title">Your Tasks</p>
                     
                     <div className="progress-dots-container">
-                      <span className="dot empty"></span>
-                      <span className="dot empty"></span>
-                      <span className="dot empty"></span>
-                      <span className="dot empty"></span>
-                      <span className="dot filled"></span>
-                      <span className="dot filled"></span>
-                      <span className="dot filled"></span>
-                      <span className="dot filled"></span>
+                      {Array.from({ length: 8 }).map((_, i) => {
+                         const rate = userAnalytics ? userAnalytics.completionRate : 0;
+                         const filledCount = Math.round((rate / 100) * 8);
+                         return <span key={i} className={`dot ${i < filledCount ? 'filled' : 'empty'}`}></span>;
+                      })}
                     </div>
                     
                     <h3 className="tp-val">{userAnalytics ? userAnalytics.completionRate : "0"}%</h3>
@@ -677,34 +728,25 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
         <div className="right-section">
           <h3 className="right-title">Activities</h3>
           <ul className="list-items activities-list">
-            <li className="list-item">
-              <img src="https://ui-avatars.com/api/?name=Alice+Wonder&background=random" alt="user" className="tiny-avatar" />
-              <div className="item-details">
-                <p className="item-title">Completed task 'Update Homepage'.</p>
-                <p className="item-time">Just now</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <img src="https://ui-avatars.com/api/?name=Bob+Builder&background=random" alt="user" className="tiny-avatar" />
-              <div className="item-details">
-                <p className="item-title">Earned 'Fast Learner' badge.</p>
-                <p className="item-time">47 Minutes ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <img src="https://ui-avatars.com/api/?name=Charlie+Day&background=random" alt="user" className="tiny-avatar" />
-              <div className="item-details">
-                <p className="item-title">Submitted weekly performance report.</p>
-                <p className="item-time">1 Days ago</p>
-              </div>
-            </li>
-            <li className="list-item">
-              <img src="https://ui-avatars.com/api/?name=Diana+Prince&background=random" alt="user" className="tiny-avatar" />
-              <div className="item-details">
-                <p className="item-title">Appreciated Danny Liu.</p>
-                <p className="item-time">Feb 2, 2026</p>
-              </div>
-            </li>
+            {activities.length > 0 ? (
+              activities.map((act, index) => (
+                <li key={act.id || index} className="list-item">
+                  <div className="tiny-avatar" style={{ background: `hsl(${Math.random() * 360}, 70%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '12px' }}>
+                    {(act.title || 'Event').substring(0, 2).toUpperCase()}
+                  </div>
+                  <div className="item-details">
+                    <p className="item-title">{act.title || 'Untitled Event'}</p>
+                    <p className="item-time">
+                      {new Date(act.eventDate || act.EventDate).toLocaleDateString()}
+                      {' '}
+                      <span style={{color: 'var(--brand-primary)', fontSize: '0.7rem', paddingLeft: '4px'}}>{act.status || act.Status}</span>
+                    </p>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>No recent activities found.</p>
+            )}
           </ul>
         </div>
 
@@ -720,9 +762,9 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                     {member.designation && <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginTop: '2px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{member.designation}</p>}
                   </div>
                   <div className="contact-actions" style={{ display: 'flex', gap: '8px' }}>
-                     <a href={`mailto:${member.email}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                       <span className="c-action" style={{ cursor: 'pointer' }} title="Email">✉</span>
-                     </a>
+                     <div onClick={() => { setActiveChatUserId(member.id); handleMenuClick('Chat'); }} style={{ textDecoration: 'none', color: 'inherit' }}>
+                       <span className="c-action" style={{ cursor: 'pointer' }} title="Chat">💬</span>
+                     </div>
                   </div>
                 </li>
               ))
