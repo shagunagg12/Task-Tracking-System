@@ -135,7 +135,8 @@ namespace Backend.Services
                     UserId = p.UserId,
                     FullName = p.User.FullName,
                     Points = p.User.Points,
-                    ProfilePictureUrl = p.User.ProfilePictureUrl ?? string.Empty
+                    ProfilePictureUrl = p.User.ProfilePictureUrl ?? string.Empty,
+                    CompletedTasks = tasks.Count(t => p.User.Projects.Any(pr => pr.Id == t.ProjectId) && (t.Status == "Completed" || t.Status == "Done"))
                 })
                 .ToList();
 
