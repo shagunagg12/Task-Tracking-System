@@ -600,7 +600,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                           </div>
                         </div>
                       </td>
-                      <td>-</td>
+                      <td>{performer.completedTasks}</td>
                       <td>{performer.points.toLocaleString()}</td>
                     </tr>
                   )) : (
