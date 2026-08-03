@@ -55,7 +55,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
     if (activeTab === 'team') {
       const fetchUsers = async () => {
         try {
-          const res = await fetch('http://localhost:5024/api/AdminUsers');
+          const res = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/AdminUsers');
           if (res.ok) {
             const data = await res.json();
             setAllUsers(data);
@@ -112,7 +112,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
     setTasks(updatedTasks);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/tasks/${draggedTask.id}/status`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/tasks/${draggedTask.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatusInfo.status, statusClass: newStatusInfo.statusClass })
@@ -133,7 +133,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
     if (!newTaskTitle.trim()) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${project.id}/tasks`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${project.id}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTaskTitle, description: '' })
@@ -154,7 +154,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
     e.preventDefault();
     if (!editTaskTitle.trim()) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/tasks/${taskId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/tasks/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: editTaskTitle })
@@ -172,7 +172,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
   const confirmDeleteTask = async () => {
     if (!taskToDelete) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/tasks/${taskToDelete}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/tasks/${taskToDelete}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -189,7 +189,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
   const handleSaveDetails = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${project.id}/details`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${project.id}/details`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(projectDetails)
@@ -206,7 +206,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
     e.preventDefault();
     if (!newTeamMember.name) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${project.id}/team-members`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${project.id}/team-members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newTeamMember)
@@ -220,7 +220,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
 
   const handleDeleteTeamMember = async (memberId) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${project.id}/team-members/${memberId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${project.id}/team-members/${memberId}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -234,7 +234,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
   const handleAddDeadline = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${project.id}/deadlines`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${project.id}/deadlines`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newDeadline)
@@ -249,7 +249,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
   const handleAddFeedback = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminProjects/${project.id}/feedback`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')}/AdminProjects/${project.id}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newFeedback)
