@@ -41,7 +41,7 @@ function App() {
     if (!userId) return;
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5024/adminDashboardHub")
+      .withUrl((import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5024') + '/adminDashboardHub')
       .withAutomaticReconnect()
       .build();
 
