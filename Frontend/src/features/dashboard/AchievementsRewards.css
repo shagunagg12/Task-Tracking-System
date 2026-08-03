@@ -19,19 +19,23 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  background: linear-gradient(135deg, rgba(32,32,35,0.75) 0%, rgba(20,20,22,0.85) 100%);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
   padding: 30px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 215, 0, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.bright-theme .ar-hero-header {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
 .ar-hero-info h1 {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 8px;
-  background: linear-gradient(90deg, #ffffff 0%, #ffd700 100%);
+  background: linear-gradient(90deg, var(--text-main) 0%, var(--accent-green) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
