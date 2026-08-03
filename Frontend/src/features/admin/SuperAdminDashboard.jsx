@@ -63,7 +63,7 @@ const SuperAdminDashboard = ({ onNavigate }) => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5024/api/AdminDashboard/stats');
+      const response = await fetch((import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api')) + '/AdminDashboard/stats');
       if (response.ok) {
         const data = await response.json();
         setStats({
@@ -88,7 +88,7 @@ const SuperAdminDashboard = ({ onNavigate }) => {
     fetchStats();
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5024/adminDashboardHub")
+      .withUrl((import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5024') + '/adminDashboardHub')
       .withAutomaticReconnect()
       .build();
 
