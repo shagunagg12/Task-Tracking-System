@@ -206,18 +206,18 @@ const StandingsLayout = ({ setActiveMenu }) => {
   return (
     <div className="standings-container">
       <div className="standings-header" style={{ justifyContent: 'center', borderBottom: 'none', marginBottom: '40px', marginTop: '20px' }}>
-        <div className="standings-tabs premium-hover" style={{ display: 'flex', gap: '15px', padding: '10px', borderRadius: '50px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+        <div className="standings-tabs premium-hover" style={{ display: 'flex', gap: '15px', padding: '10px', borderRadius: '50px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
           <button 
             className={`tab-btn ${activeTab === 'social' ? 'active' : ''}`}
             onClick={() => setActiveTab('social')}
-            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'social' ? 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)' : 'transparent', color: activeTab === 'social' ? '#101213' : 'var(--text-muted)' }}
+            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'social' ? 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)' : 'transparent', color: activeTab === 'social' ? 'var(--bg-dark)' : 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
           >
             Social Standings
           </button>
           <button 
             className={`tab-btn ${activeTab === 'efficiency' ? 'active' : ''}`}
             onClick={() => setActiveTab('efficiency')}
-            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'efficiency' ? 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)' : 'transparent', color: activeTab === 'efficiency' ? '#101213' : 'var(--text-muted)' }}
+            style={{ padding: '15px 40px', fontSize: '1.2rem', borderRadius: '40px', fontWeight: 'bold', whiteSpace: 'nowrap', transition: 'all 0.3s ease', background: activeTab === 'efficiency' ? 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)' : 'transparent', color: activeTab === 'efficiency' ? 'var(--bg-dark)' : 'var(--text-muted)', border: 'none', cursor: 'pointer' }}
           >
             Efficiency Standings
           </button>
