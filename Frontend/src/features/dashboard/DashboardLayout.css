@@ -13,12 +13,14 @@
 }
 
 .bright-theme {
-  --bg-dark: #F3F4F6;
+  --bg-dark: #FAF8F5;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F9FAFB;
-  --text-main: #111827;
-  --text-muted: #6B7280;
-  --border-color: #E5E7EB;
+  --bg-card-hover: #F6F2EB;
+  --text-main: #2A1F13;
+  --text-muted: #7E6D5B;
+  --accent-green: #FF9F00;
+  --accent-green-dark: #D47A00;
+  --border-color: #EFE9DE;
 }
 
 body, html, #root {

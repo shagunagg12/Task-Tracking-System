@@ -19,19 +19,19 @@ namespace Backend.Services
 
         public async Task<object> GetSocialStandingsAsync(string timeframe)
         {
-            var users = await _context.Profiles.AsNoTracking()
+            var users = await _context.Profiles.AsNoTrackingWithIdentityResolution()
                 .Include(p => p.User)
                 .ToListAsync();
 
             var currentMonth = DateTime.UtcNow.Month;
             var currentYear = DateTime.UtcNow.Year;
 
-            var allAttendances = await _context.EventAttendances.AsNoTracking()
+            var allAttendances = await _context.EventAttendances.AsNoTrackingWithIdentityResolution()
                 .Include(a => a.Event)
                 .Where(a => a.Status == "Going" || a.IsAttended)
                 .ToListAsync();
             
-            var allEvents = await _context.CompanyEvents.AsNoTracking().ToListAsync();
+            var allEvents = await _context.CompanyEvents.AsNoTrackingWithIdentityResolution().ToListAsync();
 
             var standings = users.Select(p => {
                 int score = p.SocialPoints; 
@@ -58,6 +58,7 @@ namespace Backend.Services
                     Score = score
                 };
             })
+            .Where(p => p.Score > 0)
             .OrderByDescending(p => p.Score)
             .ToList();
 
@@ -119,7 +120,7 @@ namespace Backend.Services
 
         public async Task<object> GetMySocialDashboardAsync(int currentUserId)
         {
-            var allProfiles = await _context.Profiles.AsNoTracking()
+            var allProfiles = await _context.Profiles.AsNoTrackingWithIdentityResolution()
                 .OrderByDescending(p => p.SocialPoints)
                 .Select(p => new { p.UserId, p.SocialPoints })
                 .ToListAsync();
@@ -129,7 +130,8 @@ namespace Backend.Services
 
             int rank = allProfiles.FindIndex(p => p.UserId == currentUserId) + 1;
 
-            var myAttendances = await _context.EventAttendances.AsNoTracking()
+            // Use a tracking query here since no-tracking queries in EF Core do not allow cyclic includes (Event -> Attendees -> Event)
+            var myAttendances = await _context.EventAttendances
                 .Include(a => a.Event)
                     .ThenInclude(e => e.Organizer)
                 .Include(a => a.Event)
@@ -182,7 +184,7 @@ namespace Backend.Services
                 .OrderBy(e => e.EventDate)
                 .ToList();
 
-            int eventsOrganized = await _context.CompanyEvents.AsNoTracking().CountAsync(e => e.OrganizerId == currentUserId);
+            int eventsOrganized = await _context.CompanyEvents.AsNoTrackingWithIdentityResolution().CountAsync(e => e.OrganizerId == currentUserId);
             int attendanceRate = myAttendances.Count > 0 ? (int)Math.Round((double)attendedEvents.Count / myAttendances.Count * 100) : 0;
 
             var currentMonth = DateTime.UtcNow.Month;
@@ -192,7 +194,7 @@ namespace Backend.Services
                 .Where(a => (a.Status == "Going" || a.IsAttended) && a.Event.EventDate.Month == currentMonth && a.Event.EventDate.Year == currentYear)
                 .Sum(a => a.Event.Points);
                 
-            int organizedPointsThisMonth = await _context.CompanyEvents.AsNoTracking()
+            int organizedPointsThisMonth = await _context.CompanyEvents.AsNoTrackingWithIdentityResolution()
                 .Where(e => e.OrganizerId == currentUserId && e.EventDate.Month == currentMonth && e.EventDate.Year == currentYear)
                 .CountAsync() * 50;
                 
