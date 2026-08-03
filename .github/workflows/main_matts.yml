@@ -23,11 +23,16 @@ jobs:
         with:
           dotnet-version: '8.x'
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build Backend/Backend.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish Backend/Backend.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -62,4 +67,3 @@ jobs:
           app-name: 'Matts'
           slot-name: 'Production'
           package: .
-          
