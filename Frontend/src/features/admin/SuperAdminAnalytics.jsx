@@ -42,7 +42,7 @@ const SuperAdminAnalytics = () => {
 
   // Determine backend URL
   const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const backendUrl = isDevelopment ? 'http://localhost:5024' : window.location.origin;
+  const backendUrl = isDevelopment ? (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5024') : window.location.origin;
 
   useEffect(() => {
     fetchFilters();

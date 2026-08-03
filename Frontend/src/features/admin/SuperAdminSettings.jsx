@@ -21,7 +21,7 @@ const SuperAdminSettings = () => {
     setIsLoggingIn(true);
     setLoginError('');
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5024/api';
+      const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.VITE_API_URL || 'http://localhost:5024/api');
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,8 +76,8 @@ const SuperAdminSettings = () => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = action === 'promote' 
-        ? `http://localhost:5024/api/AdminUsers/${user.id}/promote`
-        : `http://localhost:5024/api/AdminUsers/${user.id}/demote`;
+        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${user.id}/promote`
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5024/api'}/AdminUsers/${user.id}/demote`;
         
       const res = await fetch(endpoint, {
         method: 'POST',

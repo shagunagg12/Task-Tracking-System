@@ -1,10 +1,10 @@
 ==================================================
 LEAVE VOUCHER REDEMPTION REQUEST (PENDING HR APPROVAL)
 ==================================================
-Timestamp: 2026-07-29 05:49:45 UTC
-User ID: 20
-Employee Name: Daksh Tyagi
-Employee Email: dakshtyagi282005@gmail.com
+Timestamp: 2026-08-01 09:13:30 UTC
+User ID: 18
+Employee Name: Rachit
+Employee Email: connect2rachit882@gmail.com
 
 Reward Details:
 - Reward Name: Leave Voucher (Approved by HR)

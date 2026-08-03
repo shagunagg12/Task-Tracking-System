@@ -1,5 +1,6 @@
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -7,6 +8,16 @@ using Microsoft.AspNetCore.Authentication;
 using Backend.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+    .WriteTo.Console()
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Load the custom .env file from the env folder manually to bypass DotNetEnv bugs
 var envPath = Path.Combine(builder.Environment.ContentRootPath, "env", ".env");
@@ -44,7 +55,7 @@ Console.WriteLine("=============================================");
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
 // Add CORS to connect the frontend without modifying frontend code
 builder.Services.AddCors(options =>
@@ -59,7 +70,8 @@ builder.Services.AddCors(options =>
         });
 });
 
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "super_secret_fallback_key_that_is_long_enough_12345!";
+builder.Services.Configure<Backend.Models.AppSettings>(builder.Configuration.GetSection("AppSettings"));
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? builder.Configuration.GetSection("AppSettings")["JwtSecretFallback"] ?? "super_secret_fallback_key_that_is_long_enough_12345!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -74,6 +86,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddScoped<Backend.Services.IEmailService, Backend.Services.SmtpEmailService>();
 
+builder.Services.AddScoped<Backend.Interfaces.IAdminDashboardService, Backend.Services.AdminDashboardService>();
+builder.Services.AddScoped<Backend.Interfaces.IAdminProjectsService, Backend.Services.AdminProjectsService>();
+builder.Services.AddScoped<Backend.Interfaces.IAdminReportsService, Backend.Services.AdminReportsService>();
+builder.Services.AddScoped<Backend.Interfaces.IAdminUsersService, Backend.Services.AdminUsersService>();
+builder.Services.AddScoped<Backend.Interfaces.IAnalyticsService, Backend.Services.AnalyticsService>();
+builder.Services.AddScoped<Backend.Interfaces.IAuthService, Backend.Services.AuthService>();
+builder.Services.AddScoped<Backend.Interfaces.IDepartmentNotificationsService, Backend.Services.DepartmentNotificationsService>();
+builder.Services.AddScoped<Backend.Interfaces.IDepartmentsService, Backend.Services.DepartmentsService>();
+builder.Services.AddScoped<Backend.Interfaces.IEventsService, Backend.Services.EventsService>();
+builder.Services.AddScoped<Backend.Interfaces.IGoogleOAuthService, Backend.Services.GoogleOAuthService>();
+builder.Services.AddScoped<Backend.Interfaces.IMeetingsService, Backend.Services.MeetingsService>();
+builder.Services.AddScoped<Backend.Interfaces.IMessagesService, Backend.Services.MessagesService>();
+builder.Services.AddScoped<Backend.Interfaces.IProfileService, Backend.Services.ProfileService>();
+builder.Services.AddScoped<Backend.Interfaces.IProjectsService, Backend.Services.ProjectsService>();
+builder.Services.AddScoped<Backend.Interfaces.IRewardsService, Backend.Services.RewardsService>();
+builder.Services.AddScoped<Backend.Interfaces.IStandingsService, Backend.Services.StandingsService>();
+builder.Services.AddScoped<Backend.Interfaces.ISuperAdminsService, Backend.Services.SuperAdminsService>();
+builder.Services.AddScoped<Backend.Interfaces.IUploadService, Backend.Services.UploadService>();
+
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
@@ -86,6 +118,8 @@ builder.Services.AddSignalR();
 
 
 var app = builder.Build();
+
+app.UseMiddleware<Backend.Middleware.GlobalExceptionMiddleware>();
 
 app.UseCors("AllowFrontend");
 

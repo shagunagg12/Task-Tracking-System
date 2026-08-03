@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using Microsoft.Extensions.Options;
+using Backend.Models;
 
 namespace Backend.Services
 {
@@ -18,11 +20,13 @@ namespace Backend.Services
     {
         private readonly string _smtpEmail;
         private readonly string _smtpPassword;
+        private readonly AppSettings _appSettings;
 
-        public SmtpEmailService()
+        public SmtpEmailService(IOptions<AppSettings> appSettings)
         {
             _smtpEmail = Environment.GetEnvironmentVariable("SMTP_EMAIL") ?? "";
             _smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? "";
+            _appSettings = appSettings.Value;
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string message)
@@ -113,7 +117,7 @@ namespace Backend.Services
             <a href='{declineLink}' style='background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;'>Decline</a>
         </div>
         <div style='text-align: center; margin-top: 20px;'>
-            <a href='http://localhost:5173/dashboard' style='color: #6366f1; text-decoration: none; font-size: 14px;'>View in Dashboard</a>
+            <a href='{_appSettings.FrontendUrl}/dashboard' style='color: #6366f1; text-decoration: none; font-size: 14px;'>View in Dashboard</a>
         </div>
     </div>
 </div>
