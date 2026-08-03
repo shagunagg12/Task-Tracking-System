@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Login({ onLogin }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -8,6 +9,45 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   
+  const handleGoogleLogin = async (credentialResponse) => {
+    setError(null);
+    setSuccess(null);
+    
+    const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+    const endpoint = `${API_URL}/auth/google-login`;
+    
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: credentialResponse.credential })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || 'Google sign-in failed.');
+        return;
+      }
+      
+      localStorage.setItem('token', data.token);
+      if (data.user && data.user.isAdmin) {
+        localStorage.setItem('isAdmin', 'true');
+      } else {
+        localStorage.removeItem('isAdmin');
+      }
+      if (data.user && data.user.isSuperAdmin) {
+        localStorage.setItem('isSuperAdmin', 'true');
+      } else {
+        localStorage.removeItem('isSuperAdmin');
+      }
+      localStorage.removeItem('profilePic');
+      if (onLogin) onLogin(data.user);
+      
+    } catch (err) {
+      setError('Failed to connect to the server.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -163,6 +203,15 @@ export default function Login({ onLogin }) {
               {isRegistering ? 'Sign Up' : 'Sign In'}
             </button>
           </form>
+
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => setError('Google sign-in failed.')}
+              theme="filled_black"
+              shape="rectangular"
+            />
+          </div>
           
           <p style={{ marginTop: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
             {isRegistering ? "Already have an account? " : "Don't have an account? "}
