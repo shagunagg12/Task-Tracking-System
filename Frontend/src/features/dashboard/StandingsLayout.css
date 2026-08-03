@@ -999,11 +999,30 @@
 }
 
 .social-card {
-  background: #15151c;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.bright-theme .social-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.bright-theme .social-card h3,
+.bright-theme .social-card h4,
+.bright-theme .social-card .score-header-top h3,
+.bright-theme .social-card .card-header h3 {
+  color: var(--text-main) !important;
+}
+
+.bright-theme .view-all-btn,
+.bright-theme .view-all-footer .view-all-btn,
+.bright-theme .create-event-btn {
+  color: var(--accent-green) !important;
 }
 
 .card-header {
@@ -1025,7 +1044,7 @@
 .view-all-btn {
   background: transparent;
   border: none;
-  color: #a78bfa;
+  color: var(--accent-green);
   font-size: 0.9rem;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -1236,7 +1255,7 @@
 }
 .create-event-btn {
   background: transparent !important;
-  color: #a78bfa !important;
+  color: var(--accent-green) !important;
   border: none !important;
   padding: 0 !important;
   font-weight: 500 !important;
