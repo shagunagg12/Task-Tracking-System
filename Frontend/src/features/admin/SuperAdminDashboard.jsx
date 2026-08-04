@@ -261,7 +261,7 @@ const SuperAdminDashboard = ({ onNavigate }) => {
                       className="sa-recent-item" 
                       key={user.id}
                    >
-                      <img src={user.avatar || user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random`} alt="Avatar" />
+                      <img src={user.avatar || user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random`} alt="Avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                       <div className="sa-recent-info">
                          <p className="sa-recent-name">{user.name || 'Unknown'}</p>
                          <p className="sa-recent-role">{user.email}</p>

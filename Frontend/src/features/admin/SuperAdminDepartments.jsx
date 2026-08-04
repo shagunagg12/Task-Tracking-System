@@ -197,7 +197,7 @@ const SuperAdminDepartments = ({ addToast }) => {
               {selectedDepartment.users && selectedDepartment.users.length > 0 ? (
                 selectedDepartment.users.map((user) => (
                   <div key={user.id} className="sad-user-item">
-                    <img src={user.avatar} alt={user.name} className="sad-user-avatar" />
+                    <img src={user.avatar} alt={user.name} className="sad-user-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                     <div className="sad-user-info">
                       <span className="sad-user-name">{user.name}</span>
                       <span className="sad-user-role">{user.designation || 'No designation'}</span>
@@ -354,7 +354,7 @@ const SuperAdminDepartments = ({ addToast }) => {
                             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                           }} 
                           title={`${user.name} - ${user.designation || 'No designation'}`}
-                        />
+                        onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                       ))}
                       {dept.users.length > 4 && (
                         <div style={{
