@@ -283,7 +283,7 @@ const SuperAdminAnalytics = () => {
               <ul className="sa-top-performers">
                 {deptData.topPerformers.map((user, idx) => (
                   <li key={idx} className="sa-performer-item">
-                    <img src={user.profilePictureUrl || `https://ui-avatars.com/api/?name=${user.fullName}`} alt={user.fullName} className="sa-performer-avatar" />
+                    <img src={user.profilePictureUrl || `https://ui-avatars.com/api/?name=${user.fullName}`} alt={user.fullName} className="sa-performer-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                     <div className="sa-performer-info">
                       <div className="sa-performer-name">{user.fullName}</div>
                       <div className="sa-performer-points">{user.points} pts</div>

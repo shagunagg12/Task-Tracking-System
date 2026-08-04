@@ -444,7 +444,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
                     >
                       {newTeamMember.name ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                           <img src={newTeamMember.avatar || newTeamMember.profilePictureUrl || `https://ui-avatars.com/api/?name=${newTeamMember.name}&background=random`} style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+                           <img src={newTeamMember.avatar || newTeamMember.profilePictureUrl || `https://ui-avatars.com/api/?name=${newTeamMember.name}&background=random`} style={{ width: '28px', height: '28px', borderRadius: '50%' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                            <span>{newTeamMember.name}</span>
                         </div>
                       ) : (
@@ -487,7 +487,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                           >
-                            <img src={u.avatar || `https://ui-avatars.com/api/?name=${u.fullName}&background=random`} style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
+                            <img src={u.avatar || `https://ui-avatars.com/api/?name=${u.fullName}&background=random`} style={{ width: '36px', height: '36px', borderRadius: '50%' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                             <div>
                               <div style={{ color: '#fff', fontWeight: '500' }}>{u.fullName}</div>
                               <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>{u.email}</div>
@@ -507,7 +507,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                       {project.teamMembers.map((m, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '8px 16px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                           <img src={m.image} alt={m.name} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                           <img src={m.image} alt={m.name} style={{ width: '24px', height: '24px', borderRadius: '50%' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                            <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '600' }}>{m.name}</span>
                            <button 
                              type="button"
@@ -603,7 +603,7 @@ const ProjectKanbanBoard = ({ project, onClose, onTasksChanged }) => {
                         <div key={i} style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
                            <p style={{ color: '#fff', fontStyle: 'italic', margin: '0 0 12px 0', fontSize: '0.95rem' }}>"{f.text}"</p>
                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                             <img src={f.authorImage} alt={f.authorName} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                             <img src={f.authorImage} alt={f.authorName} style={{ width: '24px', height: '24px', borderRadius: '50%' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                              <span style={{ color: 'var(--sa-muted)', fontSize: '0.85rem' }}>{f.authorName}</span>
                            </div>
                         </div>
