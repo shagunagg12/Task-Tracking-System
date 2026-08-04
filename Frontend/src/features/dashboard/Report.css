@@ -116,8 +116,10 @@
 }
 
 .report-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(145deg, rgba(38, 41, 51, 0.92), rgba(22, 24, 30, 0.96));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid #000000;
   border-radius: 16px;
   padding: 24px;
   display: flex;
@@ -125,6 +127,10 @@
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
   position: relative;
   overflow: hidden;
+  box-shadow: 
+    0 15px 30px -10px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0px rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8);
   animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -148,9 +154,12 @@
 .report-card:nth-child(6) { animation-delay: 0.4s; }
 
 .report-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(185, 246, 90, 0.3);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(185, 246, 90, 0.5);
+  box-shadow: 
+    0 25px 45px -12px rgba(0, 0, 0, 0.95), 
+    inset 0 1px 0px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8);
 }
 
 .report-card-header {
@@ -1554,5 +1563,42 @@
   }
   .summary-stats-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+.bright-theme .report-card {
+  background: linear-gradient(145deg, #FFFFFF, #FAF7F2) !important;
+  border: 1.5px solid rgba(255, 159, 0, 0.35) !important;
+  box-shadow: 
+    0 10px 20px rgba(42, 31, 19, 0.05),
+    inset 0 1px 0px rgba(255, 255, 255, 0.9),
+    0 0 6px rgba(255, 159, 0, 0.05) !important;
+  animation: border-pulse-light 3s infinite alternate ease-in-out !important;
+}
+
+.bright-theme .report-card:hover {
+  border-color: rgba(255, 159, 0, 0.95) !important;
+  box-shadow: 
+    0 15px 30px rgba(42, 31, 19, 0.1),
+    inset 0 1px 0px rgba(255, 255, 255, 0.9),
+    0 0 20px rgba(255, 159, 0, 0.3) !important;
+  transform: translateY(-4px) scale(1.01) !important;
+  animation-play-state: paused !important;
+}
+
+@keyframes border-pulse-light {
+  0% {
+    border-color: rgba(255, 159, 0, 0.35);
+    box-shadow: 
+      0 10px 20px rgba(42, 31, 19, 0.05),
+      inset 0 1px 0px rgba(255, 255, 255, 0.9),
+      0 0 6px rgba(255, 159, 0, 0.05);
+  }
+  100% {
+    border-color: rgba(255, 159, 0, 0.8);
+    box-shadow: 
+      0 10px 20px rgba(42, 31, 19, 0.05),
+      inset 0 1px 0px rgba(255, 255, 255, 0.9),
+      0 0 16px rgba(255, 159, 0, 0.25);
   }
 }
