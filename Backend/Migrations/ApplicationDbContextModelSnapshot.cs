@@ -510,8 +510,6 @@ namespace Backend.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.HasIndex("SenderId");
-
                     b.ToTable("ProjectMessages");
                 });
 
@@ -657,7 +655,7 @@ namespace Backend.Migrations
                             Id = 1,
                             Email = "connect2rachit882@gmail.com",
                             FullName = "Rachit",
-                            PasswordHash = "$2a$11$vQt89wE6vLCy3A07cScGYueHZ.xizxc5gAV6J9v6jVWPRlVqbQili"
+                            PasswordHash = "$2a$11$XGBJBIPzRNKi..oJLGWo/eajIrWPeyubZeuPO2.16aCwqNtf54zai"
                         });
                 });
 
@@ -794,6 +792,28 @@ namespace Backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserNotifications");
+                });
+
+            modelBuilder.Entity("Backend.Models.UserPoints", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int")
+                        .HasColumnName("Points");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("UserId");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserPoints");
                 });
 
             modelBuilder.Entity("Backend.Models.UserProfile", b =>
@@ -980,15 +1000,7 @@ namespace Backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend.Models.User", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Project");
-
-                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Backend.Models.ProjectTask", b =>
