@@ -861,8 +861,9 @@ body, html, #root {
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(185, 246, 90, 0.2);
+  border: 1.5px solid rgba(185, 246, 90, 0.35);
   transition: all 0.3s ease;
+  color: #FFFFFF !important;
 }
 
 .premium-plan-card:hover {
@@ -1391,3 +1392,38 @@ body, html, #root {
 }
 
 /* Premium 3D border and shadow configurations for the main overview cards */
+
+.bright-theme .premium-plan-card {
+  background: linear-gradient(145deg, #FFF4E5, #FFEAD2) !important;
+  border: 1.5px solid rgba(255, 159, 0, 0.35) !important;
+  color: #2A1F13 !important;
+  box-shadow: 
+    0 10px 20px rgba(42, 31, 19, 0.05),
+    inset 0 1px 0px rgba(255, 255, 255, 0.9),
+    0 0 6px rgba(255, 159, 0, 0.05) !important;
+}
+
+.bright-theme .premium-plan-card:hover {
+  border-color: rgba(255, 159, 0, 0.95) !important;
+  box-shadow: 
+    0 15px 30px rgba(42, 31, 19, 0.1),
+    inset 0 1px 0px rgba(255, 255, 255, 0.9),
+    0 0 20px rgba(255, 159, 0, 0.3) !important;
+}
+
+.bright-theme .premium-tag {
+  background-color: rgba(255, 159, 0, 0.15) !important;
+  color: #D47A00 !important;
+}
+
+.bright-theme .premium-price h2 {
+  color: #2A1F13 !important;
+}
+
+.bright-theme .price-details p {
+  color: #7E6D5B !important;
+}
+
+.bright-theme .premium-desc {
+  color: #5C4A37 !important;
+}
