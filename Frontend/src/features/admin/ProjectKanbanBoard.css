@@ -109,19 +109,30 @@
 }
 
 .kanban-task-card {
-  background: #242424;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(58, 63, 79, 0.85), rgba(40, 44, 55, 0.92));
+  border: 1.5px solid #000000;
+  border-radius: 10px;
   padding: 16px;
   cursor: grab;
   display: flex;
   gap: 12px;
-  transition: all 0.2s ease;
+  box-shadow: 
+    0 6px 12px -4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0px rgba(255, 255, 255, 0.12),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.7);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .kanban-task-card:hover {
-  border-color: rgba(190, 242, 100, 0.5);
+  border-color: rgba(185, 246, 90, 0.5);
+  background: linear-gradient(145deg, rgba(68, 74, 92, 0.9), rgba(48, 52, 65, 0.95));
   transform: translateY(-2px);
+  box-shadow: 
+    0 12px 20px -6px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.7);
 }
 
 .kanban-task-card:active {
