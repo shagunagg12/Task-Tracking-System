@@ -28,6 +28,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Build frontend
+        run: |
+          cd Frontend
+          npm install
+          npm run build
+
       - name: Build with dotnet
         run: dotnet build Backend/Backend.csproj --configuration Release
 
