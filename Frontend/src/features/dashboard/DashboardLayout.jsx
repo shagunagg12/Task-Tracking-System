@@ -94,7 +94,9 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
            const deptData = await deptRes.json();
            setDeptAnalytics(deptData);
            if (deptData.topPerformers) {
-              setTeamMembers(deptData.topPerformers.map(u => ({
+              setTeamMembers(deptData.topPerformers
+                .filter(u => String(u.userId) !== String(userId))
+                .map(u => ({
                  id: u.userId,
                  name: u.fullName,
                  designation: u.department,
@@ -351,15 +353,14 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
     <div className={`layout-container ${isBrightTheme ? 'bright-theme' : ''}`}>
       {showPendingTasks && pendingTasks.length > 0 && (
         <PendingTasksModal 
-          tasks={pendingTasks} 
+        tasks={pendingTasks} 
           onClose={() => setShowPendingTasks(false)}
         />
       )}
       {/* LEFT SIDEBAR */}
       <aside className={`left-sidebar ${isLeftSidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)' }}>
-          <img src="/image/logo.png" alt="MATTS Logo" className="matts-sidebar-logo" style={{ maxWidth: '120px', height: 'auto' }} />
-          <button className="mobile-close-btn" onClick={toggleLeftSidebar} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '24px', cursor: 'pointer' }}>×</button>
+        <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-start', borderBottom: '1px solid var(--border-color)' }}>
+          <img src="/image/logo.png" alt="MATTS Logo" className="matts-sidebar-logo" style={{ maxWidth: '120px', height: 'auto' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
         </div>
 
         <div className="sidebar-section">
@@ -397,13 +398,14 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             width: '100%',
             boxSizing: 'border-box'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
               <img 
                 src={userPic ? userPic : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`} 
                 alt="User" 
-                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
+                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} 
+                onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=random`; }}
               />
-              <span style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-main)' }}>{userName}</span>
+              <span title={userName} style={{ fontWeight: '600', fontSize: '14px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</span>
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -472,7 +474,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           </div>
         ) : (activeMenu === 'Chats' || activeMenu === 'Chat') ? (
           <div className="chat-full-page-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <ChatLayout />
+            <ChatLayout initialChatUserId={activeChatUserId} />
           </div>
         ) : (
         <div className="content-scroll">
@@ -499,13 +501,13 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
             <div className="stats-grid">
               <div className="stat-card">
                 <p className="stat-title">Active Tasks</p>
-                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? (userAnalytics.totalTasksAssigned - userAnalytics.tasksCompleted).toString() : "0"} duration={2000} /></h3>
-                <p className="stat-trend positive">↗ 12% <span className="trend-text">vs last month</span></p>
+                <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? (userAnalytics.activeTasks?.toString() || "0") : "0"} duration={2000} /></h3>
+                <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px'}}>Out of {userAnalytics ? userAnalytics.totalTasksAssigned : "0"} total assigned tasks</p>
               </div>
               <div className="stat-card">
                 <p className="stat-title">Completed Projects</p>
                 <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.completedProjects.toString() : "0"} duration={2000} /></h3>
-                <p className="stat-trend positive">↗ 5% <span className="trend-text">vs last quarter</span></p>
+                <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px'}}>Out of {userAnalytics ? userAnalytics.totalProjects : "0"} total assigned projects</p>
               </div>
               <div className="stat-card">
                 <p className="stat-title">Efficiency Score</p>
@@ -525,7 +527,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
               <div className="stat-card">
                 <p className="stat-title">Reward Points</p>
                 <h3 className="stat-value"><AnimatedCounter end={userAnalytics ? userAnalytics.totalPoints.toLocaleString() : "0"} duration={2000} /></h3>
-                <p className="stat-trend positive">↗ 150 <span className="trend-text">vs last month</span></p>
+                <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px'}}>{userAnalytics ? userAnalytics.rewardsClaimed : "0"} rewards claimed so far</p>
               </div>
             </div>
           </section>
@@ -612,7 +614,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                     
                     <div className="progress-details">
                       <p className="pd-row"><span>{userAnalytics ? userAnalytics.tasksCompleted : "0"}</span> Completed</p>
-                      <p className="pd-row"><span>{userAnalytics ? (userAnalytics.totalTasksAssigned - userAnalytics.tasksCompleted) : "0"}</span> Remaining</p>
+                      <p><strong><AnimatedCounter end={userAnalytics ? (userAnalytics.activeTasks?.toString() || "0") : "0"} duration={1500} /></strong> Remaining</p>
                     </div>
                   </div>
                   
@@ -648,7 +650,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                     <tr key={index}>
                       <td>
                         <div className="user-cell">
-                          <img src={performer.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.fullName)}&background=random`} alt={performer.fullName} />
+                          <img src={performer.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.fullName)}&background=random`} alt={performer.fullName} onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(performer.fullName || 'User')}&background=random`; }} />
                           <div className="user-info">
                             <p className="name">{performer.fullName}</p>
                             <p className="email">{deptAnalytics.departmentName}</p>
@@ -769,15 +771,20 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
           <ul className="list-items contacts-list">
             {teamMembers.length > 0 ? (
               teamMembers.map(member => (
-                <li key={member.id} className="list-item contact-item">
-                  <img src={member.avatar} alt="user" className="tiny-avatar" />
+                <li key={member.id} className="list-item contact-item" onClick={() => { setActiveChatUserId(member.id); setActiveMenu('Chats'); }} style={{ cursor: 'pointer' }}>
+                  <img 
+                    src={member.avatar} 
+                    alt="user" 
+                    className="tiny-avatar" 
+                    onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`; }}
+                  />
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <p className="item-title" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{member.name}</p>
                     {member.designation && <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginTop: '2px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{member.designation}</p>}
                   </div>
                   <div className="contact-actions" style={{ display: 'flex', gap: '8px' }}>
-                     <div onClick={() => { setActiveChatUserId(member.id); handleMenuClick('Chat'); }} style={{ textDecoration: 'none', color: 'inherit' }}>
-                       <span className="c-action" style={{ cursor: 'pointer' }} title="Chat">💬</span>
+                     <div style={{ textDecoration: 'none', color: 'inherit' }}>
+                       <span className="c-action" title="Chat">💬</span>
                      </div>
                   </div>
                 </li>

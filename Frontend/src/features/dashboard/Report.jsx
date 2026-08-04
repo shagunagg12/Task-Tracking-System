@@ -279,7 +279,7 @@ const Report = () => {
               </div>
               
               {/* SVG Line / Area Graph */}
-              <div style={{height: '180px', marginTop: '10px'}}>
+              <div style={{marginTop: '10px'}}>
                 <svg className="chart-svg" viewBox="0 0 500 180">
                   <defs>
                     <linearGradient id="area-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -328,7 +328,7 @@ const Report = () => {
                 </svg>
               </div>
               
-              <div style={{display: 'flex', justifycontent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', borderTop:'1px solid var(--border-color)', paddingTop: '12px', marginTop: '10px'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', borderTop:'1px solid var(--border-color)', paddingTop: '12px', marginTop: '10px'}}>
                 <div>⏱️ Avg. Completion: <strong>{hasRealData ? '4.2 hrs' : '0 hrs'}</strong></div>
                 <div>🔥 Focus Hours: <strong>{hasRealData ? '26.4 hrs / wk' : '0 hrs / wk'}</strong></div>
               </div>
