@@ -25,6 +25,7 @@ const ChatLayout = ({ initialChatUserId }) => {
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
   const [connection, setConnection] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
   const [showProfile, setShowProfile] = useState(false);
@@ -129,6 +130,7 @@ const ChatLayout = ({ initialChatUserId }) => {
       const startPromise = connection.start()
       .then(() => {
         console.log("Connected to SignalR Chat Hub!");
+        setIsConnected(true);
         connection.invoke('GetOnlineUsers')
           .then(users => {
             setOnlineUsers(new Set(users.map(String)));
@@ -149,14 +151,14 @@ const ChatLayout = ({ initialChatUserId }) => {
     }
   }, [connection]);
 
-  // Join Project Groups when projects load
+  // Join Project Groups when projects load or connection is established
   useEffect(() => {
-    if (connection?.state === signalR.HubConnectionState.Connected && projects.length > 0) {
+    if (isConnected && projects.length > 0) {
       projects.forEach(p => {
         connection.invoke('JoinProjectGroup', p.id).catch(e => console.error('Join group failed', e));
       });
     }
-  }, [connection, projects]);
+  }, [isConnected, projects, connection]);
 
   useEffect(() => {
     if (!connection) return;
@@ -382,7 +384,7 @@ const ChatLayout = ({ initialChatUserId }) => {
   const handleKeyDown = (e) => {
     if (showMentions && selectedProject) {
       const filteredMembers = selectedProject.teamMembers?.filter(m => 
-        (m.name || '').toLowerCase().includes(mentionFilter.toLowerCase())
+        (m.name || '').toLowerCase().includes(mentionFilter.toLowerCase()) && m.userId !== currentUserId
       ) || [];
       
       if (e.key === 'ArrowDown') {
@@ -763,7 +765,7 @@ const ChatLayout = ({ initialChatUserId }) => {
             <form className="message-input-area" onSubmit={sendMessage}>
               {showMentions && selectedProject && (
                 <div className="mentions-popup">
-                  {(selectedProject.teamMembers?.filter(m => (m.name || '').toLowerCase().includes(mentionFilter.toLowerCase())) || []).map((member, i) => (
+                  {(selectedProject.teamMembers?.filter(m => (m.name || '').toLowerCase().includes(mentionFilter.toLowerCase()) && m.userId !== currentUserId) || []).map((member, i) => (
                     <div 
                       key={i} 
                       className={`mention-item ${i === mentionIndex ? 'active' : ''}`}
