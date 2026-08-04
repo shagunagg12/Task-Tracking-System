@@ -211,14 +211,9 @@ namespace Backend.Services
                 throw new UnauthorizedAccessException("Invalid user token.");
             }
 
-            bool isAdmin = user.Claims.Any(c => (c.Type == ClaimTypes.Role || c.Type == "role") && (c.Value == "Admin" || c.Value == "SuperAdmin"));
-
             var query = _context.Meetings.AsQueryable();
 
-            if (!isAdmin)
-            {
-                query = query.Where(m => m.OrganizerId == userId || _context.MeetingParticipants.Any(mp => mp.MeetingId == m.Id && mp.UserId == userId));
-            }
+            query = query.Where(m => m.OrganizerId == userId || _context.MeetingParticipants.Any(mp => mp.MeetingId == m.Id && mp.UserId == userId));
 
             var meetings = await query
                 .Select(m => new

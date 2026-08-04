@@ -178,13 +178,21 @@ namespace Backend.Services
                 throw new KeyNotFoundException("User not found.");
             }
 
-            var projectIds = profile.User.Projects.Select(p => p.Id).ToList();
+            var ownedProjectIds = profile.User.Projects.Select(p => p.Id).ToList();
+            var teamProjectIds = await _context.ProjectTeamMembers.AsNoTracking()
+                .Where(ptm => ptm.UserId == userId || ptm.Name == profile.User.FullName)
+                .Select(ptm => ptm.ProjectId)
+                .ToListAsync();
+            
+            var projectIds = ownedProjectIds.Union(teamProjectIds).Distinct().ToList();
+
             var tasks = await _context.ProjectTasks.AsNoTracking()
                 .Where(t => projectIds.Contains(t.ProjectId))
                 .ToListAsync();
 
             var totalTasks = tasks.Count;
             var completedTasks = tasks.Count(t => t.Status == "Completed" || t.Status == "Done");
+            var activeTasks = tasks.Count(t => t.Status != "Completed" && t.Status != "Done");
             var completionRate = totalTasks > 0 ? (double)completedTasks / totalTasks * 100 : 0;
 
             var meetingsOrganized = await _context.Meetings.AsNoTracking().CountAsync(m => m.OrganizerId == userId);
@@ -210,10 +218,11 @@ namespace Backend.Services
                 FullName = profile.User.FullName,
                 Department = profile.Department,
                 TotalPoints = profile.User.Points,
-                TotalProjects = profile.User.Projects.Count,
-                CompletedProjects = profile.User.Projects.Count(p => p.Status == "Completed" || p.Status == "Done"),
+                TotalProjects = projectIds.Count,
+                CompletedProjects = await _context.Projects.AsNoTracking().CountAsync(p => projectIds.Contains(p.Id) && (p.Status == "Completed" || p.Status == "Done")),
                 TotalTasksAssigned = totalTasks,
                 TasksCompleted = completedTasks,
+                ActiveTasks = activeTasks,
                 CompletionRate = Math.Round(completionRate, 2),
                 MeetingsOrganized = meetingsOrganized,
                 MessagesSent = messagesSent,

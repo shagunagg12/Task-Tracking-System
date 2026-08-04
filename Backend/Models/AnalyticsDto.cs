@@ -67,6 +67,7 @@ namespace Backend.Models
         public int CompletedProjects { get; set; }
         public int TotalTasksAssigned { get; set; }
         public int TasksCompleted { get; set; }
+        public int ActiveTasks { get; set; }
         public double CompletionRate { get; set; }
         
         // New detailed metrics
