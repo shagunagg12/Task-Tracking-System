@@ -37,7 +37,7 @@ MATTS is a comprehensive, full-stack enterprise web application designed to stre
 ## 🚀 Getting Started
 
 ### Prerequisites
-*   [Node.js](https://nodejs.org/) (v18+)
+*   [Rect.js](https://nodejs.org/) 
 *   [.NET 8 SDK](https://dotnet.microsoft.com/download)
 *   SQL Server
 
