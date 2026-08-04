@@ -107,12 +107,7 @@ export default function Login({ onLogin }) {
       const data = await response.json();
       if (!response.ok) {
         const errorMsg = data.message || 'GitHub sign-in failed.';
-        if (!isRegistering && errorMsg.includes('Account not found')) {
-          setIsRegistering(true);
-          setError('Please register yourself first to continue with GitHub.');
-        } else {
-          setError(errorMsg);
-        }
+        setError(errorMsg);
         setIsLoading(false);
         return;
       }
@@ -159,12 +154,7 @@ export default function Login({ onLogin }) {
       const data = await response.json();
       if (!response.ok) {
         const errorMsg = data.message || 'Google sign-in failed.';
-        if (!isRegistering && errorMsg.includes('Account not found')) {
-          setIsRegistering(true);
-          setError('Please register yourself first to continue with Google.');
-        } else {
-          setError(errorMsg);
-        }
+        setError(errorMsg);
         setIsLoading(false);
         return;
       }
