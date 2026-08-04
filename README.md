@@ -76,4 +76,4 @@ MATTS is a comprehensive, full-stack enterprise web application designed to stre
 This project is configured with a GitHub Actions workflow (`main_matts.yml`) that automatically builds and deploys the .NET backend and React frontend build artifacts to an Azure Web App whenever changes are pushed to the `main` branch.
 
 ---
-*Built with ❤️ by Shivam Chaudhary.*
+*Built with ❤️ by The Revenant Corps.*
