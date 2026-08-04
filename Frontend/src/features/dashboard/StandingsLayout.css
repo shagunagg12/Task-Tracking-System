@@ -1015,7 +1015,9 @@
 .bright-theme .social-card h3,
 .bright-theme .social-card h4,
 .bright-theme .social-card .score-header-top h3,
-.bright-theme .social-card .card-header h3 {
+.bright-theme .social-card .card-header h3,
+.bright-theme .user-name,
+.bright-theme .user-score-right {
   color: var(--text-main) !important;
 }
 

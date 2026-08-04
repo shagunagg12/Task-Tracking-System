@@ -242,7 +242,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                     <div key={inv.id} className="invite-row" style={{ display: 'flex', flexDirection: 'column', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '15px' }}>
                       <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                         <div className="event-cover" style={{ width: '80px', height: '60px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden' }}>
-                          <img src={getImageForEventType(inv.type)} alt={inv.type} className="cover-image" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+                          <img src={getImageForEventType(inv.type)} alt={inv.type} className="cover-image" style={{ objectFit: 'cover', width: '100%', height: '100%' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                         </div>
                         <div className="event-details" style={{ flex: 1 }}>
                           <h4>{inv.title} {inv.type === 'Celebration' ? '🎂' : inv.type === 'Outing' ? '🌲' : ''}</h4>
@@ -259,7 +259,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div className="avatar-group">
                               {inv.attendeesList.map((att, i) => (
-                                <img key={i} src={att.avatar} alt={att.name} className="stacked-avatar" style={{ width: '24px', height: '24px' }} />
+                                <img key={i} src={att.avatar} alt={att.name} className="stacked-avatar" style={{ width: '24px', height: '24px' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                               ))}
                             </div>
                             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{inv.totalAttendees} attending</span>
@@ -343,7 +343,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                             <span className="day">{dateObj.getDate()}</span>
                           </div>
                           <div className="event-cover" style={{ width: '80px', height: '60px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden' }}>
-                            <img src={getImageForEventType(ev.type)} alt={ev.type} className="cover-image" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+                            <img src={getImageForEventType(ev.type)} alt={ev.type} className="cover-image" style={{ objectFit: 'cover', width: '100%', height: '100%' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                           </div>
                           <div className="event-details" style={{ flex: 1 }}>
                             <h4>{ev.title}</h4>
@@ -364,7 +364,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div className="avatar-group">
                               {ev.attendeesList?.map((att, i) => (
-                                <img key={i} src={att.avatar} alt={att.name} className="stacked-avatar" style={{ width: '28px', height: '28px' }} />
+                                <img key={i} src={att.avatar} alt={att.name} className="stacked-avatar" style={{ width: '28px', height: '28px' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                               ))}
                             </div>
                             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ev.totalAttendees > 0 ? `${ev.totalAttendees} attending` : 'Be the first to RSVP!'}</span>
@@ -391,7 +391,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                 {socialStandings.length > 0 ? socialStandings.slice(0, 5).map((user, index) => (
                   <div key={user.userId} className={`leaderboard-row ${user.userId === (myDashboard?.userId || myDashboard?.UserId) ? 'is-me' : ''}`}>
                     <div className={`rank-circle rank-${index + 1}`}>{index + 1}</div>
-                    <img src={user.avatar} alt="Avatar" className="user-avatar-small" />
+                    <img src={user.avatar} alt="Avatar" className="user-avatar-small" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                     <div className="user-name">
                       {user.name} {user.userId === (myDashboard?.userId || myDashboard?.UserId) ? <span className="you-text">(You)</span> : ''}
                     </div>
@@ -447,7 +447,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                            <div className="rank-circle" style={{ background: 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-dark) 100%)', width: '60px', height: '60px', fontSize: '1.5rem', color: '#101213', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(185, 246, 90, 0.2)' }}>
                              #{myIndex + 1}
                            </div>
-                           <img src={myStats.avatar || myStats.Avatar || 'https://via.placeholder.com/80'} alt="Avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
+                           <img src={myStats.avatar || myStats.Avatar || 'https://via.placeholder.com/80'} alt="Avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                            <div style={{ flex: 1 }}>
                              <h3 style={{ margin: '0 0 5px 0', fontSize: '1.4rem', color: '#fff' }}>{myStats.name || myStats.Name}</h3>
                              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.95rem' }}>{myStats.department || myStats.Department || 'Employee'}</p>
@@ -495,7 +495,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                 return (
                 <div key={user.userId || user.UserId || index} className={`efficiency-card ${isMe ? 'is-me-card' : ''}`}>
                   <div className="rank-badge">{index + 1}</div>
-                  <img src={user.avatar || user.Avatar || 'https://via.placeholder.com/80'} alt={user.name || user.Name} className="user-avatar" />
+                  <img src={user.avatar || user.Avatar || 'https://via.placeholder.com/80'} alt={user.name || user.Name} className="user-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                   <h4>{user.name || user.Name}</h4>
                   <p>{user.department || user.Department || 'Employee'}</p>
                   
@@ -598,7 +598,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                             }
                           }}
                         />
-                        <img src={user.avatar} alt={user.name} className="tiny-avatar" />
+                        <img src={user.avatar} alt={user.name} className="tiny-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                         <span>{user.name}</span>
                       </label>
                     )})}
@@ -681,7 +681,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                             <span className="day">{dateObj.getDate()}</span>
                           </div>
                           <div className="event-cover" style={{ width: '80px', height: '60px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden' }}>
-                            <img src={getImageForEventType(ev.type)} alt={ev.type} className="cover-image" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+                            <img src={getImageForEventType(ev.type)} alt={ev.type} className="cover-image" style={{ objectFit: 'cover', width: '100%', height: '100%' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                           </div>
                           <div className="event-details" style={{ flex: 1 }}>
                             <h4>{ev.title}</h4>
@@ -702,7 +702,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div className="avatar-group">
                               {ev.attendeesList?.map((att, i) => (
-                                <img key={i} src={att.avatar} alt={att.name} className="stacked-avatar" style={{ width: '28px', height: '28px' }} />
+                                <img key={i} src={att.avatar} alt={att.name} className="stacked-avatar" style={{ width: '28px', height: '28px' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                               ))}
                             </div>
                             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ev.totalAttendees > 0 ? `${ev.totalAttendees} attending` : 'Be the first to RSVP!'}</span>
@@ -734,7 +734,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                 {socialStandings.map((user, index) => (
                   <div key={user.userId || index} className={`leaderboard-row ${user.userId === (myUserId ?? myDashboard?.userId ?? myDashboard?.UserId) ? 'is-me' : ''}`} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                     <div className={`rank-circle rank-${index + 1}`}>{index + 1}</div>
-                    <img src={user.avatar} alt="Avatar" className="user-avatar-small" />
+                    <img src={user.avatar} alt="Avatar" className="user-avatar-small" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                     <div className="user-name">
                       {user.name} {user.userId === (myUserId ?? myDashboard?.userId ?? myDashboard?.UserId) ? <span className="you-text">(You)</span> : ''}
                     </div>
@@ -783,7 +783,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '300px', overflowY: 'auto' }}>
                 {selectedEventForParticipants && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <img src={selectedEventForParticipants.organizerAvatar} alt={selectedEventForParticipants.organizer} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={selectedEventForParticipants.organizerAvatar} alt={selectedEventForParticipants.organizer} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontWeight: '600' }}>{selectedEventForParticipants.organizer}</span>
                       <span style={{ fontSize: '0.8rem', color: '#8b5cf6', fontWeight: '500' }}>Organizer</span>
@@ -795,7 +795,7 @@ const StandingsLayout = ({ setActiveMenu }) => {
                   <>
                     {selectedEventForParticipants.attendeesList.map((att, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                        <img src={att.avatar} alt={att.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <img src={att.avatar} alt={att.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                         <span style={{ fontWeight: '500' }}>{att.name}</span>
                       </div>
                     ))}
