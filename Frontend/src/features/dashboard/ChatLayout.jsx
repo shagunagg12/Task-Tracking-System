@@ -552,9 +552,9 @@ const ChatLayout = ({ initialChatUserId }) => {
     }
   });
   
-  const filteredProjects = projects.filter(p =>
-    p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = projects
+    .filter(p => p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => (b.unreadCount || 0) - (a.unreadCount || 0));
 
   return (
     <div className={`chat-container ${(selectedUser || selectedProject) ? 'chat-active' : ''}`}>
