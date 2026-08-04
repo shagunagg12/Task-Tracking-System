@@ -152,6 +152,27 @@ namespace Backend.Services
             var user = await _context.Users.FindAsync(id);
             if (user == null) return false;
 
+            var teamMembers = await _context.ProjectTeamMembers.Where(t => t.UserId == id).ToListAsync();
+            _context.ProjectTeamMembers.RemoveRange(teamMembers);
+
+            var messages = await _context.Messages.Where(m => m.SenderId == id || m.ReceiverId == id).ToListAsync();
+            _context.Messages.RemoveRange(messages);
+
+            var projectMessages = await _context.ProjectMessages.Where(m => m.SenderId == id).ToListAsync();
+            _context.ProjectMessages.RemoveRange(projectMessages);
+
+            var meetings = await _context.Meetings.Where(m => m.OrganizerId == id).ToListAsync();
+            _context.Meetings.RemoveRange(meetings);
+
+            var events = await _context.CompanyEvents.Where(e => e.OrganizerId == id).ToListAsync();
+            _context.CompanyEvents.RemoveRange(events);
+
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == user.Email);
+            if (admin != null)
+            {
+                _context.Admins.Remove(admin);
+            }
+
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return true;

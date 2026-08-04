@@ -218,6 +218,9 @@ namespace Backend.Services
             var task = await _context.ProjectTasks.FindAsync(taskId);
             if (task == null) return false;
 
+            var notifications = await _context.AppNotifications.Where(n => n.TaskId == taskId).ToListAsync();
+            _context.AppNotifications.RemoveRange(notifications);
+
             _context.ProjectTasks.Remove(task);
             await _context.SaveChangesAsync();
             return true;
@@ -227,6 +230,9 @@ namespace Backend.Services
         {
             var project = await _context.Projects.FindAsync(projectId);
             if (project == null) return false;
+
+            var notifications = await _context.AppNotifications.Where(n => n.ProjectId == projectId).ToListAsync();
+            _context.AppNotifications.RemoveRange(notifications);
 
             _context.Projects.Remove(project);
             await _context.SaveChangesAsync();
