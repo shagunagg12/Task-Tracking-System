@@ -368,7 +368,7 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
                   src={adminProfile?.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(adminProfile?.fullName || 'Admin')}&background=random`} 
                   alt="Profile" 
                   className="sa-avatar" 
-                />
+                onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                 <div className="sa-profile-info">
                   <span className="sa-profile-name">{adminProfile?.fullName || 'Super Admin'}</span>
                   <span className="sa-profile-role">{adminProfile?.designation || 'System Admin'}</span>

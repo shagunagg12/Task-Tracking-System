@@ -183,7 +183,7 @@ const SuperAdminProjects = () => {
               className={`sap-user-card ${selectedUser?.id === user.id ? 'active' : ''}`}
               onClick={() => setSelectedUser(user)}
             >
-              <img src={user.avatar || user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.email)}&background=random`} alt="Avatar" />
+              <img src={user.avatar || user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.email)}&background=random`} alt="Avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
               <div className="sap-user-info">
                 <h4>{user.fullName || 'No Name'}</h4>
                 <p>{user.email}</p>
