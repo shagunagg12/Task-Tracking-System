@@ -160,7 +160,7 @@ const SuperAdminRewards = () => {
                   <tr key={item.id}>
                     <td>
                       <div className="sar-user-cell">
-                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.userName)}&background=random`} alt={item.userName} className="sar-avatar" />
+                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.userName)}&background=random`} alt={item.userName} className="sar-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                         <div>
                           <div className="sar-name">{item.userName}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--sa-muted)' }}>{item.userEmail}</div>

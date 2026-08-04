@@ -429,7 +429,7 @@ const SuperAdminReports = () => {
                   <tr key={user.id} className="sau-row-clickable" onClick={() => openUserReport(user)}>
                     <td>
                       <div className="sau-user-cell">
-                        <img src={user.avatar} alt={user.name} className="sau-avatar" />
+                        <img src={user.avatar} alt={user.name} className="sau-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                         <div>
                           <div className="sau-name">{user.name}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--sa-muted)' }}>{user.email}</div>
