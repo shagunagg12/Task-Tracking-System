@@ -280,9 +280,6 @@ body, html, #root {
 }
 
 @media (max-width: 768px) {
-  .report-container {
-
-@media (max-width: 768px) {
   .chatbot-selection-grid {
     display: flex !important;
     flex-wrap: nowrap !important;
