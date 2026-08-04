@@ -336,17 +336,16 @@ const AssignedProjects = () => {
             <span><span style={{ color: 'var(--accent-green)' }}>⏱️</span> {activeProject.priorityTaskTimeRemaining}</span>
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
-            <button className="priority-action" style={{ marginTop: 0 }}>Jump to Task</button>
-            {activeProject?.status !== 'Completed' && computedProgress === 100 && (
+          {activeProject?.status !== 'Completed' && computedProgress === 100 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '24px' }}>
               <button 
                 className="pulse-complete-btn"
                 onClick={() => setCompletionModalData(activeProject.id)}
               >
                 Mark as Completed
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* 5. Progress */}
@@ -450,7 +449,7 @@ const AssignedProjects = () => {
                  <div className="feedback-bubble">
                    <p className="feedback-text">{activeProject.feedbacks[0].text}</p>
                    <div className="feedback-author">
-                     <img src={activeProject.feedbacks[0].authorImage} alt="Manager" />
+                     <img src={activeProject.feedbacks[0].authorImage} alt="Manager" onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activeProject.feedbacks[0].authorName || 'Manager')}&background=random`; }} />
                      <span>{activeProject.feedbacks[0].authorName}</span>
                    </div>
                  </div>
@@ -467,7 +466,7 @@ const AssignedProjects = () => {
           <div className="team-avatars">
             {activeProject.teamMembers?.map((member, idx) => (
               <div key={idx} className="team-member">
-                <img src={member.image} alt={member.name} />
+                <img src={member.image} alt={member.name} onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'User')}&background=random`; }} />
                 <span>{member.name}</span>
               </div>
             ))}

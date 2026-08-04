@@ -585,7 +585,7 @@ const ChatLayout = ({ initialChatUserId }) => {
                 <div key={u.id} className={`user-item ${selectedUser?.id === u.id ? 'active' : ''}`} onClick={() => setSelectedUser(u)}>
                   <div className="user-avatar-container">
                     <div className="user-avatar">
-                      {u.avatar ? <img src={u.avatar} alt={u.name} /> : <User size={20} />}
+                      {u.avatar ? <img src={u.avatar} alt={u.name} onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=random`; }} /> : <User size={20} />}
                     </div>
                     <span className={`status-indicator-dot ${isOnline ? 'online' : 'offline'}`}></span>
                   </div>
@@ -638,7 +638,7 @@ const ChatLayout = ({ initialChatUserId }) => {
                 <div className="chat-header-info clickable-profile" onClick={toggleProfile} title="View Profile">
                   <div className="user-avatar-container">
                     <div className="chat-header-avatar">
-                      {selectedUser.avatar ? <img src={selectedUser.avatar} alt={selectedUser.name} /> : <User size={24} />}
+                      {selectedUser.avatar ? <img src={selectedUser.avatar} alt={selectedUser.name} onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name || 'User')}&background=random`; }} /> : <User size={24} />}
                     </div>
                     <span className={`status-indicator-dot header-dot ${onlineUsers.has(String(selectedUser.id)) ? 'online' : 'offline'}`}></span>
                   </div>
@@ -694,7 +694,7 @@ const ChatLayout = ({ initialChatUserId }) => {
                           {(msg.fileType || msg.FileType) === 'audio' || (msg.fileType || msg.FileType) === 'video' ? (
                             <audio controls src={msg.fileUrl || msg.FileUrl} className="audio-player" />
                           ) : (msg.fileType || msg.FileType) === 'image' ? (
-                            <img src={msg.fileUrl || msg.FileUrl} alt="attachment" className="image-attachment" onClick={() => window.open(msg.fileUrl || msg.FileUrl, '_blank')} style={{cursor: 'pointer'}} />
+                            <img src={msg.fileUrl || msg.FileUrl} alt="attachment" className="image-attachment" onClick={() => window.open(msg.fileUrl || msg.FileUrl, '_blank')} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} style={{cursor: 'pointer'}} />
                           ) : (
                             <a href={msg.fileUrl || msg.FileUrl} target="_blank" rel="noopener noreferrer" className="raw-attachment">
                               <FileText size={16} /> Download File
@@ -769,7 +769,7 @@ const ChatLayout = ({ initialChatUserId }) => {
                       className={`mention-item ${i === mentionIndex ? 'active' : ''}`}
                       onClick={() => handleMentionSelect(member)}
                     >
-                      {member.image ? <img src={member.image} alt="" className="mention-avatar"/> : <User size={16} />}
+                      {member.image ? <img src={member.image} alt="" className="mention-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} /> : <User size={16} />}
                       <span>{member.name || 'User'}</span>
                     </div>
                   ))}
@@ -869,7 +869,7 @@ const ChatLayout = ({ initialChatUserId }) => {
               ) : profileData ? (
                 <div className="profile-details-card">
                   <div className="profile-avatar-large">
-                    {profileData.avatar ? <img src={profileData.avatar} alt={profileData.name} /> : <User size={80} />}
+                    {profileData.avatar ? <img src={profileData.avatar} alt={profileData.name} onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} /> : <User size={80} />}
                   </div>
                   <h2 className="profile-name">{profileData.name}</h2>
                   <p className="profile-designation">{profileData.designation}</p>
@@ -919,7 +919,7 @@ const ChatLayout = ({ initialChatUserId }) => {
                         }
                       }}
                     >
-                      {member.image ? <img src={member.image} style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} alt=""/> : <User size={32} />}
+                      {member.image ? <img src={member.image} style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} alt="" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} /> : <User size={32} />}
                       <span className="info-value" style={{ fontWeight: '500' }}>{member.name || 'User'}</span>
                     </div>
                   ))}
