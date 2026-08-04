@@ -85,7 +85,7 @@ namespace Backend.Controllers
 
                 var client = _httpClientFactory.CreateClient();
                 // Google Gemini api endpoint
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={apiKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={apiKey}";
                 var request = new HttpRequestMessage(HttpMethod.Post, url);
                 
                 var jsonOptions = new JsonSerializerOptions
@@ -99,7 +99,8 @@ namespace Backend.Controllers
                 var response = await client.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
-                    return Ok(new { reply = "I am currently experiencing unusually high traffic and cannot respond right now. Please try again in a moment." });
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, new { message = $"Gemini API returned error: {errorContent}" });
                 }
 
                 var responseString = await response.Content.ReadAsStringAsync();
@@ -117,7 +118,7 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(new { reply = "I am currently experiencing unusually high traffic and cannot respond right now. Please try again in a moment." });
+                return StatusCode(500, new { message = "Failed to query Gemini chatbot service.", error = ex.Message });
             }
         }
     }
