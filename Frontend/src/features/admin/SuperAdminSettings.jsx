@@ -213,7 +213,7 @@ const SuperAdminSettings = () => {
                                     src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`} 
                                     alt={user.fullName} 
                                     style={{ width: '32px', height: '32px', borderRadius: '50%' }}
-                                  />
+                                  onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                                   {user.fullName}
                                 </div>
                               </td>
@@ -269,7 +269,7 @@ const SuperAdminSettings = () => {
                                 src={admin.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.fullName)}&background=random`} 
                                 alt={admin.fullName} 
                                 style={{ width: '32px', height: '32px', borderRadius: '50%' }}
-                              />
+                              onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                               {admin.fullName}
                             </div>
                           </td>

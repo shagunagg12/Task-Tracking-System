@@ -267,7 +267,7 @@ const SuperAdminUsers = () => {
               <tr key={user.id} onClick={() => openInsightsDrawer(user)} className="sau-row-clickable">
                 <td>
                   <div className="sau-user-cell">
-                    <img src={user.avatar} alt={user.fullName} className="sau-avatar" />
+                    <img src={user.avatar} alt={user.fullName} className="sau-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                     <div>
                       <div className="sau-name">{user.fullName}</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--sa-muted)' }}>ID: #{user.id}</div>
@@ -327,7 +327,7 @@ const SuperAdminUsers = () => {
               </div>
               <div className="sau-drawer-content">
                 <div className="sau-drawer-profile">
-                  <img src={selectedUser.avatar} alt={selectedUser.fullName} className="sau-drawer-avatar" />
+                  <img src={selectedUser.avatar} alt={selectedUser.fullName} className="sau-drawer-avatar" onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
                   <div className="sau-drawer-info">
                     <h3>{selectedUser.fullName}</h3>
                     <p>{selectedUser.email}</p>
