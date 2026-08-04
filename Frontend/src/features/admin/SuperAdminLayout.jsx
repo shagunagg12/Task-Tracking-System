@@ -245,13 +245,13 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
     <>
     <div className={`sa-layout ${isDarkTheme ? 'sa-dark' : 'sa-light'}`}>
       
-      {/* SIDEBAR */}
-      <aside className="sa-sidebar">
-        <div className="sa-sidebar-header">
+      <aside className={`sa-sidebar ${activeMenu === 'ToggleSidebar' ? 'open' : ''}`} id="sa-sidebar">
+        <div className="sa-sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="sa-logo">
             <div className="sa-logo-mark"></div>
             <span>Workspace</span>
           </div>
+          <button className="mobile-close-btn" onClick={() => document.getElementById('sa-sidebar').classList.remove('open')} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '24px', cursor: 'pointer' }}>×</button>
         </div>
 
         <div className="sa-sidebar-content">
@@ -261,7 +261,12 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
               <li 
                 key={item.id}
                 className={`sa-menu-item ${activeMenu === item.id ? 'sa-active' : ''}`}
-                onClick={() => setActiveMenu(item.id)}
+                onClick={() => {
+                  setActiveMenu(item.id);
+                  if (window.innerWidth <= 768) {
+                    document.getElementById('sa-sidebar').classList.remove('open');
+                  }
+                }}
               >
                 <span className="sa-menu-icon">{item.icon}</span>
                 <span className="sa-menu-text">{item.text}</span>
@@ -273,11 +278,13 @@ const SuperAdminLayout = ({ onSwitchToUser }) => {
 
       {/* MAIN AREA */}
       <div className="sa-main">
-        {/* TOP NAV */}
         <header className="sa-topnav">
-          <div className="sa-search-container">
+          <div className="sa-search-container" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button className="sa-icon-btn mobile-only-btn" onClick={() => document.getElementById('sa-sidebar').classList.toggle('open')} style={{ display: window.innerWidth <= 768 ? 'block' : 'none' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
             <Search className="sa-search-icon" size={18} />
-            <input type="text" placeholder="Search across organization..." className="sa-search-input" />
+            <input type="text" placeholder="Search..." className="sa-search-input" />
             <div className="sa-shortcut">Ctrl K</div>
           </div>
           

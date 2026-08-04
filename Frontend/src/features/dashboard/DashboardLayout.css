@@ -1131,3 +1131,77 @@ body, html, #root {
 .c-action {
   cursor: pointer;
 }
+
+/* ============================================================
+   RESPONSIVE DESIGN (ADDED)
+============================================================ */
+
+/* TABLETS & SMALL LAPTOPS */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .middle-row-grid, .bottom-row-grid {
+    grid-template-columns: 1fr;
+  }
+  .left-sidebar {
+    width: 220px;
+  }
+  .doughnut-chart-wrapper {
+    margin-bottom: 24px;
+  }
+}
+
+/* MOBILE DEVICES */
+@media (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+    position: relative;
+  }
+  .left-sidebar {
+    position: absolute;
+    z-index: 1000;
+    height: 100vh;
+    transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+  }
+  .left-sidebar.open {
+    transform: translateX(0);
+    width: 260px;
+  }
+  .right-sidebar {
+    position: absolute;
+    right: 0;
+    z-index: 1000;
+    height: 100vh;
+    transform: translateX(100%);
+    box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+  }
+  .right-sidebar.open {
+    transform: translateX(0);
+    width: 280px;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .top-header {
+    padding: 0 16px;
+  }
+  .content-scroll {
+    padding: 16px;
+  }
+  .sales-content {
+    flex-direction: column;
+  }
+  .small-cards-column {
+    grid-template-columns: 1fr;
+  }
+  .customer-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .legend-grid {
+    grid-template-columns: 1fr;
+  }
+}

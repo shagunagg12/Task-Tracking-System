@@ -243,8 +243,11 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: 'var(--bg-dark)', color: 'var(--text-main)', fontFamily: 'var(--font-main)' }}>
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRight: '1px solid var(--border-color)' }}>
+    <div className="login-container" style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: 'var(--bg-dark)', color: 'var(--text-main)', fontFamily: 'var(--font-main)' }}>
+      <div className="login-video-section" style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRight: '1px solid var(--border-color)' }}>
+        <div className="login-mobile-logo" style={{ padding: '20px', display: 'none', justifyContent: 'center', backgroundColor: 'var(--bg-dark)' }}>
+          <img src="/image/logo.png" alt="MATTS Logo" style={{ maxWidth: '150px', height: 'auto', filter: 'brightness(0) invert(1)' }} />
+        </div>
         <video 
           key={isRegistering ? 'register' : 'login'}
           src="/image/login_page.mp4" 
@@ -256,7 +259,7 @@ export default function Login({ onLogin }) {
         />
       </div>
       
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', backgroundColor: 'var(--bg-card)' }}>
+      <div className="login-form-section" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', backgroundColor: 'var(--bg-card)' }}>
         <div style={{ width: '100%', maxWidth: '400px' }}>
           <h1 style={{ fontSize: '32px', marginBottom: '8px', color: 'var(--text-main)' }}>
             {isRegistering ? 'Sign Up' : 'Sign In'}

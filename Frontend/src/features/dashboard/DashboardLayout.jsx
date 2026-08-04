@@ -278,7 +278,7 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
   }, [activeMenu]);
   const [isBrightTheme, setIsBrightTheme] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(window.innerWidth > 768);
 
   const toggleTheme = () => {
     setIsBrightTheme(!isBrightTheme);
@@ -357,8 +357,9 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
       )}
       {/* LEFT SIDEBAR */}
       <aside className={`left-sidebar ${isLeftSidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'flex-start', borderBottom: '1px solid var(--border-color)' }}>
+        <div className="sidebar-logo-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)' }}>
           <img src="/image/logo.png" alt="MATTS Logo" className="matts-sidebar-logo" style={{ maxWidth: '120px', height: 'auto' }} />
+          <button className="mobile-close-btn" onClick={toggleLeftSidebar} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '24px', cursor: 'pointer' }}>×</button>
         </div>
 
         <div className="sidebar-section">
@@ -372,6 +373,9 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
                     onSwitchToAdmin();
                   } else {
                     setActiveMenu(item.id);
+                  }
+                  if (window.innerWidth <= 768) {
+                    setIsLeftSidebarOpen(false);
                   }
                 }}
               >

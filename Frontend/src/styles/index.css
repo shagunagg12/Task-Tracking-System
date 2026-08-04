@@ -8,3 +8,273 @@ body, html, #root {
 * {
   box-sizing: border-box;
 }
+
+/* ============================================================
+   GLOBAL RESPONSIVE OVERRIDES (ADDED)
+============================================================ */
+@media (max-width: 1024px) {
+  .sa-projects-grid, .sa-kanban-board, .sa-users-grid, .achievements-grid, .standings-grid, .assigned-projects-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+
+@media (max-width: 768px) {
+  /* Login Page */
+  .login-container {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+  .login-video-section {
+    display: flex !important;
+    flex: none !important;
+    height: 45vh !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .login-mobile-logo {
+    display: flex !important;
+  }
+  .login-form-section {
+    flex: none !important;
+    min-height: 55vh !important;
+    padding: 30px 20px !important;
+  }
+}
+
+
+@media (min-width: 769px) {
+  .mobile-close-btn {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only-btn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .standings-container {
+    padding: 16px !important;
+  }
+  .standings-tabs, .social-sub-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab-btn, .sub-nav-btn {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+  .social-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .social-tab {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .dashboard-stats-row {
+    flex-direction: column;
+  }
+  .dashboard-main-area {
+    flex-direction: column;
+  }
+  .leaderboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .score-main {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+  }
+  .score-stats-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 15px !important;
+  }
+  .stat-col {
+    padding: 10px !important;
+  }
+  .social-card {
+    overflow: hidden;
+  }
+  .level-circle {
+    position: relative !important;
+    right: auto !important;
+    top: auto !important;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .event-row > div:first-child, .invite-row > div:first-child {
+    flex-wrap: wrap;
+    gap: 10px !important;
+  }
+  .event-row .event-details, .invite-row .event-details {
+    flex: 1 1 100% !important;
+    text-align: center;
+  }
+  .event-row .going-status, .invite-row .invite-actions {
+    flex: 1 1 100% !important;
+    display: flex;
+    justify-content: center;
+  }
+  .card-header {
+    flex-wrap: wrap !important;
+    gap: 10px;
+  }
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .event-cover {
+    margin: 0 auto;
+  }
+  .date-block {
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-header {
+    padding: 8px 12px !important;
+  }
+  .header-left {
+    gap: 8px !important;
+  }
+  .header-actions {
+    gap: 12px !important;
+  }
+  .breadcrumb {
+    font-size: 0.9rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+  .header-left .header-icon {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-grid-wrapper {
+    overflow-x: auto !important;
+  }
+  .calendar-grid {
+    min-width: 800px !important;
+  }
+  .calendar-top-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .calendar-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-container {
+    flex-direction: column !important;
+  }
+  .chat-sidebar {
+    width: 100% !important;
+    height: 35vh !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .chat-main {
+    height: 65vh !important;
+    flex: 1 !important;
+  }
+  .profile-sidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 50;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-container {
+    flex-direction: column !important;
+  }
+  .chat-sidebar {
+    width: 100% !important;
+    height: 100% !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    display: flex !important;
+  }
+  .chat-main {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+    display: flex !important;
+  }
+  .chat-container.chat-active .chat-sidebar {
+    display: none !important;
+  }
+  .chat-container:not(.chat-active) .chat-main {
+    display: none !important;
+  }
+  .mobile-back-btn {
+    display: block !important;
+  }
+  .message-input-area {
+    padding: 10px 10px !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+  }
+  .message-input-area > input[type="text"] {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    padding: 10px 12px !important;
+  }
+  .message-input-area > button[type="submit"] {
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
+  }
+  .attachment-btn {
+    padding: 6px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .ar-milestones-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .achievements-rewards-container {
+    padding: 16px !important;
+  }
+  .ar-milestone-action {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .ar-stat-card {
+    min-width: auto !important;
+    flex: 1 1 100% !important;
+  }
+  .ar-hero-header {
+    padding: 20px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-video-section {
+    flex-direction: column !important;
+  }
+}

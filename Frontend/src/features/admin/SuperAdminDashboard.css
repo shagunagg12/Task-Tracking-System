@@ -290,3 +290,34 @@
   color: var(--sa-warning);
   border: 1px solid rgba(252, 211, 77, 0.3);
 }
+
+/* ============================================================
+   RESPONSIVE DESIGN (ADDED)
+============================================================ */
+
+@media (max-width: 1024px) {
+  .sa-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .sa-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .sa-charts-grid.three-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .sa-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .sa-dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .sa-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

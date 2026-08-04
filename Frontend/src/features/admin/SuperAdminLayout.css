@@ -967,3 +967,40 @@
 .sa-layout.sa-light .sa-toast { background: rgba(255,255,255,0.96); border-color: rgba(0,0,0,0.1); }
 .sa-layout.sa-light .sa-toast-title { color: #0f172a; }
 .sa-layout.sa-light .sa-toast-msg { color: #64748b; }
+
+/* ============================================================
+   RESPONSIVE DESIGN (ADDED)
+============================================================ */
+
+@media (max-width: 1024px) {
+  .sa-sidebar {
+    width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sa-layout-container {
+    flex-direction: column;
+    position: relative;
+  }
+  .sa-sidebar {
+    position: absolute;
+    z-index: 1000;
+    height: 100vh;
+    transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+  }
+  .sa-sidebar.open {
+    transform: translateX(0);
+    width: 260px;
+  }
+  .sa-topbar {
+    padding: 0 16px;
+  }
+  .sa-content-scroll {
+    padding: 16px;
+  }
+  .hamburger-menu {
+    display: block;
+  }
+}

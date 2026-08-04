@@ -555,7 +555,7 @@ const ChatLayout = ({ initialChatUserId }) => {
   );
 
   return (
-    <div className="chat-container">
+    <div className={`chat-container ${(selectedUser || selectedProject) ? 'chat-active' : ''}`}>
       <div className="chat-sidebar">
         <div className="sidebar-header">
           <h2><MessageCircle className="icon" /> Messages</h2>
@@ -627,6 +627,13 @@ const ChatLayout = ({ initialChatUserId }) => {
         {(selectedUser || selectedProject) ? (
           <>
             <div className="chat-header">
+              <button 
+                className="mobile-back-btn" 
+                onClick={(e) => { e.stopPropagation(); setSelectedUser(null); setSelectedProject(null); }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '24px', marginRight: '10px', display: 'none', cursor: 'pointer' }}
+              >
+                ←
+              </button>
               {selectedUser ? (
                 <div className="chat-header-info clickable-profile" onClick={toggleProfile} title="View Profile">
                   <div className="user-avatar-container">
