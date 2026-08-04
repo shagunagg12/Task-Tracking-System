@@ -223,7 +223,8 @@ const AchievementsRewards = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setPoints(data.points);
+          const pts = data.points !== undefined ? data.points : (data.Points !== undefined ? data.Points : 0);
+          setPoints(pts);
           setRedeemedItems(prev => [...prev, reward.title]);
           setRedemptionSuccess(`Successfully redeemed ${reward.title}! Check your email for details.`);
           setTimeout(() => setRedemptionSuccess(null), 4000);
@@ -251,7 +252,8 @@ const AchievementsRewards = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setPoints(data.points);
+          const pts = data.points !== undefined ? data.points : (data.Points !== undefined ? data.Points : 0);
+          setPoints(pts);
           setClaimedBonuses(prev => [...prev, milestone.id]);
           setRedemptionSuccess(`Claimed +${milestone.rewardPoints} points for completing "${milestone.title}"! 🎉`);
           setTimeout(() => setRedemptionSuccess(null), 4000);
@@ -281,7 +283,8 @@ const AchievementsRewards = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setPoints(data.points);
+          const pts = data.points !== undefined ? data.points : (data.Points !== undefined ? data.Points : 0);
+          setPoints(pts);
           setAllAchievementsClaimed(true);
           setClaimedBonuses(prev => [...prev, 'all-star-completion']);
           setRedemptionSuccess(`Claimed +500 All-Star Completion Bonus points! 🏆`);
