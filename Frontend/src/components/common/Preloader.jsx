@@ -25,7 +25,7 @@ const Preloader = ({ onFinish }) => {
           src="/image/logo.png" 
           alt="MATTS Logo" 
           className="preloader-logo-img" 
-        />
+        onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
       </div>
     </div>
   );

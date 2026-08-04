@@ -161,7 +161,7 @@ export default function ProfileSettings() {
           src={profile.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&background=random&size=128`} 
           alt="Profile" 
           style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }} 
-        />
+        onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=User&background=random"; }} />
         <div>
           <input 
             type="file" 
@@ -198,7 +198,7 @@ export default function ProfileSettings() {
             name="fullName"
             value={profile.fullName}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white' }}
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
           />
         </div>
         
@@ -209,7 +209,7 @@ export default function ProfileSettings() {
             name="email"
             value={profile.email}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white' }}
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
           />
         </div>
 
@@ -219,7 +219,7 @@ export default function ProfileSettings() {
             name="designation"
             value={profile.designation}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white', outline: 'none' }}
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-main)', outline: 'none' }}
           >
             <option value="">Select Designation...</option>
             <option value="Software Engineer">Software Engineer</option>
@@ -237,7 +237,7 @@ export default function ProfileSettings() {
             name="department"
             value={profile.department}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white', outline: 'none' }}
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-main)', outline: 'none' }}
           >
             <option value="">Select Department...</option>
             {departments.map((dept, idx) => (
@@ -254,7 +254,7 @@ export default function ProfileSettings() {
             placeholder="e.g. New York, USA"
             value={profile.location}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white' }}
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
           />
         </div>
 
@@ -266,7 +266,7 @@ export default function ProfileSettings() {
             placeholder="Tell us about yourself..."
             value={profile.bio}
             onChange={handleChange}
-            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'white', fontFamily: 'inherit', resize: 'vertical' }}
+            style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-main)', fontFamily: 'inherit', resize: 'vertical' }}
           />
         </div>
 
