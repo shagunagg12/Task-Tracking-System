@@ -1499,3 +1499,60 @@
     border-color: #ffcdd2 !important;
   }
 }
+
+@media (max-width: 768px) {
+  .report-container {
+    padding: 16px !important;
+    gap: 20px !important;
+    overflow-x: hidden;
+  }
+  .report-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+  .report-controls {
+    flex-direction: row !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .report-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+  .report-tabs {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 4px !important;
+    padding-bottom: 0 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+  }
+  .report-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+  .report-tab-btn {
+    flex: 1 !important;
+    padding: 10px 4px !important;
+    font-size: 11px !important;
+    white-space: normal !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    background: none !important;
+  }
+  .productivity-kpis {
+    grid-template-columns: 1fr !important;
+  }
+  .donut-container {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  .summary-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

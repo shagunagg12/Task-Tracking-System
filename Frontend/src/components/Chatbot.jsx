@@ -391,7 +391,7 @@ const Chatbot = ({ isSidebarOpen }) => {
             fontFamily: 'var(--font-main)'
           }}>
             {/* HEADER */}
-            <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', height: '80px', boxSizing: 'border-box' }}>
+            <div className="chat-header-container" style={{ backgroundColor: 'var(--bg-card)', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', minHeight: '70px', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 {selectedBot ? (
                   <button 
@@ -425,7 +425,7 @@ const Chatbot = ({ isSidebarOpen }) => {
                 {selectedBot && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '10px' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--accent-green)' }}>
-                      <video src={botConfigs[selectedBot].video} autoPlay muted playsInline loop style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <video src={botConfigs[selectedBot].video} autoPlay muted playsInline loop style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }} />
                     </div>
                     <div>
                       <div style={{ fontWeight: '600', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -444,9 +444,9 @@ const Chatbot = ({ isSidebarOpen }) => {
             {/* CHAT WINDOW OR GRID SELECTION */}
             {selectedBot ? (
               /* ACTIVE CHAT INTERFACE */
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-dark)', height: 'calc(100vh - 80px)' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-dark)', height: 'calc(100vh - 70px)' }}>
                 {/* MESSAGES AREA */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '30px 40px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="chat-messages-area" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {!showPrevious[selectedBot] && sessionStartLengths[selectedBot] > botConfigs[selectedBot].initialMessages.length && (
                     <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                       <button 
@@ -466,10 +466,10 @@ const Chatbot = ({ isSidebarOpen }) => {
                     : [ ...botConfigs[selectedBot].initialMessages, ...(chatHistories[selectedBot] || []).slice(sessionStartLengths[selectedBot]) ]
                   ).map((msg, index) => (
                     <div key={index} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start', width: '100%' }}>
-                      <div style={{ display: 'flex', gap: '12px', maxWidth: '70%', flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row' }}>
+                      <div className="chat-message-bubble-wrapper" style={{ display: 'flex', gap: '10px', maxWidth: '85%', flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row' }}>
                         {msg.sender === 'bot' && (
                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1.5px solid var(--accent-green)' }}>
-                            <video src={botConfigs[selectedBot].video} autoPlay muted playsInline loop style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <video src={botConfigs[selectedBot].video} autoPlay muted playsInline loop style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }} />
                           </div>
                         )}
                         <div>
@@ -523,9 +523,9 @@ const Chatbot = ({ isSidebarOpen }) => {
                   
                   {isTyping && (
                     <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-                      <div style={{ display: 'flex', gap: '12px', maxWidth: '70%' }}>
+                      <div style={{ display: 'flex', gap: '10px', maxWidth: '85%' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1.5px solid var(--accent-green)' }}>
-                          <video src={botConfigs[selectedBot].video} autoPlay muted playsInline loop style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <video src={botConfigs[selectedBot].video} autoPlay muted playsInline loop style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }} />
                         </div>
                         <div style={{
                           padding: '14px 20px',
@@ -547,9 +547,9 @@ const Chatbot = ({ isSidebarOpen }) => {
                 </div>
 
                 {/* SUGGESTION PILLS & INPUT BOX */}
-                <div style={{ padding: '20px 40px 30px', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}>
+                <div className="chat-input-area" style={{ padding: '15px 20px 20px', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}>
                   {/* Suggestions */}
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
+                  <div className="chat-suggestions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                     {botConfigs[selectedBot].suggestions.map((sug, i) => (
                       <button 
                         key={i}
@@ -621,7 +621,7 @@ const Chatbot = ({ isSidebarOpen }) => {
                   Choose your friend according to the task you intend to do today
                 </h2>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', width: '100%', maxWidth: '1000px' }}>
+                <div className="chatbot-selection-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', width: '100%', maxWidth: '1000px' }}>
                   
                   {/* Option 1 - Daksh */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} onClick={() => setSelectedBot('daksh')}>
@@ -631,7 +631,7 @@ const Chatbot = ({ isSidebarOpen }) => {
                     <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
                          onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
                          onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                      <video src="/image/daksh.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                      <video src="/image/daksh.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', borderRadius: '14px' }} />
                     </div>
                   </div>
                   
@@ -643,7 +643,7 @@ const Chatbot = ({ isSidebarOpen }) => {
                     <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
                          onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
                          onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                      <video src="/image/Ayush%20Badola%20Video.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                      <video src="/image/Ayush%20Badola%20Video.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', borderRadius: '14px' }} />
                     </div>
                   </div>
                   
@@ -655,7 +655,7 @@ const Chatbot = ({ isSidebarOpen }) => {
                     <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
                          onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
                          onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                      <video src="/image/rachit.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                      <video src="/image/rachit.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', borderRadius: '14px' }} />
                     </div>
                   </div>
                   
@@ -667,7 +667,7 @@ const Chatbot = ({ isSidebarOpen }) => {
                     <div style={{ backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-color)', borderRadius: '16px', height: '350px', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative' }} 
                          onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent-green)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
                          onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                      <video src="/image/kartik.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }} />
+                      <video src="/image/kartik.mp4" autoPlay muted playsInline loop ref={(el) => { if (el) el.playbackRate = 1.5; }} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', borderRadius: '14px' }} />
                     </div>
                   </div>
                 </div>
@@ -716,3 +716,4 @@ const Chatbot = ({ isSidebarOpen }) => {
 };
 
 export default Chatbot;
+

@@ -1,0 +1,23 @@
+.profile-settings-avatar-container {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-settings-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 800px;
+}
+
+@media (max-width: 768px) {
+  .profile-settings-avatar-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .profile-settings-form {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1205,3 +1205,27 @@ body, html, #root {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .right-sidebar-close-btn {
+    display: block !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-list-card {
+    overflow-x: auto;
+  }
+  .customer-table {
+    display: table !important;
+    width: 100%;
+    min-width: 450px; 
+  }
+  .customer-table th, .customer-table td {
+    padding: 12px 10px !important;
+    white-space: nowrap;
+  }
+  .user-info {
+    white-space: normal;
+  }
+}

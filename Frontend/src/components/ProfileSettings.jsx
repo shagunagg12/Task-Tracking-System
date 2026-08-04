@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './ProfileSettings.css';
 
 export default function ProfileSettings() {
   const [profile, setProfile] = useState({
@@ -155,7 +156,7 @@ export default function ProfileSettings() {
       {message && <div style={{ backgroundColor: 'rgba(81, 207, 102, 0.1)', color: '#51cf66', padding: '12px', borderRadius: '8px', marginBottom: '20px' }}>{message}</div>}
       {error && <div style={{ backgroundColor: 'rgba(255, 107, 107, 0.1)', color: '#ff6b6b', padding: '12px', borderRadius: '8px', marginBottom: '20px' }}>{error}</div>}
       
-      <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <div className="profile-settings-avatar-container">
         <img 
           src={profile.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&background=random&size=128`} 
           alt="Profile" 
@@ -189,7 +190,7 @@ export default function ProfileSettings() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxWidth: '800px' }}>
+      <form onSubmit={handleSubmit} className="profile-settings-form">
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <label style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--text-muted)' }}>Full Name</label>
           <input 

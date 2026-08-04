@@ -699,7 +699,17 @@ const DashboardLayout = ({ isAdmin, onSwitchToAdmin }) => {
       <aside className={`right-sidebar ${isRightSidebarOpen ? 'open' : 'closed'}`}>
         
         <div className="right-section">
-          <h3 className="right-title">Notifications</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 className="right-title" style={{ margin: 0, paddingBottom: 0, borderBottom: 'none' }}>Notifications</h3>
+            <button 
+              onClick={toggleRightSidebar} 
+              className="right-sidebar-close-btn"
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '24px', cursor: 'pointer', display: 'none' }}
+              aria-label="Close Notifications"
+            >
+              ×
+            </button>
+          </div>
           <ul className="list-items">
             {notifications.length === 0 ? (
               <li className="list-item" style={{ justifyContent: 'center', opacity: 0.5, paddingTop: '10px' }}>

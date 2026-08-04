@@ -278,3 +278,77 @@ body, html, #root {
     flex-direction: column !important;
   }
 }
+
+@media (max-width: 768px) {
+  .report-container {
+
+@media (max-width: 768px) {
+  .chatbot-selection-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 20px !important;
+    scroll-snap-type: x mandatory;
+    gap: 16px !important;
+    justify-content: flex-start !important;
+  }
+  .chatbot-selection-grid > div {
+    min-width: 240px !important;
+    scroll-snap-align: center;
+  }
+  .chatbot-selection-grid > div > div {
+    height: 280px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-header-container {
+    padding: 12px 15px !important;
+    height: auto !important;
+    min-height: 70px;
+  }
+  .chat-header-container > div:first-child {
+    gap: 8px !important;
+  }
+  .chat-header-container button {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+  }
+  .chat-header-container .bot-info-wrapper {
+    margin-left: 5px !important;
+  }
+  
+  .chat-messages-area {
+    padding: 15px 15px !important;
+    gap: 15px !important;
+  }
+  
+  .chat-message-bubble-wrapper {
+    max-width: 92% !important;
+  }
+  
+  .chat-input-area {
+    padding: 15px 15px 20px !important;
+  }
+  
+  .chat-suggestions {
+    gap: 6px !important;
+    margin-bottom: 10px !important;
+  }
+  .chat-suggestions button {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  .chat-input-area form {
+    gap: 10px !important;
+  }
+  .chat-input-area form input {
+    padding: 12px 15px !important;
+    font-size: 14px !important;
+  }
+  .chat-input-area form button {
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+  }
+}
