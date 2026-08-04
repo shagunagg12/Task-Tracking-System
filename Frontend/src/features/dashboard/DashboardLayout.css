@@ -327,19 +327,31 @@ body, html, #root {
 }
 
 .stat-card {
-  background-color: var(--bg-card);
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(38, 41, 51, 0.92), rgba(22, 24, 30, 0.96));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  border: 1px solid transparent;
-  transition: all 0.3s ease;
+  border: 1.5px solid rgba(185, 246, 90, 0.55);
+  box-shadow: 
+    0 15px 30px -10px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0px rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: border-pulse 3s infinite alternate ease-in-out;
 }
 
 .stat-card:hover {
-  border-color: var(--border-color);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  border-color: rgba(185, 246, 90, 0.95);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 
+    0 25px 45px -12px rgba(0, 0, 0, 0.95), 
+    inset 0 1px 0px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(185, 246, 90, 0.5);
+  animation-play-state: paused;
 }
 
 .stat-title {
@@ -442,19 +454,32 @@ body, html, #root {
   line-height: 1;
 }
 
-/* Sales Overview Card */
 .sales-overview-card {
-  background-color: var(--bg-card);
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(38, 41, 51, 0.92), rgba(22, 24, 30, 0.96));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  border: 1.5px solid rgba(185, 246, 90, 0.55);
+  box-shadow: 
+    0 15px 30px -10px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0px rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: border-pulse 3s infinite alternate ease-in-out;
 }
 
 .sales-overview-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  border-color: rgba(185, 246, 90, 0.95);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 
+    0 25px 45px -12px rgba(0, 0, 0, 0.95), 
+    inset 0 1px 0px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(185, 246, 90, 0.5);
+  animation-play-state: paused;
 }
 
 .sales-content {
@@ -589,11 +614,31 @@ body, html, #root {
 }
 
 .small-card {
-  background-color: var(--bg-card);
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(38, 41, 51, 0.92), rgba(22, 24, 30, 0.96));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
+  border: 1.5px solid rgba(185, 246, 90, 0.55);
+  box-shadow: 
+    0 10px 20px -6px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0px rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: border-pulse 3s infinite alternate ease-in-out;
+}
+
+.small-card:hover {
+  border-color: rgba(185, 246, 90, 0.95);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 18px 30px -8px rgba(0, 0, 0, 0.95), 
+    inset 0 1px 0px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(185, 246, 90, 0.5);
+  animation-play-state: paused;
 }
 
 .card-icon-header {
@@ -646,11 +691,31 @@ body, html, #root {
 
 .total-profit-chart-card {
   grid-column: span 2;
-  background-color: var(--bg-card);
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(38, 41, 51, 0.92), rgba(22, 24, 30, 0.96));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
   padding: 20px;
   display: flex;
   flex-direction: column;
+  border: 1.5px solid rgba(185, 246, 90, 0.55);
+  box-shadow: 
+    0 12px 24px -8px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0px rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: border-pulse 3s infinite alternate ease-in-out;
+}
+
+.total-profit-chart-card:hover {
+  border-color: rgba(185, 246, 90, 0.95);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 
+    0 20px 35px -10px rgba(0, 0, 0, 0.95), 
+    inset 0 1px 0px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(185, 246, 90, 0.5);
+  animation-play-state: paused;
 }
 
 .tp-title {
@@ -712,11 +777,31 @@ body, html, #root {
 }
 
 .customer-list-card {
-  background-color: var(--bg-card);
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(38, 41, 51, 0.92), rgba(22, 24, 30, 0.96));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
   padding: 24px;
   display: flex;
   flex-direction: column;
+  border: 1.5px solid rgba(185, 246, 90, 0.55);
+  box-shadow: 
+    0 15px 30px -10px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0px rgba(255, 255, 255, 0.12),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: border-pulse 3s infinite alternate ease-in-out;
+}
+
+.customer-list-card:hover {
+  border-color: rgba(185, 246, 90, 0.95);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 25px 45px -12px rgba(0, 0, 0, 0.95), 
+    inset 0 1px 0px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.8),
+    0 0 24px rgba(185, 246, 90, 0.5);
+  animation-play-state: paused;
 }
 
 .customer-table {
@@ -1234,5 +1319,73 @@ body, html, #root {
   }
   .user-info {
     white-space: normal;
+  }
+}
+
+@keyframes border-pulse {
+  0% {
+    border-color: rgba(185, 246, 90, 0.4);
+    box-shadow: 
+      0 15px 30px -10px rgba(0, 0, 0, 0.75),
+      inset 0 1px 0px rgba(255, 255, 255, 0.12),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.8),
+      0 0 6px rgba(185, 246, 90, 0.1);
+  }
+  100% {
+    border-color: rgba(185, 246, 90, 0.9);
+    box-shadow: 
+      0 15px 30px -10px rgba(0, 0, 0, 0.75),
+      inset 0 1px 0px rgba(255, 255, 255, 0.12),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.8),
+      0 0 16px rgba(185, 246, 90, 0.35);
+  }
+}
+
+.bright-theme .stat-card,
+.bright-theme .sales-overview-card,
+.bright-theme .small-card,
+.bright-theme .total-profit-chart-card,
+.bright-theme .customer-list-card {
+  background: linear-gradient(145deg, #FFFFFF, #FAF7F2) !important;
+  border: 1.5px solid rgba(255, 159, 0, 0.35) !important;
+  box-shadow: 
+    0 10px 20px rgba(42, 31, 19, 0.05),
+    inset 0 1px 0px rgba(255, 255, 255, 0.9),
+    0 0 6px rgba(255, 159, 0, 0.05) !important;
+  animation: border-pulse-light 3s infinite alternate ease-in-out !important;
+}
+
+.bright-theme .stat-card:hover,
+.bright-theme .sales-overview-card:hover,
+.bright-theme .small-card:hover,
+.bright-theme .total-profit-chart-card:hover,
+.bright-theme .customer-list-card:hover {
+  border-color: rgba(255, 159, 0, 0.95) !important;
+  box-shadow: 
+    0 15px 30px rgba(42, 31, 19, 0.1),
+    inset 0 1px 0px rgba(255, 255, 255, 0.9),
+    0 0 20px rgba(255, 159, 0, 0.3) !important;
+  transform: translateY(-5px) scale(1.02);
+  animation-play-state: paused !important;
+}
+
+.bright-theme .total-profit-chart-card:hover {
+  transform: translateY(-5px) scale(1.01) !important;
+}
+
+@keyframes border-pulse-light {
+  0% {
+    border-color: rgba(255, 159, 0, 0.35);
+    box-shadow: 
+      0 10px 20px rgba(42, 31, 19, 0.05),
+      inset 0 1px 0px rgba(255, 255, 255, 0.9),
+      0 0 6px rgba(255, 159, 0, 0.05);
+  }
+  100% {
+    border-color: rgba(255, 159, 0, 0.8);
+    box-shadow: 
+      0 10px 20px rgba(42, 31, 19, 0.05),
+      inset 0 1px 0px rgba(255, 255, 255, 0.9),
+      0 0 16px rgba(255, 159, 0, 0.25);
   }
 }
