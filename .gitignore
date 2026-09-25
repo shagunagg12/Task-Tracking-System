@@ -1,0 +1,7 @@
+# Environment variables
+.env
+*.env
+Backend/env/
+
+# Config containing secrets
+Backend/appsettings.json
